@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Extract": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
