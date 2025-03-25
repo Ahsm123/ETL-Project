@@ -21,7 +21,7 @@ namespace Extract.Services
 
         }
 
-        public async Task<ConfigFile?> GetByIdAsync(int id)
+        public async Task<ConfigFile?> GetByIdAsync(string id)
         {
             var response = await _httpClient.GetAsync($"/api/ConfigFile/{id}");
             if (!response.IsSuccessStatusCode)

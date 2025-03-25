@@ -9,5 +9,5 @@ namespace Extract.Services;
 
 public interface IConfigService
 {
-    Task<ConfigFile?> GetByIdAsync(int id);
+    Task<ConfigFile?> GetByIdAsync(string id);
 }
