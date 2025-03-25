@@ -1,4 +1,5 @@
 ﻿
+using Extract.DataSources;
 using Extract.Services;
 
 var baseUrl = "https://localhost:7027";
@@ -17,3 +18,4 @@ Console.WriteLine($"Config id: {config.id}");
 Console.WriteLine($"Config name: {config.name}");
 
 
+builder.Services.AddHttpClient<ApiDataSourceProvider>();
