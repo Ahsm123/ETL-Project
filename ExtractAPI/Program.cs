@@ -3,12 +3,20 @@ using ExtractAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var baseUrl = "https://localhost:7027";
+
+// Register services
 builder.Services.AddHttpClient<ApiDataSourceProvider>();
 builder.Services.AddSingleton<DataSourceFactory>();
 
-builder.Services.AddScoped<IConfigService, ConfigService>();
+// Register ConfigService with factory to inject baseUrl
+builder.Services.AddScoped<IConfigService>(_ =>
+    new ConfigService(baseUrl));
+
+// Register ExtractService 
 builder.Services.AddScoped<IExtractService, ExtractService>();
 
+// Swagger + Controllers
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -22,9 +30,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();

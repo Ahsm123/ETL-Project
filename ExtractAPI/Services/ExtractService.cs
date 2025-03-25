@@ -15,16 +15,24 @@ namespace ExtractAPI.Services
 
         public async Task ExtractAsync(string configId)
         {
+            Console.WriteLine($"Starter extract for configId {configId}");
+
             var config = await _configService.GetByIdAsync(configId);
             if (config == null)
             {
-                Console.WriteLine("❌ Config not found.");
+                Console.WriteLine("Config not found.");
                 return;
             }
 
+            Console.WriteLine($"Using source type: {config.SourceType}");
+
+
             var provider = _dataSourceFactory.GetProvider(config.SourceType);
+
+
             var data = await provider.GetDataAsync(config.SourceInfo);
 
+            Console.WriteLine($"Retrieved data: {config.JsonContent}");
 
         }
     }
