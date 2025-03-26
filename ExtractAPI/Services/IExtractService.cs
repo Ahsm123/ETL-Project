@@ -1,6 +1,9 @@
-﻿namespace ExtractAPI.Services;
+﻿using ETL.Domain.Model;
+using System.Text.Json;
+
+namespace ExtractAPI.Services;
 
 public interface IExtractService
 {
-    Task ExtractAsync(string configId);
+    Task<ConfigFile> ExtractAsync(string configId);
 }

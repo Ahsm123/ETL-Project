@@ -1,8 +1,9 @@
-﻿using System.Text.Json;
+﻿using ETL.Domain.Model.SourceInfo;
+using System.Text.Json;
 
 namespace ExtractAPI.DataSources;
 
 public interface IDataSourceProvider
 {
-    Task<JsonElement> GetDataAsync(string sourceInfo);
+    Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo);
 }

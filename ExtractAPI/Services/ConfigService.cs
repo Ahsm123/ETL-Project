@@ -1,4 +1,5 @@
-﻿using ExtractAPI.Models;
+﻿using ETL.Domain.Model;
+using ETL.Domain.Model.SourceInfo;
 using System.Text.Json;
 
 namespace ExtractAPI.Services
@@ -13,7 +14,6 @@ namespace ExtractAPI.Services
             {
                 BaseAddress = new Uri(baseUrl)
             };
-
         }
 
         public async Task<ConfigFile?> GetByIdAsync(string id)
@@ -28,22 +28,42 @@ namespace ExtractAPI.Services
 
             var json = await response.Content.ReadAsStringAsync();
 
-            var config = JsonSerializer.Deserialize<ConfigFile>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            // deserialize JSON
 
-            if (config != null)
+            var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            // get the sourcetype
+            var sourceType = root.GetProperty("SourceType").GetString();
+
+            // deserialize the based on the sourcetype
+
+            var sourceInfoElement = root.GetProperty("SourceInfo");
+            SourceInfoBase? sourceInfo = sourceType!.ToLower() switch
             {
-                Console.WriteLine($"Id: {config.Id}");
-                Console.WriteLine($"SourceType: {config.SourceType}");
-                Console.WriteLine($"SourceInfo: {config.SourceInfo}");
-                Console.WriteLine($"JsonContent: {config.JsonContent}");
-            }
-            else
+                "api" => JsonSerializer.Deserialize<ApiSourceBaseInfo>(sourceInfoElement.GetRawText()),
+                "db" => JsonSerializer.Deserialize<DbSourceBaseInfo>(sourceInfoElement.GetRawText()),
+                "file" => JsonSerializer.Deserialize<FileSourceBaseInfo>(sourceInfoElement.GetRawText()),
+                _ => throw new NotImplementedException($"Source type {sourceType} not implemented")
+            };
+
+            // deserialize the rest of the config file
+            var config = new ConfigFile
             {
-                Console.WriteLine("Could not deserialize config.");
-            }
+                Id = root.GetProperty("Id").GetString(),
+                SourceType = sourceType,
+                SourceInfo = sourceInfo,
+                Extract = JsonSerializer.Deserialize<ExtractSettings>(root.GetProperty("Extract").GetRawText()),
+                Transform = JsonSerializer.Deserialize<TransformSettings>(root.GetProperty("Transform").GetRawText()),
+                Load = JsonSerializer.Deserialize<LoadSettings>(root.GetProperty("Load").GetRawText())
+            };
+
+
+            config!.SourceInfo = sourceInfo!;
+
+            Console.WriteLine($"Id: {config.Id}");
+            Console.WriteLine($"SourceType: {config.SourceType}");
+            Console.WriteLine($"SourceInfo: {config.SourceInfo.GetType().Name}");
 
             return config;
         }

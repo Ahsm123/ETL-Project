@@ -4,12 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ETL.Domain.Model
-{
-    public class TransformSettings
-    {
-        public List<FieldMapping> Mappings {  get; set; }
-        public List<FilterCondition> Filters { get; set; }
+namespace ETL.Domain.Model;
 
-    }
+public class TransformSettings
+{
+    public List<FieldMapping> Mappings {  get; set; }
+    public List<FilterCondition> Filters { get; set; }
+
 }

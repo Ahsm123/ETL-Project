@@ -1,4 +1,4 @@
-﻿using ExtractAPI.Models;
+﻿using ETL.Domain.Model;
 
 namespace ExtractAPI.Services;
 
