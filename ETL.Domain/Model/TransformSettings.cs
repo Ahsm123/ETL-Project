@@ -8,8 +8,8 @@ namespace ETL.Domain.Model
 {
     public class TransformSettings
     {
-        public List<FieldMapping> Mappings {  get; set; }
-        public List<FilterCondition> Filters { get; set; }
+        public List<FieldMapping>? Mappings {  get; set; }
+        public List<FilterCondition>? Filters { get; set; }
 
     }
 }
