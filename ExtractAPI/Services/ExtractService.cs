@@ -1,8 +1,8 @@
-﻿using ExtractAPI.DataSources;
-using ETL.Domain.Model;
-using System.Text.Json;
-using ExtractAPI.Kafka;
+﻿using ETL.Domain.Model;
 using ETL.Domain.Model.DTOs;
+using ExtractAPI.DataSources;
+using ExtractAPI.Kafka;
+using System.Text.Json;
 
 namespace ExtractAPI.Services
 {
@@ -13,7 +13,7 @@ namespace ExtractAPI.Services
         private readonly IKafkaProducer _kafkaProducer;
 
         public ExtractService(
-            IConfigService configService, 
+            IConfigService configService,
             DataSourceFactory dataSourceFactory,
             IKafkaProducer kafkaProducer)
         {
@@ -22,10 +22,15 @@ namespace ExtractAPI.Services
             _kafkaProducer = kafkaProducer;
         }
 
+        //ExtractService henter data fra en kilde (fx api) baseret på config
+        //og sender resultatet videre til et Kafka topic.
+
         public async Task<ConfigFile> ExtractAsync(string configId)
         {
             Console.WriteLine($"Starter extract for configId {configId}");
 
+
+            // henter config ud fra pipeline id (fx "pipeline_001") som blev postet til /api/extract/{configId}
             var config = await _configService.GetByIdAsync(configId);
             if (config == null)
             {
@@ -34,13 +39,25 @@ namespace ExtractAPI.Services
 
             Console.WriteLine($"SourceType: {config.SourceType}");
 
+            // returnerer den rigtige provider baseret på sourceType "api", "file" eller "database"
+            // da vi har en api source, så returnerer den ApiDataSourceProvider, som er en IDataSourceProvider 
+            // og har en metode GetDataAsync, som henter data fra et api
             var provider = _dataSourceFactory.GetProvider(config.SourceType);
+
+            // henter data fra api
             var data = await provider.GetDataAsync(config.SourceInfo);
+
+            // gemmer den hentede data i config objektet 
             config.Data = data;
+
+            // mapper config objektet til en ExtractedPayload, som er en DTO, der bruges til at sende data til Kafka
+            // hvor vi har fjernet nogle properties, som ikke er nødvendige at sende med: ExtractSettings og SourceInfo
 
             var payload = MapToKafka(config);
             var json = JsonSerializer.Serialize(payload);
 
+            // sender data og config til Kafka, (specifikt rawData topic), som er defineret i appsettings.json
+            // TODO: overvej at bruge en random genereret key i stedet for config.Id mht. load balancing
             await _kafkaProducer.PublishAsync("rawData", config.Id, json);
 
             Console.WriteLine("Data retrieved:");
@@ -50,6 +67,7 @@ namespace ExtractAPI.Services
 
         }
 
+        // metoder der kun mapper det nødvendige information fra ConfigFile til ExtractedPayload
         private ExtractedPayload MapToKafka(ConfigFile config)
         {
             return new ExtractedPayload

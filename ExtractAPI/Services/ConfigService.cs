@@ -16,8 +16,12 @@ namespace ExtractAPI.Services
             };
         }
 
+
+        // ConfigService henter config (json) fra Config API
+        // og deserializerer det til et ConfigFile objekt
         public async Task<ConfigFile?> GetByIdAsync(string id)
         {
+            // kalder config api for at hente config for et givent id, id er navnet på pipelinen, fx "pipeline_001"
             var response = await _httpClient.GetAsync($"/api/ConfigFile/{id}");
 
             if (!response.IsSuccessStatusCode)
@@ -28,16 +32,15 @@ namespace ExtractAPI.Services
 
             var json = await response.Content.ReadAsStringAsync();
 
-            // deserialize JSON
-
+            // parser json direkte uden at bruge en klasse først
             var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            // get the sourcetype
+            // vi får fat i SourceType så vi ved om det er et api, fil eller database
             var sourceType = root.GetProperty("SourceType").GetString();
 
-            // deserialize the based on the sourcetype
 
+            // ud fra hvilken type, bestemmer vi hvilken type sourceInfoBase vi skal deserialisere til
             var sourceInfoElement = root.GetProperty("SourceInfo");
             SourceInfoBase? sourceInfo = sourceType!.ToLower() switch
             {
@@ -47,7 +50,7 @@ namespace ExtractAPI.Services
                 _ => throw new NotImplementedException($"Source type {sourceType} not implemented")
             };
 
-            // deserialize the rest of the config file
+            // resten af config deserialiseres til domænemodellen ConfigFile
             var config = new ConfigFile
             {
                 Id = root.GetProperty("Id").GetString(),

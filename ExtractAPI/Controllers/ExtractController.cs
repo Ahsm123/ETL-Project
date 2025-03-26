@@ -1,6 +1,5 @@
 ﻿using ETL.Domain.Model;
 using ExtractAPI.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExtractAPI.Controllers
@@ -22,12 +21,12 @@ namespace ExtractAPI.Controllers
         {
             try
             {
-                var configWithData = await _extractService.ExtractAsync(configId);
+                ConfigFile configWithData = await _extractService.ExtractAsync(configId);
                 return Ok(configWithData);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { error = ex.Message});
+                return BadRequest(new { error = ex.Message });
             }
         }
     }
