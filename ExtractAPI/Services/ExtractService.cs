@@ -29,7 +29,6 @@ namespace ExtractAPI.Services
         {
             Console.WriteLine($"Starter extract for configId {configId}");
 
-
             // henter config ud fra pipeline id (fx "pipeline_001") som blev postet til /api/extract/{configId}
             var config = await _configService.GetByIdAsync(configId);
             if (config == null)
@@ -47,8 +46,20 @@ namespace ExtractAPI.Services
             // henter data fra api
             var data = await provider.GetDataAsync(config.SourceInfo);
 
-            // gemmer den hentede data i config objektet 
-            config.Data = data;
+            // filtrer felter hvis der er angivet i config filen
+            // gemmer den hentede data i config objektet
+            if (config.Extract?.Fields != null && config.Extract.Fields.Any())
+            {
+                var filteredData = FilterFields(data, config.Extract.Fields);
+                config.Data = JsonDocument.Parse(JsonSerializer.Serialize(filteredData)).RootElement;
+            }
+            else
+            {
+                config.Data = data;
+            }
+
+           
+           
 
             // mapper config objektet til en ExtractedPayload, som er en DTO, der bruges til at sende data til Kafka
             // hvor vi har fjernet nogle properties, som ikke er nødvendige at sende med: ExtractSettings og SourceInfo
@@ -66,6 +77,36 @@ namespace ExtractAPI.Services
             return config;
 
         }
+
+        private IEnumerable<Dictionary<string, object>> FilterFields(JsonElement data, List<string> fields)
+        {
+            var result = new List<Dictionary<string, object>>();
+
+            foreach (var item in data.EnumerateArray())
+            {
+                var filteredItem = new Dictionary<string, object>();
+
+                foreach (var field in fields)
+                {
+                    if (item.TryGetProperty(field, out var value))
+                    {
+                        filteredItem[field] = value.ValueKind switch
+                        {
+                            JsonValueKind.Number => value.GetDouble(),
+                            JsonValueKind.String => value.GetString(),
+                            JsonValueKind.True => true,
+                            JsonValueKind.False => false,
+                            _ => value.ToString()
+                        };
+                    }
+                }
+
+                result.Add(filteredItem);
+            }
+
+            return result;
+        }
+
 
         // metoder der kun mapper det nødvendige information fra ConfigFile til ExtractedPayload
         private ExtractedPayload MapToKafka(ConfigFile config)
