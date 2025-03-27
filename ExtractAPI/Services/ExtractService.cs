@@ -93,10 +93,10 @@ namespace ExtractAPI.Services
                         filteredItem[field] = value.ValueKind switch
                         {
                             JsonValueKind.Number => value.GetDouble(),
-                            JsonValueKind.String => value.GetString(),
+                            JsonValueKind.String => value.GetString() ?? string.Empty,
                             JsonValueKind.True => true,
                             JsonValueKind.False => false,
-                            _ => value.ToString()
+                            _ => value.ToString() ?? string.Empty
                         };
                     }
                 }
