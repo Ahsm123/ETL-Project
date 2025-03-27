@@ -1,7 +1,8 @@
 ﻿using ETL.Domain.Model;
 using ETL.Domain.Model.DTOs;
 using ExtractAPI.DataSources;
-using ExtractAPI.Kafka;
+using ExtractAPI.Events;
+using ExtractAPI.ExtractedEvents;
 using System.Text.Json;
 
 namespace ExtractAPI.Services
@@ -10,16 +11,17 @@ namespace ExtractAPI.Services
     {
         private readonly IConfigService _configService;
         private readonly DataSourceFactory _dataSourceFactory;
-        private readonly IKafkaProducer _kafkaProducer;
+        private readonly IEventDispatcher _eventDispatcher;
+
 
         public ExtractService(
             IConfigService configService,
             DataSourceFactory dataSourceFactory,
-            IKafkaProducer kafkaProducer)
+            IEventDispatcher eventDispatcher)
         {
             _configService = configService;
             _dataSourceFactory = dataSourceFactory;
-            _kafkaProducer = kafkaProducer;
+            _eventDispatcher = eventDispatcher;
         }
 
         //ExtractService henter data fra en kilde (fx api) baseret på config
@@ -79,7 +81,7 @@ namespace ExtractAPI.Services
                     var json = JsonSerializer.Serialize(payload);
 
                     // sender beskeden med en tilfældig key for load balancing
-                    await _kafkaProducer.PublishAsync("rawData", Guid.NewGuid().ToString(), json);
+                    await _eventDispatcher.DispatchAsync(new DataExtractedEvent(payload));
                 }
             }
             else
@@ -95,7 +97,7 @@ namespace ExtractAPI.Services
                 };
 
                 var json = JsonSerializer.Serialize(payload);
-                await _kafkaProducer.PublishAsync("rawData", Guid.NewGuid().ToString(), json);
+                await _eventDispatcher.DispatchAsync(new DataExtractedEvent(payload));
             }
 
 

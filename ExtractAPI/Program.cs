@@ -1,4 +1,5 @@
 using ExtractAPI.DataSources;
+using ExtractAPI.Events;
 using ExtractAPI.Kafka;
 using ExtractAPI.Services;
 
@@ -10,6 +11,7 @@ var baseUrl = "https://localhost:7027";
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 builder.Services.AddHttpClient<ApiDataSourceProvider>();
 builder.Services.AddSingleton<DataSourceFactory>();
+builder.Services.AddScoped<IEventDispatcher, KafkaEventDispatcher>();
 
 // Register ConfigService with factory to inject baseUrl
 builder.Services.AddScoped<IConfigService>(_ =>
