@@ -4,12 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ETL.Domain.Model
+namespace ETL.Domain.Model;
+
+public class FilterCondition
 {
-    public class FilterCondition
-    {
-        public string Field { get; set; }
-        public string Operator { get; set; }
-        public string Value { get; set; }
-    }
+    public string Field { get; set; }
+    public string Operator { get; set; }
+    public string Value { get; set; }
 }

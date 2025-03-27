@@ -1,4 +1,5 @@
 using ExtractAPI.DataSources;
+using ExtractAPI.Kafka;
 using ExtractAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 var baseUrl = "https://localhost:7027";
 
 // Register services
+builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 builder.Services.AddHttpClient<ApiDataSourceProvider>();
 builder.Services.AddSingleton<DataSourceFactory>();
 

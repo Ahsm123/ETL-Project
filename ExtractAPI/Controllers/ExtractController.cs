@@ -1,11 +1,12 @@
-﻿using ExtractAPI.Services;
-using Microsoft.AspNetCore.Http;
+﻿using ETL.Domain.Model;
+using ExtractAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExtractAPI.Controllers
 {
-    [Route("api/[controller]")]
+
     [ApiController]
+    [Route("api/[controller]")]
     public class ExtractController : ControllerBase
     {
         private readonly IExtractService _extractService;
@@ -16,10 +17,18 @@ namespace ExtractAPI.Controllers
         }
 
         [HttpPost("{configId}")]
-        public async Task<IActionResult> Trigger(string configId)
+        public async Task<ActionResult<ConfigFile>> Trigger(string configId)
         {
-            await _extractService.ExtractAsync(configId);
-            return Ok("Pipeline triggerede for configId" + configId);
+            try
+            {
+                ConfigFile configWithData = await _extractService.ExtractAsync(configId);
+                return Ok(configWithData);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
     }
+
 }

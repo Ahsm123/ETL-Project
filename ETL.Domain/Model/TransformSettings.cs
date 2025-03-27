@@ -12,5 +12,4 @@ namespace ETL.Domain.Model
         public List<FieldMapping> Mappings {  get; set; }
         public List<FilterCondition> Filters { get; set; }
 
-    }
 }
