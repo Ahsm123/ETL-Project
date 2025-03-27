@@ -14,8 +14,13 @@ public class KafkaProducer : IKafkaProducer
         // bestemmer hvilken Kafka server vi skal forbinde til
         var kafkaConfig = new ProducerConfig
         {
-            BootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092"
+            BootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092",
+            EnableIdempotence = true,           // sikrer at der ikke bliver sendt duplikater ved retries
+            Acks = Acks.All,                    
+            MessageSendMaxRetries = 3,          
+            RetryBackoffMs = 100               
         };
+
 
         // opretter en producer
 
