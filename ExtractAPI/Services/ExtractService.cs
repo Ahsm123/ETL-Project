@@ -26,7 +26,7 @@ namespace ExtractAPI.Services
 
             Console.WriteLine($"Using source type: {config.SourceType}");
 
-
+ 
             var provider = _dataSourceFactory.GetProvider(config.SourceType);
 
 
