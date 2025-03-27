@@ -58,18 +58,47 @@ namespace ExtractAPI.Services
                 config.Data = data;
             }
 
-           
-           
 
-            // mapper config objektet til en ExtractedPayload, som er en DTO, der bruges til at sende data til Kafka
-            // hvor vi har fjernet nogle properties, som ikke er nødvendige at sende med: ExtractSettings og SourceInfo
 
-            var payload = MapToKafka(config);
-            var json = JsonSerializer.Serialize(payload);
 
-            // sender data og config til Kafka, (specifikt rawData topic), som er defineret i appsettings.json
-            // TODO: overvej at bruge en random genereret key i stedet for config.Id mht. load balancing
-            await _kafkaProducer.PublishAsync("rawData", config.Id, json);
+            // sender én besked per row i dataen til Kafka - rawData
+            if (config.Data.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in config.Data.EnumerateArray())
+                {
+                    // for hver row bygger vi et payload med config dataen
+                    var payload = new ExtractedPayload
+                    {
+                        Id = config.Id,
+                        SourceType = config.SourceType,
+                        Transform = config.Transform,
+                        Load = config.Load,
+                        Data = item
+                    };
+
+                    var json = JsonSerializer.Serialize(payload);
+
+                    // sender beskeden med en tilfældig key for load balancing
+                    await _kafkaProducer.PublishAsync("rawData", Guid.NewGuid().ToString(), json);
+                }
+            }
+            else
+            {
+                // hvis dataen kun er ét objekt, sendes det som en besked.
+                var payload = new ExtractedPayload
+                {
+                    Id = config.Id,
+                    SourceType = config.SourceType,
+                    Transform = config.Transform,
+                    Load = config.Load,
+                    Data = config.Data
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                await _kafkaProducer.PublishAsync("rawData", Guid.NewGuid().ToString(), json);
+            }
+
+
 
             Console.WriteLine("Data retrieved:");
             Console.WriteLine(JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
@@ -117,7 +146,7 @@ namespace ExtractAPI.Services
                 SourceType = config.SourceType,
                 Transform = config.Transform,
                 Load = config.Load,
-                Data = config.Data!.Value,
+                Data = config.Data
             };
         }
     }
