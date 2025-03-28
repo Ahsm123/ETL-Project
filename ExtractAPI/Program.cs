@@ -12,10 +12,13 @@ builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 builder.Services.AddHttpClient<ApiDataSourceProvider>();
 builder.Services.AddSingleton<DataSourceFactory>();
 builder.Services.AddScoped<IEventDispatcher, KafkaEventDispatcher>();
+builder.Services.AddScoped<FieldFilterService, FieldFilterService>();
 
 // Register ConfigService with factory to inject baseUrl
-builder.Services.AddScoped<IConfigService>(_ =>
-    new ConfigService(baseUrl));
+builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>
+{
+    client.BaseAddress = new Uri(baseUrl);
+});
 
 // Register ExtractService 
 builder.Services.AddScoped<IExtractService, ExtractService>();

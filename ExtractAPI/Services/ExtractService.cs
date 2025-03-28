@@ -5,144 +5,80 @@ using ExtractAPI.Events;
 using ExtractAPI.ExtractedEvents;
 using System.Text.Json;
 
-namespace ExtractAPI.Services
+namespace ExtractAPI.Services;
+
+public class ExtractService : IExtractService
 {
-    public class ExtractService : IExtractService
+    private readonly IConfigService _configService;
+    private readonly DataSourceFactory _dataSourceFactory;
+    private readonly IEventDispatcher _eventDispatcher;
+    private readonly FieldFilterService _fieldFilterService;
+
+    public ExtractService(
+        IConfigService configService,
+        DataSourceFactory dataSourceFactory,
+        IEventDispatcher eventDispatcher,
+        FieldFilterService fieldFilterService)
     {
-        private readonly IConfigService _configService;
-        private readonly DataSourceFactory _dataSourceFactory;
-        private readonly IEventDispatcher _eventDispatcher;
+        _configService = configService;
+        _dataSourceFactory = dataSourceFactory;
+        _eventDispatcher = eventDispatcher;
+        _fieldFilterService = fieldFilterService;
+    }
 
+    public async Task<ConfigFile> ExtractAsync(string configId)
+    {
+        Console.WriteLine($"Starter extract for configId {configId}");
 
-        public ExtractService(
-            IConfigService configService,
-            DataSourceFactory dataSourceFactory,
-            IEventDispatcher eventDispatcher)
+        // Hent config fra ConfigAPI
+        var config = await _configService.GetByIdAsync(configId);
+        if (config == null)
         {
-            _configService = configService;
-            _dataSourceFactory = dataSourceFactory;
-            _eventDispatcher = eventDispatcher;
+            throw new Exception($"Config not found for ID: {configId}");
         }
 
-        //ExtractService henter data fra en kilde (fx api) baseret på config
-        //og sender resultatet videre til et Kafka topic.
+        Console.WriteLine($"SourceType: {config.SourceType}");
 
-        public async Task<ConfigFile> ExtractAsync(string configId)
+        // Hent den rigtige dataprovider ud fra SourceType-property
+        var provider = _dataSourceFactory.GetProvider(config.SourceType);
+
+        // Hent data fra kilde
+        var data = await provider.GetDataAsync(config.SourceInfo);
+
+        // Filtrer dataen, hvis det er specificeret i config
+        if (config.Extract?.Fields != null && config.Extract.Fields.Any())
         {
-            Console.WriteLine($"Starter extract for configId {configId}");
+            var filteredData = _fieldFilterService.FilterFields(data, config.Extract.Fields);
+            config.Data = JsonDocument.Parse(JsonSerializer.Serialize(filteredData)).RootElement;
+        }
+        else
+        {
+            config.Data = data;
+        }
 
-            // henter config ud fra pipeline id (fx "pipeline_001") som blev postet til /api/extract/{configId}
-            var config = await _configService.GetByIdAsync(configId);
-            if (config == null)
+        // Send beskeder til Kafka - én pr. row i dataen
+        if (config.Data.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in config.Data.EnumerateArray())
             {
-                throw new Exception($"Config not found for ID: {configId}");
-            }
-
-            Console.WriteLine($"SourceType: {config.SourceType}");
-
-            // returnerer den rigtige provider baseret på sourceType "api", "file" eller "database"
-            // da vi har en api source, så returnerer den ApiDataSourceProvider, som er en IDataSourceProvider 
-            // og har en metode GetDataAsync, som henter data fra et api
-            var provider = _dataSourceFactory.GetProvider(config.SourceType);
-
-            // henter data fra api
-            var data = await provider.GetDataAsync(config.SourceInfo);
-
-            // filtrer felter hvis der er angivet i config filen
-            // gemmer den hentede data i config objektet
-            if (config.Extract?.Fields != null && config.Extract.Fields.Any())
-            {
-                var filteredData = FilterFields(data, config.Extract.Fields);
-                config.Data = JsonDocument.Parse(JsonSerializer.Serialize(filteredData)).RootElement;
-            }
-            else
-            {
-                config.Data = data;
-            }
-
-
-
-
-            // sender én besked per row i dataen til Kafka - rawData
-            if (config.Data.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var item in config.Data.EnumerateArray())
-                {
-                    // for hver row bygger vi et payload med config dataen
-                    var payload = new ExtractedPayload
-                    {
-                        Id = config.Id,
-                        SourceType = config.SourceType,
-                        Transform = config.Transform,
-                        Load = config.Load,
-                        Data = item
-                    };
-
-                    var json = JsonSerializer.Serialize(payload);
-
-                    // sender beskeden med en tilfældig key for load balancing
-                    await _eventDispatcher.DispatchAsync(new DataExtractedEvent(payload));
-                }
-            }
-            else
-            {
-                // hvis dataen kun er ét objekt, sendes det som en besked.
                 var payload = new ExtractedPayload
                 {
                     Id = config.Id,
                     SourceType = config.SourceType,
                     Transform = config.Transform,
                     Load = config.Load,
-                    Data = config.Data
+                    Data = item
                 };
 
                 var json = JsonSerializer.Serialize(payload);
+
                 await _eventDispatcher.DispatchAsync(new DataExtractedEvent(payload));
             }
-
-
-
-            Console.WriteLine("Data retrieved:");
-            Console.WriteLine(JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
-
-            return config;
-
         }
-
-        private IEnumerable<Dictionary<string, object>> FilterFields(JsonElement data, List<string> fields)
+        else
         {
-            var result = new List<Dictionary<string, object>>();
-
-            foreach (var item in data.EnumerateArray())
-            {
-                var filteredItem = new Dictionary<string, object>();
-
-                foreach (var field in fields)
-                {
-                    if (item.TryGetProperty(field, out var value))
-                    {
-                        filteredItem[field] = value.ValueKind switch
-                        {
-                            JsonValueKind.Number => value.GetDouble(),
-                            JsonValueKind.String => value.GetString() ?? string.Empty,
-                            JsonValueKind.True => true,
-                            JsonValueKind.False => false,
-                            _ => value.ToString() ?? string.Empty
-                        };
-                    }
-                }
-
-                result.Add(filteredItem);
-            }
-
-            return result;
-        }
-
-
-        // metoder der kun mapper det nødvendige information fra ConfigFile til ExtractedPayload
-        private ExtractedPayload MapToKafka(ConfigFile config)
-        {
-            return new ExtractedPayload
+            // hvis dataen kun er ét objekt, sendes det som en besked.
+            var payload = new ExtractedPayload
             {
                 Id = config.Id,
                 SourceType = config.SourceType,
@@ -150,6 +86,14 @@ namespace ExtractAPI.Services
                 Load = config.Load,
                 Data = config.Data
             };
+
+            var json = JsonSerializer.Serialize(payload);
+            await _eventDispatcher.DispatchAsync(new DataExtractedEvent(payload));
         }
+
+        Console.WriteLine("Data retrieved:");
+        Console.WriteLine(JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
+
+        return config;
     }
 }
