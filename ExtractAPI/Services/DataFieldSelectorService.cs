@@ -2,7 +2,7 @@
 
 namespace ExtractAPI.Services;
 
-public class FieldFilterService
+public class DataFieldSelectorService
 {
     // Filtrer dataen baseret på de properties, der er specificeret i config
     public IEnumerable<Dictionary<string, object>> FilterFields(JsonElement data, List<string> fields)

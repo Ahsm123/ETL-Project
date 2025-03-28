@@ -10,7 +10,7 @@ namespace Test.Tests.Services;
 
 public class FieldFilterServiceTests
 {
-    private readonly FieldFilterService _service = new();
+    private readonly DataFieldSelectorService _service = new();
 
     [Fact]
     public void FilterFields_ReturnsOnlySpecifiedFields()

@@ -1,10 +1,10 @@
 ﻿namespace ExtractAPI.DataSources;
 
-public class DataSourceFactory
+public class DataSourceProviderFactory
 {
     private readonly IServiceProvider _serviceProvider;
 
-    public DataSourceFactory(IServiceProvider serviceProvider)
+    public DataSourceProviderFactory(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }

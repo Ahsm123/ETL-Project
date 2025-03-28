@@ -10,9 +10,9 @@ var baseUrl = "https://localhost:7027";
 // Register services
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 builder.Services.AddHttpClient<ApiDataSourceProvider>();
-builder.Services.AddSingleton<DataSourceFactory>();
+builder.Services.AddSingleton<DataSourceProviderFactory>();
 builder.Services.AddScoped<IEventDispatcher, KafkaEventDispatcher>();
-builder.Services.AddScoped<FieldFilterService, FieldFilterService>();
+builder.Services.AddScoped<DataFieldSelectorService, DataFieldSelectorService>();
 
 // Register ConfigService with factory to inject baseUrl
 builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>
@@ -21,7 +21,7 @@ builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>
 });
 
 // Register ExtractService 
-builder.Services.AddScoped<IExtractService, ExtractService>();
+builder.Services.AddScoped<IDataExtractionService, DataExtractionService>();
 
 // Swagger + Controllers
 builder.Services.AddControllers();
