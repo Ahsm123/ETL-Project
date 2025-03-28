@@ -28,23 +28,18 @@ public class ExtractService : IExtractService
 
     public async Task<ConfigFile> ExtractAsync(string configId)
     {
-        Console.WriteLine($"Starter extract for configId {configId}");
 
         // Hent config fra ConfigAPI
-        var config = await _configService.GetByIdAsync(configId);
-        if (config == null)
-        {
-            throw new Exception($"Config not found for ID: {configId}");
-        }
+        ConfigFile? config = await GetConfig(configId);
 
-        Console.WriteLine($"SourceType: {config.SourceType}");
+        JsonElement data = await GetData(config);
 
-        // Hent den rigtige dataprovider ud fra SourceType-property
-        var provider = _dataSourceFactory.GetProvider(config.SourceType);
+        //DEBUG: Returner data til api
+        return await FilterAndDispatchData(config, data);
+    }
 
-        // Hent data fra kilde
-        var data = await provider.GetDataAsync(config.SourceInfo);
-
+    private async Task<ConfigFile> FilterAndDispatchData(ConfigFile? config, JsonElement data)
+    {
         // Filtrer dataen, hvis det er specificeret i config
         if (config.Extract?.Fields != null && config.Extract.Fields.Any())
         {
@@ -93,6 +88,27 @@ public class ExtractService : IExtractService
 
         Console.WriteLine("Data retrieved:");
         Console.WriteLine(JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
+
+        return config;
+    }
+
+    private async Task<JsonElement> GetData(ConfigFile? config)
+    {
+        // Hent den rigtige dataprovider ud fra SourceType-property
+        var provider = _dataSourceFactory.GetProvider(config.SourceType);
+
+        // Hent data fra kilde
+        var data = await provider.GetDataAsync(config.SourceInfo);
+        return data;
+    }
+
+    private async Task<ConfigFile?> GetConfig(string configId)
+    {
+        var config = await _configService.GetByIdAsync(configId);
+        if (config == null)
+        {
+            throw new Exception($"Config not found for ID: {configId}");
+        }
 
         return config;
     }

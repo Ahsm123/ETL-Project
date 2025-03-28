@@ -31,4 +31,13 @@ namespace ExtractAPI.Controllers
         }
     }
 
+
+    // parse json så det kan læse
+    // extract fields, find source og targetfield
+    // map det til c# objekter for at arbejde med det
+    // ændre fields så source property bliver target property.
+    // erstatte det gamle json med det nye json
+    // serialize til json
+    // returnere det nye json og fjerne transform dele i config
+
 }
