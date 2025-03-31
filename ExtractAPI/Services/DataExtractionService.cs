@@ -1,84 +1,98 @@
 ﻿using ETL.Domain.Model;
 using ETL.Domain.Model.DTOs;
+using ExtractAPI.Converters;
 using ExtractAPI.DataSources;
 using ExtractAPI.Events;
 using ExtractAPI.ExtractedEvents;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
-namespace ExtractAPI.Services
+namespace ExtractAPI.Services;
+
+public class DataExtractionService : IExtractService
 {
-    public class DataExtractionService : IDataExtractionService
+    private readonly IConfigService _configService;
+    private readonly DataSourceProviderFactory _dataSourceFactory;
+    private readonly IEventDispatcher _eventDispatcher;
+    private readonly DataFieldSelectorService _selectorService;
+    private readonly ILogger<DataExtractionService> _logger; 
+
+    public DataExtractionService(
+        IConfigService configService,
+        DataSourceProviderFactory dataSourceFactory,
+        IEventDispatcher eventDispatcher,
+        DataFieldSelectorService selectorService,
+        ILogger<DataExtractionService> logger) 
     {
-        private readonly IConfigService _configService;
-        private readonly DataSourceProviderFactory _dataSourceFactory;
-        private readonly IEventDispatcher _eventDispatcher;
-        private readonly DataFieldSelectorService _fieldSelectorService;
-        private readonly ILogger<DataExtractionService> _logger;
+        _configService = configService;
+        _dataSourceFactory = dataSourceFactory;
+        _eventDispatcher = eventDispatcher;
+        _selectorService = selectorService;
+        _logger = logger;
+    }
 
-        public DataExtractionService(
-            IConfigService configService,
-            DataSourceProviderFactory dataSourceFactory,
-            IEventDispatcher eventDispatcher,
-            DataFieldSelectorService fieldSelectorService,
-            ILogger<DataExtractionService> logger)
-        {
-            _configService = configService;
-            _dataSourceFactory = dataSourceFactory;
-            _eventDispatcher = eventDispatcher;
-            _fieldSelectorService = fieldSelectorService;
-            _logger = logger;
-        }
 
-        public async Task<ConfigFile> ExtractAndDispatchAsync(string configId)
-        {
-            var config = await GetConfigAsync(configId);
-            var data = await GetDataAsync(config);
-            return await FilterAndDispatchDataAsync(config, data);
-        }
+    public async Task<ExtractResponseDto> ExtractAsync(string configId)
+    {
+        // Hent konfiguration fra API
+        var config = await GetConfig(configId);
 
-        private async Task<ConfigFile> FilterAndDispatchDataAsync(ConfigFile config, JsonElement data)
+        // Hent data fra kilde
+        var data = await GetData(config);
+
+        // Filtrér og send data til event-system
+        var messagesSent = await FilterAndDispatchData(config, data);
+
+        return new ExtractResponseDto
         {
-            // Filtrer dataen hvis der er angivet specifikke felter i config
-            if (config.Extract?.Fields != null && config.Extract.Fields.Any())
+            PipelineId = config.Id,
+            MessagesSent = messagesSent
+        };
+    }
+
+
+    private async Task<int> FilterAndDispatchData(ConfigFile? config, JsonElement data)
+    {
+        var dispatchTasks = new List<Task>();
+
+        if (config.Extract?.Fields != null && config.Extract.Fields.Any())
+        {
+            var filteredData = _selectorService.FilterFields(data, config.Extract.Fields);
+            foreach (var item in filteredData)
             {
-                var filteredData = _fieldSelectorService.FilterFields(data, config.Extract.Fields);
-
-                // Konverter filtreret data tilbage til JsonElement
-                config.Data = JsonDocument.Parse(JsonSerializer.Serialize(filteredData)).RootElement;
+                dispatchTasks.Add(DispatchPayload(config, item));
+            }
+        }
+        else
+        {
+            if (data.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in data.EnumerateArray())
+                {
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(item.GetRawText());
+                    dispatchTasks.Add(DispatchPayload(config, dict!));
+                }
             }
             else
             {
-                config.Data = data;
+                var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(data.GetRawText());
+                dispatchTasks.Add(DispatchPayload(config, dict!));
             }
-
-            // Send data som events til Kafka
-            switch (config.Data)
-            {
-                case { ValueKind: JsonValueKind.Array }:
-                    foreach (var item in config.Data.EnumerateArray())
-                    {
-                        var payload = CreatePayload(config, item);
-                        await _eventDispatcher.DispatchAsync(new DataExtractedEvent(payload));
-                    }
-                    break;
-
-                case { ValueKind: JsonValueKind.Object }:
-                    var singlePayload = CreatePayload(config, config.Data);
-                    await _eventDispatcher.DispatchAsync(new DataExtractedEvent(singlePayload));
-                    break;
-
-                default:
-                    _logger.LogWarning("Unsupported data format in config {ConfigId}", config.Id);
-                    break;
-            }
-
-            _logger.LogInformation("Data extracted and sent for config {ConfigId}", config.Id);
-            return config;
         }
 
-        private ExtractedPayload CreatePayload(ConfigFile config, JsonElement data)
+        await Task.WhenAll(dispatchTasks);
+
+        _logger.LogInformation("Pipeline {PipelineId} sendte {Count} beskeder til Kafka", config.Id, dispatchTasks.Count);
+
+        return dispatchTasks.Count;
+    }
+
+
+    private async Task DispatchPayload(ConfigFile config, Dictionary<string, object> data)
+    {
+        try
         {
-            return new ExtractedPayload
+            var payload = new ExtractedPayload
             {
                 Id = config.Id,
                 SourceType = config.SourceType,
@@ -86,27 +100,33 @@ namespace ExtractAPI.Services
                 Load = config.Load,
                 Data = data
             };
-        }
 
-        private async Task<JsonElement> GetDataAsync(ConfigFile config)
+            await _eventDispatcher.DispatchAsync(new DataExtractedEvent(payload));
+        }
+        catch (Exception ex)
         {
-            // Find den rigtige datakilde baseret på SourceType
-            var provider = _dataSourceFactory.GetProvider(config.SourceType);
-
-            // Hent data fra kilden
-            return await provider.GetDataAsync(config.SourceInfo);
+            // Fejllog ved dispatch
+            _logger.LogError(ex, "Fejl under dispatch for pipeline {PipelineId}", config.Id);
+            throw;
         }
+    }
 
-        private async Task<ConfigFile> GetConfigAsync(string configId)
+    private async Task<JsonElement> GetData(ConfigFile? config)
+    {
+        var provider = _dataSourceFactory.GetProvider(config.SourceType);
+        var data = await provider.GetDataAsync(config.SourceInfo);
+        return data;
+    }
+
+    private async Task<ConfigFile?> GetConfig(string configId)
+    {
+        var config = await _configService.GetByIdAsync(configId);
+        if (config == null)
         {
-            var config = await _configService.GetByIdAsync(configId);
-            if (config == null)
-            {
-                _logger.LogError("Config not found for ID: {ConfigId}", configId);
-                throw new Exception($"Config not found for ID: {configId}");
-            }
-
-            return config;
+            _logger.LogError("Config blev ikke fundet for ID: {ConfigId}", configId);
+            throw new Exception($"Config blev ikke fundet for ID: {configId}");
         }
+
+        return config;
     }
 }

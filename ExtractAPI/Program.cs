@@ -21,7 +21,7 @@ builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>
 });
 
 // Register ExtractService 
-builder.Services.AddScoped<IDataExtractionService, DataExtractionService>();
+builder.Services.AddScoped<IExtractService, DataExtractionService>();
 
 // Swagger + Controllers
 builder.Services.AddControllers();
