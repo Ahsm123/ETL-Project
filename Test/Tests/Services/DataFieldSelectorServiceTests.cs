@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Test.Tests.Services;
 
-public class FieldFilterServiceTests
+public class DataFieldSelectorServiceTests
 {
     private readonly DataFieldSelectorService _service = new();
 

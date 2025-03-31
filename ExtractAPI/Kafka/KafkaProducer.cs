@@ -1,41 +1,47 @@
-﻿
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
+using Microsoft.Extensions.Configuration;
 
 namespace ExtractAPI.Kafka;
 
-public class KafkaProducer : IKafkaProducer
+public class KafkaProducer : IKafkaProducer, IDisposable
 {
     private readonly IProducer<string, string> _producer;
 
     public KafkaProducer(IConfiguration config)
     {
-        // Konfigurer Kafka-producer
         var kafkaConfig = new ProducerConfig
         {
-            // Adresse til Kafka-broker
             BootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092",
-            // Gør at beskeder bliver sendt 'Idempotent' - ingen dubletter ved retry
-            EnableIdempotence = true,           
-            Acks = Acks.All,                    
-            MessageSendMaxRetries = 3,          
-            RetryBackoffMs = 100               
+            EnableIdempotence = true,
+            Acks = Acks.All,
+            MessageSendMaxRetries = 3,
+            RetryBackoffMs = 100,
+            CompressionType = CompressionType.Snappy 
         };
 
         _producer = new ProducerBuilder<string, string>(kafkaConfig).Build();
     }
 
-    /// Sender en besked til et Kafka-topic med angivet nøgle og JSON-payload.
-    /// <param name="topic">Navnet på Kafka-topic'en</param>
-    /// <param name="key">Partitioneringsnøgle – bruges til at styre hvilken partition beskeden lander i</param>
-    /// <param name="jsonPayload">Selve beskeden som JSON-string</param>
     public async Task PublishAsync(string topic, string key, string jsonPayload)
     {
         var message = new Message<string, string>
         {
             Key = key,
-            Value = jsonPayload 
+            Value = jsonPayload
         };
 
-        await _producer.ProduceAsync(topic, message);
+        try
+        {
+            var result = await _producer.ProduceAsync(topic, message);
+        }
+        catch (ProduceException<string, string> ex)
+        {
+            throw new Exception($"Kafka publish failed: {ex.Error.Reason}", ex);
+        }
+    }
+
+    public void Dispose()
+    {
+        _producer?.Dispose();
     }
 }

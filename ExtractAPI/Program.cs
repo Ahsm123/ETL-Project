@@ -12,15 +12,15 @@ builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 builder.Services.AddHttpClient<ApiDataSourceProvider>();
 builder.Services.AddSingleton<DataSourceProviderFactory>();
 builder.Services.AddScoped<IEventDispatcher, KafkaEventDispatcher>();
-builder.Services.AddScoped<DataFieldSelectorService, DataFieldSelectorService>();
+builder.Services.AddScoped<DataFieldSelectorService>();
 
-// Register ConfigService with factory to inject baseUrl
+// Register ConfigService
 builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>
 {
     client.BaseAddress = new Uri(baseUrl);
 });
 
-// Register ExtractService 
+// Register extract logic
 builder.Services.AddScoped<IExtractService, DataExtractionService>();
 
 // Swagger + Controllers
