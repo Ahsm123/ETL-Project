@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ExtractAPI\ExtractAPI.csproj" />
+    <ProjectReference Include="..\Transform\Transform.csproj" />
   </ItemGroup>
 
   <ItemGroup>
