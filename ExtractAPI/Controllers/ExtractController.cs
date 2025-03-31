@@ -1,43 +1,38 @@
 ﻿using ETL.Domain.Model;
+using ETL.Domain.Model.DTOs;
 using ExtractAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ExtractAPI.Controllers
+namespace ExtractAPI.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ExtractController : ControllerBase
 {
+    private readonly IExtractService _extractService;
+    private readonly ILogger<ExtractController> _logger;
 
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ExtractController : ControllerBase
+    public ExtractController(
+        IExtractService extractService,
+        ILogger<ExtractController> logger)
     {
-        private readonly IExtractService _extractService;
-
-        public ExtractController(IExtractService extractService)
-        {
-            _extractService = extractService;
-        }
-
-        [HttpPost("{configId}")]
-        public async Task<ActionResult<ConfigFile>> Trigger(string configId)
-        {
-            try
-            {
-                ConfigFile configWithData = await _extractService.ExtractAsync(configId);
-                return Ok(configWithData);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
-        }
+        _extractService = extractService;
+        _logger = logger;
     }
 
-
-    // parse json så det kan læse
-    // extract fields, find source og targetfield
-    // map det til c# objekter for at arbejde med det
-    // ændre fields så source property bliver target property.
-    // erstatte det gamle json med det nye json
-    // serialize til json
-    // returnere det nye json og fjerne transform dele i config
+    [HttpPost("{configId}")]
+    public async Task<ActionResult<ExtractResponseDto>> Trigger(string configId)
+    {
+        try
+        {
+            var result = await _extractService.ExtractAsync(configId);
+            return Ok(result); 
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fejl under extract for config med ID: {ConfigId}", configId);
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 
 }

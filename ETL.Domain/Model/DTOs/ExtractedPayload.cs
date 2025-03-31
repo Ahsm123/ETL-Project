@@ -13,5 +13,6 @@ public class ExtractedPayload
     public string SourceType { get; set; }
     public TransformSettings Transform { get; set; }
     public LoadSettings Load { get; set; }
-    public JsonElement Data { get; set; }
+
+    public Dictionary<string, object> Data { get; set; }
 }

@@ -17,6 +17,5 @@ public class ConfigFile
     public TransformSettings Transform { get; set; }
     public LoadSettings Load { get; set; }
 
-    public JsonElement Data { get; set; }
 
 }
