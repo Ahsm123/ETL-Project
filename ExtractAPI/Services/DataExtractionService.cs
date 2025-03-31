@@ -1,10 +1,8 @@
 ﻿using ETL.Domain.Model;
 using ETL.Domain.Model.DTOs;
-using ExtractAPI.Converters;
 using ExtractAPI.DataSources;
 using ExtractAPI.Events;
 using ExtractAPI.ExtractedEvents;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace ExtractAPI.Services;
@@ -15,14 +13,14 @@ public class DataExtractionService : IDataExtractionService
     private readonly DataSourceProviderFactory _dataSourceFactory;
     private readonly IEventDispatcher _eventDispatcher;
     private readonly DataFieldSelectorService _selectorService;
-    private readonly ILogger<DataExtractionService> _logger; 
+    private readonly ILogger<DataExtractionService> _logger;
 
     public DataExtractionService(
         IConfigService configService,
         DataSourceProviderFactory dataSourceFactory,
         IEventDispatcher eventDispatcher,
         DataFieldSelectorService selectorService,
-        ILogger<DataExtractionService> logger) 
+        ILogger<DataExtractionService> logger)
     {
         _configService = configService;
         _dataSourceFactory = dataSourceFactory;

@@ -1,6 +1,4 @@
-﻿using ETL.Domain.Model;
-using ETL.Domain.Model.DTOs;
-using System.Text.Json;
+﻿using ETL.Domain.Model.DTOs;
 
 namespace ExtractAPI.Services;
 
