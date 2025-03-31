@@ -8,7 +8,6 @@ namespace ETL.Domain.Model
 {
     public class TransformSettings
     {
-        public string StrategyType { get; set; }
         public List<FieldMapping> Mappings { get; set; }
         public List<FilterCondition> Filters { get; set; }
 
