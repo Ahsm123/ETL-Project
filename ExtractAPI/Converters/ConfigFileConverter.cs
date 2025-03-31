@@ -41,9 +41,9 @@ public class ConfigFileConverter : JsonConverter<ConfigFile>
     {
         return sourceType switch
         {
-            "api" => JsonSerializer.Deserialize<ApiSourceBaseInfo>(element, options)!,
-            "db" => JsonSerializer.Deserialize<DbSourceBaseInfo>(element, options)!,
-            "file" => JsonSerializer.Deserialize<FileSourceBaseInfo>(element, options)!,
+            "api" => JsonSerializer.Deserialize<RestApiSourceInfo>(element, options)!,
+            "excel" => JsonSerializer.Deserialize<ExcelSourceInfo>(element.GetRawText(), options)!,
+
             _ => throw new JsonException($"Ukendt SourceType: {sourceType}")
         };
     }

@@ -3,18 +3,18 @@ using ETL.Domain.Model.SourceInfo;
 
 namespace ExtractAPI.DataSources;
 
-public class ApiDataSourceProvider : IDataSourceProvider
+public class RestApiSourceProvider : IDataSourceProvider
 {
     private readonly HttpClient _httpClient;
 
-    public ApiDataSourceProvider(HttpClient httpClient)
+    public RestApiSourceProvider(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
 
     public async Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo)
     {
-        if (sourceInfo is not ApiSourceBaseInfo apiInfo)
+        if (sourceInfo is not RestApiSourceInfo apiInfo)
             throw new ArgumentException("SourceInfo skal være af typen ApiSourceBaseInfo", nameof(sourceInfo));
 
         using var request = new HttpRequestMessage(HttpMethod.Get, apiInfo.Url);

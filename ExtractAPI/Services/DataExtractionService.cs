@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace ExtractAPI.Services;
 
-public class DataExtractionService : IExtractService
+public class DataExtractionService : IDataExtractionService
 {
     private readonly IConfigService _configService;
     private readonly DataSourceProviderFactory _dataSourceFactory;

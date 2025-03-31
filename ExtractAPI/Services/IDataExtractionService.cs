@@ -1,9 +1,10 @@
 ﻿using ETL.Domain.Model;
+using ETL.Domain.Model.DTOs;
 using System.Text.Json;
 
 namespace ExtractAPI.Services;
 
 public interface IDataExtractionService
 {
-    Task<ConfigFile> ExtractAndDispatchAsync(string configId);
+    Task<ExtractResponseDto> ExtractAsync(string configId);
 }

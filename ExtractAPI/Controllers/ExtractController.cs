@@ -9,11 +9,11 @@ namespace ExtractAPI.Controllers;
 [Route("api/[controller]")]
 public class ExtractController : ControllerBase
 {
-    private readonly IExtractService _extractService;
+    private readonly IDataExtractionService _extractService;
     private readonly ILogger<ExtractController> _logger;
 
     public ExtractController(
-        IExtractService extractService,
+        IDataExtractionService extractService,
         ILogger<ExtractController> logger)
     {
         _extractService = extractService;

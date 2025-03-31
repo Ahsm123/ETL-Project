@@ -61,9 +61,9 @@ public class ConfigServiceTests
         Assert.NotNull(result);
         Assert.Equal("pipeline_001", result!.Id);
         Assert.Equal("api", result.SourceType);
-        Assert.IsType<ApiSourceBaseInfo>(result.SourceInfo);
+        Assert.IsType<RestApiSourceInfo>(result.SourceInfo);
 
-        var sourceInfo = (ApiSourceBaseInfo)result.SourceInfo;
+        var sourceInfo = (RestApiSourceInfo)result.SourceInfo;
         Assert.Equal("https://localhost/api/test", sourceInfo.Url);
         Assert.Empty(sourceInfo.Headers);
     }

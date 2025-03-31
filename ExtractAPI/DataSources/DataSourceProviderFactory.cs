@@ -13,7 +13,8 @@ public class DataSourceProviderFactory
     {
         return sourceType.ToLower() switch
         {
-            "api" => _serviceProvider.GetRequiredService<ApiDataSourceProvider>(),
+            "api" => _serviceProvider.GetRequiredService<RestApiSourceProvider>(),
+            "excel" => _serviceProvider.GetRequiredService<ExcelDataSourceProvider>(),
             _ => throw new NotSupportedException($"Unknown source type: {sourceType}")
         };
     }
