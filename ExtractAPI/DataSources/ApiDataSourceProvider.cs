@@ -1,6 +1,5 @@
-﻿using ETL.Domain.Model.SourceInfo;
-using System.Runtime.InteropServices.Marshalling;
-using System.Text.Json;
+﻿using System.Text.Json;
+using ETL.Domain.Model.SourceInfo;
 
 namespace ExtractAPI.DataSources;
 
@@ -16,25 +15,26 @@ public class ApiDataSourceProvider : IDataSourceProvider
     public async Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo)
     {
         if (sourceInfo is not ApiSourceBaseInfo apiInfo)
-            throw new ArgumentException("Invalid source info for API source", nameof(sourceInfo));
+            throw new ArgumentException("SourceInfo skal være af typen ApiSourceBaseInfo", nameof(sourceInfo));
 
-        var request = new HttpRequestMessage(HttpMethod.Get, apiInfo.Url);
+        using var request = new HttpRequestMessage(HttpMethod.Get, apiInfo.Url);
 
-        if (apiInfo.Headers != null)
+        foreach (var header in apiInfo.Headers ?? Enumerable.Empty<KeyValuePair<string, string>>())
         {
-            foreach (var header in apiInfo.Headers)
-            {
-                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
-            }
+            request.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
 
-        var response = await _httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+        using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<JsonElement>(content);
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(
+                $"Fejl ved API-kald til {apiInfo.Url}: {response.StatusCode} - {errorBody}");
+        }
+
+        using var stream = await response.Content.ReadAsStreamAsync();
+        using var document = await JsonDocument.ParseAsync(stream);
+        return document.RootElement.Clone();
     }
 }
-
-
-
