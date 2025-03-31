@@ -9,6 +9,6 @@ namespace Transform.Kafka
 {
     public interface IKafkaConsumer
     {
-        Task ConsumeAsync(string topic,CancellationToken cancellationToken, Action<string> onMessageReceived);
+        Task ConsumeAsync(CancellationToken cancellationToken, Func<string,Task> onMessageReceivedAsync);
     }
 }

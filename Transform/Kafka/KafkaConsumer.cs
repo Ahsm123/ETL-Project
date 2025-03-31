@@ -12,14 +12,19 @@ namespace Transform.Kafka
 
         private readonly string _bootstrapServers;
         private readonly string _groupId;
+        private readonly string _topic;
+        private string bootstrapServers;
+        private string groupId;
 
-        public KafkaConsumer(string bootstrapServers, string groupId)
+
+        public KafkaConsumer(string bootstrapServers, string groupId, string topic)
         {
             _bootstrapServers = bootstrapServers;
             _groupId = groupId;
-        }
+            _topic = "rawData";
+        }   
 
-        public async Task ConsumeAsync(string consumeTopic, CancellationToken cancellationToken, Action<string> onMessageReceived)
+        public async Task ConsumeAsync(CancellationToken cancellationToken, Func<string, Task> onMessageReceivedAsync)
         {
             var consumerConfig = new ConsumerConfig
             {
@@ -30,7 +35,7 @@ namespace Transform.Kafka
 
             using (var consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build())
             {
-                consumer.Subscribe(consumeTopic);
+                consumer.Subscribe(_topic);
 
                 try
                 {
@@ -42,7 +47,7 @@ namespace Transform.Kafka
                             var message = consumeResult.Message.Value;
 
                             
-                            onMessageReceived(message);
+                           await onMessageReceivedAsync(message);
                         }
                         catch (ConsumeException e)
                         {

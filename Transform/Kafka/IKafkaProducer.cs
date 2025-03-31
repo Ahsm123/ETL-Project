@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace Transform.Kafka
 {
-    public class IKafkaProducer
+    public interface IKafkaProducer
     {
-        
+        Task ProduceAsync(string topic, string key, string jsonPayload);
     }
 }

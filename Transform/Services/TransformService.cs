@@ -1,38 +1,62 @@
 ﻿using ETL.Domain.Model;
+using ETL.Domain.Model.DTOs;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using Transform.Kafka;
 using Transform.Strategy;
 
 namespace Transform.Services
 {
-    public class TransformService : ITransformService
+    public class TransformService : ITransformService<string>
     {
-        public Task TransformDataAsync(string configId)
+        private readonly MappingStrategy _mappingStrategy;
+
+        public TransformService(MappingStrategy mappingStrategy)
         {
-            throw new NotImplementedException();
+            _mappingStrategy = mappingStrategy;
         }
 
+        public Task<string> TransformDataAsync(ExtractedPayload input)
+        {
+            var mappings = input.Transform?.Mappings ?? new List<FieldMapping>();
+
+            // Map data
+            JsonElement transformedData;
+
+            if (input.Data.ValueKind == JsonValueKind.Array)
+            {
+                var items = input.Data.EnumerateArray().Select(item =>
+                    _mappingStrategy.ApplyFieldMapping(item, mappings)).ToList();
+
+                transformedData = JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(items));
+            }
+            else
+            {
+                var item = _mappingStrategy.ApplyFieldMapping(input.Data, mappings);
+                transformedData = JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(item));
+            }
+
+            var payload = new TransformPayload
+            {
+                Id = input.Id,
+                SourceType = input.SourceType,
+                Load = input.Load,
+                Data = transformedData
+            };
+            var json = JsonSerializer.Serialize(payload);
+            return Task.FromResult(json);
 
 
+        }
 
-        //private ITransformationStrategy<Dictionary<string, object>> GetTransformationStrategy(TransformSettings transformSettings)
-        //{
-        //    switch (transformSettings.StrategyType)
-        //    {
-        //        case "Filter":
-        //            // Create and return FilterStrategy based on filter conditions
-        //            return new FilterStrategy(transformSettings.FilterConditions);
-
-        //        case "Map":
-        //            // Create and return MapStrategy based on map conditions
-        //            return new MapStrategy(transformSettings.MapConditions);
-
-        //        default:
-        //            throw new InvalidOperationException($"Unknown strategy type: {transformSettings.StrategyType}");
-        //    }
-        //}
     }
 }
+    
+
+
