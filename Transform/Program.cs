@@ -16,7 +16,8 @@ var builder = Host.CreateDefaultBuilder(args)
         // Kafka dependencies
         services.AddSingleton<IKafkaProducer, KafkaProducer>();
         services.AddSingleton<IKafkaConsumer>(provider =>
-            new KafkaConsumer("host.docker.internal:9092", "transform-group", "rawData"));
+            new KafkaConsumer("localhost:9092", "transform-group", "rawData"));
+
 
         // Transformation pipeline
         services.AddSingleton<MappingService>(); //Stateless mapper
