@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using ETL.Domain.Model;
 using ETL.Domain.Model.SourceInfo;
+using ETL.Domain.Utilities;
 
 namespace ExtractAPI.Converters;
 
@@ -39,12 +40,10 @@ public class ConfigFileConverter : JsonConverter<ConfigFile>
 
     private static SourceInfoBase DeserializeSourceInfo(JsonElement element, string sourceType, JsonSerializerOptions options)
     {
-        return sourceType switch
-        {
-            "api" => JsonSerializer.Deserialize<RestApiSourceInfo>(element, options)!,
-            "excel" => JsonSerializer.Deserialize<ExcelSourceInfo>(element.GetRawText(), options)!,
+        var type = SourceInfoTypeMapper.GetSourceInfoType(sourceType);
+        if (type == null)
+            throw new JsonException($"Ukendt SourceType: {sourceType}");
 
-            _ => throw new JsonException($"Ukendt SourceType: {sourceType}")
-        };
+        return (SourceInfoBase)JsonSerializer.Deserialize(element.GetRawText(), type, options)!;
     }
 }

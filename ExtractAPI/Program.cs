@@ -9,9 +9,8 @@ var baseUrl = "https://localhost:7027";
 
 // Register services
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
+builder.Services.AddSingleton<ExcelDataSourceProvider>();
 builder.Services.AddHttpClient<RestApiSourceProvider>();
-builder.Services.AddSingleton<ExcelDataSourceProvider>();
-builder.Services.AddSingleton<ExcelDataSourceProvider>();
 builder.Services.AddSingleton<DataSourceProviderFactory>();
 builder.Services.AddScoped<IEventDispatcher, KafkaEventDispatcher>();
 builder.Services.AddScoped<DataFieldSelectorService>();

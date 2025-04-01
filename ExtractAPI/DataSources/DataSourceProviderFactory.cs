@@ -1,21 +1,22 @@
-﻿namespace ExtractAPI.DataSources;
+﻿using ExtractAPI.Utilities;
+
+namespace ExtractAPI.DataSources;
 
 public class DataSourceProviderFactory
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceProvider _services;
 
-    public DataSourceProviderFactory(IServiceProvider serviceProvider)
+    public DataSourceProviderFactory(IServiceProvider services)
     {
-        _serviceProvider = serviceProvider;
+        _services = services;
     }
 
     public IDataSourceProvider GetProvider(string sourceType)
     {
-        return sourceType.ToLower() switch
-        {
-            "api" => _serviceProvider.GetRequiredService<RestApiSourceProvider>(),
-            "excel" => _serviceProvider.GetRequiredService<ExcelDataSourceProvider>(),
-            _ => throw new NotSupportedException($"Unknown source type: {sourceType}")
-        };
+        var provider = SourceProviderResolver.Resolve(sourceType, _services);
+        if (provider == null)
+            throw new NotSupportedException($"Unknown source type: {sourceType}");
+
+        return provider;
     }
 }
