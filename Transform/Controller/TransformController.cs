@@ -1,51 +1,62 @@
 ﻿
 using ETL.Domain.Model.DTOs;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using Transform.Kafka;
 using Transform.Services;
 
 namespace Transform.Controller
 {
-        public class TransformController : BackgroundService
+    public class TransformController : BackgroundService
+    {
+        private readonly IKafkaConsumer _consumer;
+        private readonly IKafkaProducer _producer;
+        private readonly ITransformService<string> _transformService;
+        private readonly ILogger<TransformController> _logger;
+
+        public TransformController(
+                IKafkaConsumer consumer,
+                IKafkaProducer producer,
+                ITransformService<string> transformService,
+                ILogger<TransformController> logger)
         {
-            private readonly IKafkaConsumer _kafkaConsumer;
-            private readonly IKafkaProducer _kafkaProducer;
-            private readonly ITransformService<string> _transformService;
-
-            public TransformController(
-                IKafkaConsumer kafkaConsumer,
-                IKafkaProducer kafkaProducer,
-                ITransformService<string> transformService)
-            {
-                _kafkaConsumer = kafkaConsumer;
-                _kafkaProducer = kafkaProducer;
-                _transformService = transformService;
-            }
-
-
-            protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-            {
-            await _kafkaConsumer.ConsumeAsync(stoppingToken, async (string message) =>
-                {
-                    try
-                    {
-                        var payload = System.Text.Json.JsonSerializer.Deserialize<ExtractedPayload>(message);
-                        var transformed = await _transformService.TransformDataAsync(payload);
-                        await _kafkaProducer.ProduceAsync("processedData", Guid.NewGuid().ToString(), transformed);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($"Error transforming message: {e.Message}");
-                    }
-                });
-            }
+            _consumer = consumer;
+            _producer = producer;
+            _transformService = transformService;
+            _logger = logger;
         }
+
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _logger.LogInformation("Transform service started");
+
+            await _consumer.ConsumeAsync(stoppingToken, async (string message) =>
+            {
+                try
+                {
+                    var payload = JsonSerializer.Deserialize<ExtractedPayload>(message);
+
+                    if (payload is null)
+                    {
+                        _logger.LogWarning("Received null payload");
+                    }
+
+                    var transformed = await _transformService.TransformDataAsync(payload);
+                    await _producer.ProduceAsync("processedData", Guid.NewGuid().ToString(), transformed);
+
+                    _logger.LogInformation("Transformed payload with id {id}", payload.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error transforming payload");
+                }
+            });
+
+
+        }
+    }
 }
 
 

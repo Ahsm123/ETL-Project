@@ -1,62 +1,36 @@
-﻿using ETL.Domain.Model;
-using ETL.Domain.Model.DTOs;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using ETL.Domain.Model.DTOs;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using Transform.Kafka;
-using Transform.Strategy;
 
-namespace Transform.Services
+namespace Transform.Services;
+
+public class TransformService : ITransformService<string>
 {
-    public class TransformService : ITransformService<string>
+    private readonly ITransformPipeline _pipeline;
+    private readonly ILogger<TransformService> _logger;
+
+    public TransformService(ITransformPipeline pipeline, ILogger<TransformService> logger)
     {
-        private readonly MappingStrategy _mappingStrategy;
+        _pipeline = pipeline;
+        _logger = logger;
+    }
 
-        public TransformService(MappingStrategy mappingStrategy)
+    public Task<string> TransformDataAsync(ExtractedPayload input)
+    {
+        try
         {
-            _mappingStrategy = mappingStrategy;
+            var result = _pipeline.Execute(input);
+            return Task.FromResult(JsonSerializer.Serialize(result));
         }
-
-        public Task<string> TransformDataAsync(ExtractedPayload input)
+        catch (Exception ex)
         {
-            var mappings = input.Transform?.Mappings ?? new List<FieldMapping>();
-
-            // Map data
-            JsonElement transformedData;
-
-            if (input.Data.ValueKind == JsonValueKind.Array)
-            {
-                var items = input.Data.EnumerateArray().Select(item =>
-                    _mappingStrategy.ApplyFieldMapping(item, mappings)).ToList();
-
-                transformedData = JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(items));
-            }
-            else
-            {
-                var item = _mappingStrategy.ApplyFieldMapping(input.Data, mappings);
-                transformedData = JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(item));
-            }
-
-            var payload = new TransformPayload
-            {
-                Id = input.Id,
-                SourceType = input.SourceType,
-                Load = input.Load,
-                Data = transformedData
-            };
-            var json = JsonSerializer.Serialize(payload);
-            return Task.FromResult(json);
-
-
+            _logger.LogError(ex, "Fejl under transformation af payload");
+            throw;
         }
-
     }
 }
-    
+
+
+
 
 
