@@ -11,4 +11,8 @@ namespace ETL.Domain.Model.TargetInfo.ApiTargets;
 public class RestApiTargetInfo
 {
     public string Method { get; set; } = "POST";
+
+    public RestApiTargetInfo()
+    {
+    }
 }
