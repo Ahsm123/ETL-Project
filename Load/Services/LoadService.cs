@@ -1,7 +1,4 @@
-﻿using ETL.Domain.Config;
-using ETL.Domain.Model.DTOs;
-using ETL.Domain.Model.TargetInfo;
-using ETL.Domain.Utilities;
+﻿using ETL.Domain.Events;
 using Load.Writers;
 using System.Text.Json;
 
@@ -25,47 +22,14 @@ public class LoadService
             PropertyNameCaseInsensitive = true
         };
 
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
+        var payload = JsonSerializer.Deserialize<TransformedEvent>(json, options)
+    ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
-        var pipelineId = root.GetProperty("pipelineId").GetString()!;
-        var sourceType = root.GetProperty("sourceType").GetString()!;
-        var load = root.GetProperty("load");
-        var targetType = load.GetProperty("targetType").GetString()!;
-        var targetInfoRaw = load.GetProperty("targetInfo").GetRawText();
+        var writer = _writerResolver.Resolve(payload.LoadTargetConfig.TargetType, _services)
+            ?? throw new InvalidOperationException($"No writer found for '{payload.LoadTargetConfig.TargetType}'");
 
-        var targetTypeResolved = TargetTypeMapper.GetTargetInfoType(targetType);
-        if (targetTypeResolved == null)
-            throw new InvalidOperationException($"Unrecognized TargetType: {targetType}");
+        await writer.WriteAsync(payload.LoadTargetConfig.TargetInfo, payload.Data);
 
-        var targetInfo = (TargetInfoBase)JsonSerializer.Deserialize(
-            targetInfoRaw,
-            targetTypeResolved,
-            options
-        )!;
-
-        var data = JsonSerializer.Deserialize<Dictionary<string, object>>(
-            root.GetProperty("data").GetRawText(), options
-        )!;
-
-        var payload = new ProcessedPayload
-        {
-            PipelineId = pipelineId,
-            SourceType = sourceType,
-            Load = new LoadTargetConfig
-            {
-                TargetType = targetType,
-                TargetInfo = targetInfo
-            },
-            Data = data
-        };
-
-        var writer = _writerResolver.Resolve(targetType, _services);
-        if (writer == null)
-            throw new InvalidOperationException($"No writer found for target type '{targetType}'.");
-
-        await writer.WriteAsync(payload.Load.TargetInfo, payload.Data);
     }
-
 
 }

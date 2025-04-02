@@ -1,11 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ETL.Domain.Rules;
+using System.Text.Json.Serialization;
 
 namespace ETL.Domain.Model;
 
 public class ExtractConfig
 {
-    [Required(ErrorMessage = "Felter er påkrævet.")]
-    [MinLength(1, ErrorMessage = "Data skal indeholde mindst ét element.")]
+    [JsonPropertyName("fields")]
     public List<string> Fields { get; set; }
-    public List<FilterCondition> Filters { get; set; }
+
+    [JsonPropertyName("filters")]
+    public List<FilterRule> Filters { get; set; }
 }
+

@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ETL.Domain.Rules;
+using System.Text.Json.Serialization;
 
-namespace ETL.Domain.Model
+namespace ETL.Domain.Model;
+
+public class TransformConfig
 {
-    public class TransformConfig
-    {
-        public List<FieldMapping> Mappings { get; set; }
-        public List<FilterCondition> Filters { get; set; }
+    [JsonPropertyName("mappings")]
+    public List<FieldMapRule> Mappings { get; set; }
 
-    }
+    [JsonPropertyName("filters")]
+    public List<FilterRule> Filters { get; set; }
 }
+

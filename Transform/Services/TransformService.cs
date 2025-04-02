@@ -1,4 +1,4 @@
-﻿using ETL.Domain.Model.DTOs;
+﻿using ETL.Domain.Events;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -15,21 +15,18 @@ public class TransformService : ITransformService<string>
         _logger = logger;
     }
 
-    public Task<string> TransformDataAsync(ExtractedPayload input)
+    public Task<string> TransformDataAsync(ExtractedEvent input)
     {
         var processed = _pipeline.Execute(input);
 
-        var resultToSerialize = new
+        var resultToSerialize = new TransformedEvent
         {
-            processed.PipelineId,
-            processed.SourceType,
-            Load = new
-            {
-                processed.Load.TargetType,
-                TargetInfo = (object)processed.Load.TargetInfo
-            },
-            processed.Data
+            PipelineId = processed.PipelineId,
+            SourceType = processed.SourceType,
+            LoadTargetConfig = processed.LoadTargetConfig,
+            Data = processed.Data
         };
+
 
         var options = new JsonSerializerOptions
         {

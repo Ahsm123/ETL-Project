@@ -1,5 +1,5 @@
 ﻿using ETL.Domain.Config;
-using ETL.Domain.Model.DTOs;
+using ETL.Domain.Events;
 using ExtractAPI.DataSources;
 using ExtractAPI.Events;
 using ExtractAPI.ExtractedEvents;
@@ -29,7 +29,7 @@ public class DataExtractionService : IDataExtractionService
         _logger = logger;
     }
 
-    public async Task<ExtractResponseDto> ExtractAsync(string configId)
+    public async Task<ExtractResultEvent> ExtractAsync(string configId)
     {
         // Hent konfiguration fra API
         var config = await GetConfig(configId);
@@ -40,7 +40,7 @@ public class DataExtractionService : IDataExtractionService
         // Filtrér og send data til event-system
         var messagesSent = await FilterAndDispatchData(config, data);
 
-        return new ExtractResponseDto
+        return new ExtractResultEvent
         {
             PipelineId = config.Id,
             MessagesSent = messagesSent
@@ -87,12 +87,12 @@ public class DataExtractionService : IDataExtractionService
     {
         try
         {
-            var payload = new ExtractedPayload
+            var payload = new ExtractedEvent
             {
                 Id = config.Id,
                 SourceType = config.SourceType,
-                Transform = config.Transform,
-                Load = config.Load,
+                TransformConfig = config.Transform,
+                LoadTargetConfig = config.Load,
                 Data = data
             };
 

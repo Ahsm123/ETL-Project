@@ -1,6 +1,6 @@
 ﻿using ETL.Domain.Attributes;
-using ETL.Domain.Model.TargetInfo;
-using ETL.Domain.Model.TargetInfo.DbTargets;
+using ETL.Domain.Targets;
+using ETL.Domain.Targets.DbTargets;
 using System;
 using System.Collections.Generic;
 using System.Linq;

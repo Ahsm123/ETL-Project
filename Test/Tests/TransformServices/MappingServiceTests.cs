@@ -1,4 +1,4 @@
-﻿using ETL.Domain.Model;
+﻿using ETL.Domain.Rules;
 using Transform.Services;
 
 namespace Test.Tests.TransformServices;
@@ -12,7 +12,7 @@ public class MappingServiceTests
     {
         // Arrange 
         var item = new Dictionary<string, object> { { "account_id", 123 }, { "status", "Accepted" } };
-        var mappings = new List<FieldMapping>
+        var mappings = new List<FieldMapRule>
             {
                 new() { SourceField = "account_id", TargetField = "id" }
             };

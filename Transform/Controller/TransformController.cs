@@ -1,5 +1,5 @@
 ﻿
-using ETL.Domain.Model.DTOs;
+using ETL.Domain.Events;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -41,9 +41,9 @@ public class TransformController : BackgroundService
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     PropertyNameCaseInsensitive = true
                 };
-                options.Converters.Add(new ExtractedPayloadConverter());
+                options.Converters.Add(new ExtractedEventConverter());
 
-                var payload = JsonSerializer.Deserialize<ExtractedPayload>(message, options);
+                var payload = JsonSerializer.Deserialize<ExtractedEvent>(message, options);
 
                 if (payload is null)
                 {

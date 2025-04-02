@@ -1,6 +1,6 @@
 ﻿using ClosedXML.Excel;
 using ETL.Domain.Attributes;
-using ETL.Domain.Model.SourceInfo;
+using ETL.Domain.Sources;
 using System.ComponentModel;
 using System.Text.Json;
 

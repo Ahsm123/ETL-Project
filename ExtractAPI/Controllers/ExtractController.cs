@@ -1,5 +1,5 @@
-﻿using ETL.Domain.Model;
-using ETL.Domain.Model.DTOs;
+﻿using ETL.Domain.Events;
+using ETL.Domain.Model;
 using ExtractAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,7 +21,7 @@ public class ExtractController : ControllerBase
     }
 
     [HttpPost("{configId}")]
-    public async Task<ActionResult<ExtractResponseDto>> Trigger(string configId)
+    public async Task<ActionResult<ExtractResultEvent>> Trigger(string configId)
     {
         try
         {

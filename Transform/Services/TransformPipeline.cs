@@ -1,4 +1,4 @@
-﻿using ETL.Domain.Model.DTOs;
+﻿using ETL.Domain.Events;
 
 namespace Transform.Services;
 
@@ -11,15 +11,15 @@ public class TransformPipeline : ITransformPipeline
         _mappingService = mappingService;
     }
 
-    public ProcessedPayload Execute(ExtractedPayload input)
+    public TransformedEvent Execute(ExtractedEvent input)
     {
-        var mapped = _mappingService.Apply(input.Data, input.Transform?.Mappings ?? new());
+        var mapped = _mappingService.Apply(input.Data, input.TransformConfig?.Mappings ?? new());
 
-        return new ProcessedPayload
+        return new TransformedEvent
         {
             PipelineId = input.Id,
             SourceType = input.SourceType,
-            Load = input.Load,
+            LoadTargetConfig = input.LoadTargetConfig,
             Data = mapped
         };
     }

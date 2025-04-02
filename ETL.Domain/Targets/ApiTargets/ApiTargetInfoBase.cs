@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
-namespace ETL.Domain.Model.TargetInfo.ApiTargets;
+namespace ETL.Domain.Targets.ApiTargets;
 
 public class ApiTargetInfoBase : TargetInfoBase
 {
+    [JsonPropertyName("url")]
     public string Url { get; set; }
+    [JsonPropertyName("headers")]
     public Dictionary<string, string> Headers { get; set; }
 
     protected ApiTargetInfoBase()

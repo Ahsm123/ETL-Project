@@ -1,4 +1,4 @@
-﻿using ETL.Domain.Model.SourceInfo;
+﻿using ETL.Domain.Sources;
 using System.Text.Json;
 
 namespace ExtractAPI.DataSources;

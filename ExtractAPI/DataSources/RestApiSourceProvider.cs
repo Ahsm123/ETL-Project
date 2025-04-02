@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using ETL.Domain.Attributes;
-using ETL.Domain.Model.SourceInfo;
+using ETL.Domain.Sources;
 
 namespace ExtractAPI.DataSources;
 
