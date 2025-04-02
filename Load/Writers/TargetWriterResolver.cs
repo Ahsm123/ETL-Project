@@ -25,7 +25,14 @@ public class TargetWriterResolver : ITargetWriterResolver
             })
             .Where(x => x.Attribute != null)
             .ToDictionary(x => x.Attribute!.Name.ToLowerInvariant(), x => x.Type);
+
+        Console.WriteLine("[DEBUG] Registered writers in TargetWriterResolver:");
+        foreach (var key in _map.Keys)
+        {
+            Console.WriteLine($"  -> {key} = {_map[key].Name}");
+        }
     }
+
 
     public ITargetWriter? Resolve(string targetType, IServiceProvider services)
     {
