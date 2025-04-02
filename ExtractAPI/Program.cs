@@ -5,7 +5,8 @@ using ExtractAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var baseUrl = "https://localhost:7027";
+var baseUrl = builder.Configuration["ConfigService:BaseUrl"];
+
 
 // Register services
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
