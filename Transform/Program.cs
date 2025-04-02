@@ -23,7 +23,7 @@ var builder = Host.CreateDefaultBuilder(args)
         services.AddSingleton<MappingService>(); //Stateless mapper
         services.AddSingleton<ITransformPipeline, TransformPipeline>(); //Orchestrates mapping/filtering steps
         services.AddSingleton<ITransformService<string>, TransformService>(); //Coordinates entire process
-
+        services.AddSingleton<FilterService>(); //Stateless filter
         // Background service to start consuming
         services.AddHostedService<TransformController>();
     });

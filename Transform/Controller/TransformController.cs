@@ -41,19 +41,26 @@ namespace Transform.Controller
                     if (payload is null)
                     {
                         _logger.LogWarning("Received null payload");
+                        return; // <<< prevent continuing
                     }
 
                     var transformed = await _transformService.TransformDataAsync(payload);
-                    await _producer.ProduceAsync("processedData", Guid.NewGuid().ToString(), transformed);
 
-                    _logger.LogInformation("Transformed payload with id {id}", payload.Id);
+                    if (transformed == null)
+                    {
+
+                        _logger.LogInformation("Payload with id {id} was filtered out and will not be produced", payload.Id);
+                        return; // <<< prevent producing null!
+                    }
+
+                    await _producer.ProduceAsync("processedData", Guid.NewGuid().ToString(), transformed);
+                    _logger.LogInformation("Transformed and produced payload with id {id}", payload.Id);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error transforming payload");
                 }
             });
-
 
         }
     }
