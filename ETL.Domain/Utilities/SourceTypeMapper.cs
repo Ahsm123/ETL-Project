@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace ETL.Domain.Utilities;
 
-public static class SourceInfoTypeMapper
+public static class SourceTypeMapper
 {
     private static readonly Dictionary<string, Type> _map;
 
-    static SourceInfoTypeMapper()
+    static SourceTypeMapper()
     {
         _map = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(a => a.GetTypes())

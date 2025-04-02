@@ -40,7 +40,7 @@ public class ConfigFileConverter : JsonConverter<ConfigFile>
 
     private static SourceInfoBase DeserializeSourceInfo(JsonElement element, string sourceType, JsonSerializerOptions options)
     {
-        var type = SourceInfoTypeMapper.GetSourceInfoType(sourceType);
+        var type = SourceTypeMapper.GetSourceInfoType(sourceType);
         if (type == null)
             throw new JsonException($"Ukendt SourceType: {sourceType}");
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ETL.Domain.Model.TargetInfo;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -9,8 +10,7 @@ namespace ETL.Domain.Model;
 
 public class LoadSettings
 {
-    public string DestinationType { get; set; }
-    public string ConnectionInfo { get; set; }
-    public string DestinationRessource { get; set; }
+    public string TargetType { get; set; }
+    public TargetInfoBase TargetInfo { get; set; }
 
 }
