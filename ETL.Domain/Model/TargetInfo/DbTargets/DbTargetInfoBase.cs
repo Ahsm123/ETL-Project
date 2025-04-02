@@ -9,5 +9,9 @@ namespace ETL.Domain.Model.TargetInfo.DbTargets;
 public abstract class DbTargetInfoBase : TargetInfoBase
 {
     public string ConnectionString { get; set; }
-    public string TableName { get; set; }
+    public string TargetTable { get; set; }
+
+    protected DbTargetInfoBase() 
+    {
+    }
 }

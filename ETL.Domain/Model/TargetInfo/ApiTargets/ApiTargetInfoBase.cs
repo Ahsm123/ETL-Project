@@ -10,4 +10,8 @@ public class ApiTargetInfoBase : TargetInfoBase
 {
     public string Url { get; set; }
     public Dictionary<string, string> Headers { get; set; }
+
+    protected ApiTargetInfoBase()
+    {
+    }
 }

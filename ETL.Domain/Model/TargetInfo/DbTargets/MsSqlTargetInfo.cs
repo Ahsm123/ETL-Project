@@ -11,4 +11,8 @@ namespace ETL.Domain.Model.TargetInfo.DbTargets;
 public class MsSqlTargetInfo : DbTargetInfoBase
 {
     public bool UseBulkInsert { get; set; }
+
+    public MsSqlTargetInfo()
+    {
+    }
 }
