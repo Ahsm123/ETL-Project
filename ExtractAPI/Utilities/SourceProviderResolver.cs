@@ -6,7 +6,6 @@ namespace ExtractAPI.Utilities;
 public class SourceProviderResolver
 {
     private static readonly Dictionary<string, Type> _map;
-
     static SourceProviderResolver()
     {
         _map = AppDomain.CurrentDomain.GetAssemblies()

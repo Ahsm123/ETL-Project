@@ -17,16 +17,27 @@ public class TransformService : ITransformService<string>
 
     public Task<string> TransformDataAsync(ExtractedPayload input)
     {
-        try
+        var processed = _pipeline.Execute(input);
+
+        var resultToSerialize = new
         {
-            var result = _pipeline.Execute(input);
-            return Task.FromResult(JsonSerializer.Serialize(result));
-        }
-        catch (Exception ex)
+            processed.PipelineId,
+            processed.SourceType,
+            Load = new
+            {
+                processed.Load.TargetType,
+                TargetInfo = (object)processed.Load.TargetInfo
+            },
+            processed.Data
+        };
+
+        var options = new JsonSerializerOptions
         {
-            _logger.LogError(ex, "Fejl under transformation af payload");
-            throw;
-        }
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false
+        };
+
+        return Task.FromResult(JsonSerializer.Serialize(resultToSerialize, options));
     }
 }
 

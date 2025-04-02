@@ -1,5 +1,4 @@
-﻿using ETL.Domain.Model;
-using ETL.Domain.Model.SourceInfo;
+﻿using ETL.Domain.Config;
 using ExtractAPI.Converters;
 using System.Text.Json;
 

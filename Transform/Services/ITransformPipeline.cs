@@ -4,6 +4,6 @@ namespace Transform.Services;
 
 public interface ITransformPipeline
 {
-    TransformPayload Execute(ExtractedPayload input);
+    ProcessedPayload Execute(ExtractedPayload input);
 }
 

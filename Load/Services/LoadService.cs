@@ -1,9 +1,9 @@
-﻿using ETL.Domain.Model.DTOs;
+﻿using ETL.Domain.Config;
+using ETL.Domain.Model.DTOs;
 using ETL.Domain.Model.TargetInfo;
-using ETL.Domain.Model;
+using ETL.Domain.Utilities;
 using Load.Writers;
 using System.Text.Json;
-using ETL.Domain.Utilities;
 
 namespace Load.Services;
 
@@ -20,32 +20,44 @@ public class LoadService
 
     public async Task HandleMessageAsync(string json)
     {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
-        var targetType = root.GetProperty("Load").GetProperty("TargetType").GetString()
-                        ?? throw new InvalidOperationException("TargetType is missing.");
+        var pipelineId = root.GetProperty("pipelineId").GetString()!;
+        var sourceType = root.GetProperty("sourceType").GetString()!;
+        var load = root.GetProperty("load");
+        var targetType = load.GetProperty("targetType").GetString()!;
+        var targetInfoRaw = load.GetProperty("targetInfo").GetRawText();
 
         var targetTypeResolved = TargetTypeMapper.GetTargetInfoType(targetType);
+        if (targetTypeResolved == null)
+            throw new InvalidOperationException($"Unrecognized TargetType: {targetType}");
 
-        var targetInfo = (TargetInfoBase)(JsonSerializer.Deserialize(
-            root.GetProperty("Load").GetProperty("TargetInfo").GetRawText(),
+        var targetInfo = (TargetInfoBase)JsonSerializer.Deserialize(
+            targetInfoRaw,
             targetTypeResolved,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-        ) ?? throw new InvalidOperationException("Failed to deserialize TargetInfo."));
+            options
+        )!;
+
+        var data = JsonSerializer.Deserialize<Dictionary<string, object>>(
+            root.GetProperty("data").GetRawText(), options
+        )!;
 
         var payload = new ProcessedPayload
         {
-            PipelineId = root.GetProperty("PipelineId").GetString(),
-            SourceType = root.GetProperty("SourceType").GetString(),
-            Load = new LoadSettings
+            PipelineId = pipelineId,
+            SourceType = sourceType,
+            Load = new LoadTargetConfig
             {
                 TargetType = targetType,
                 TargetInfo = targetInfo
             },
-            Data = JsonSerializer.Deserialize<Dictionary<string, object>>(
-                root.GetProperty("Data").GetRawText()
-            ) ?? new Dictionary<string, object>()
+            Data = data
         };
 
         var writer = _writerResolver.Resolve(targetType, _services);
@@ -54,4 +66,6 @@ public class LoadService
 
         await writer.WriteAsync(payload.Load.TargetInfo, payload.Data);
     }
+
+
 }

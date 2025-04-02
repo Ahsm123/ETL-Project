@@ -1,4 +1,4 @@
-﻿using ETL.Domain.Model;
+﻿using ETL.Domain.Config;
 using ETL.Domain.Model.DTOs;
 using ExtractAPI.DataSources;
 using ExtractAPI.Events;
@@ -29,7 +29,6 @@ public class DataExtractionService : IDataExtractionService
         _logger = logger;
     }
 
-
     public async Task<ExtractResponseDto> ExtractAsync(string configId)
     {
         // Hent konfiguration fra API
@@ -47,7 +46,6 @@ public class DataExtractionService : IDataExtractionService
             MessagesSent = messagesSent
         };
     }
-
 
     private async Task<int> FilterAndDispatchData(ConfigFile? config, JsonElement data)
     {
@@ -84,7 +82,6 @@ public class DataExtractionService : IDataExtractionService
 
         return dispatchTasks.Count;
     }
-
 
     private async Task DispatchPayload(ConfigFile config, Dictionary<string, object> data)
     {

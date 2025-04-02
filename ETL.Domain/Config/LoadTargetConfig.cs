@@ -1,15 +1,9 @@
 ﻿using ETL.Domain.Model.TargetInfo;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
-namespace ETL.Domain.Model;
+namespace ETL.Domain.Config;
 
-public class LoadSettings
+public class LoadTargetConfig
 {
     public string TargetType { get; set; }
 

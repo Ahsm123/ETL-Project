@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using ETL.Domain.Config;
 using ETL.Domain.Model;
 using ETL.Domain.Model.SourceInfo;
 using ETL.Domain.Model.TargetInfo;
@@ -19,8 +20,8 @@ public class ConfigFileConverter : JsonConverter<ConfigFile>
         string targetType = root.GetProperty("Load").GetProperty("TargetType").GetString()!.ToLowerInvariant();
 
         var sourceInfo = DeserializeSourceInfo(root.GetProperty("SourceInfo"), sourceType, options);
-        var extractSettings = JsonSerializer.Deserialize<ExtractSettings>(root.GetProperty("Extract"), options)!;
-        var transformSettings = JsonSerializer.Deserialize<TransformSettings>(root.GetProperty("Transform"), options)!;
+        var extractSettings = JsonSerializer.Deserialize<ExtractConfig>(root.GetProperty("Extract"), options)!;
+        var transformSettings = JsonSerializer.Deserialize<TransformConfig>(root.GetProperty("Transform"), options)!;
 
         var targetInfoType = TargetTypeMapper.GetTargetInfoType(targetType);
         if (targetInfoType == null)
@@ -32,7 +33,7 @@ public class ConfigFileConverter : JsonConverter<ConfigFile>
             options
         )!;
 
-        var loadSettings = new LoadSettings
+        var loadSettings = new LoadTargetConfig
         {
             TargetType = targetType,
             TargetInfo = targetInfo

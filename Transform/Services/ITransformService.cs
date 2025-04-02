@@ -4,6 +4,6 @@ namespace Transform.Services
 {
     public interface ITransformService<T>
     {
-        Task<T> TransformDataAsync(ExtractedPayload jsonPayload);
+        Task<T> TransformDataAsync(ExtractedPayload input);
     }
 }

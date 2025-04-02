@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ETL.Domain.Config;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,8 +12,8 @@ public class ExtractedPayload
 {
     public string Id { get; set; }
     public string SourceType { get; set; }
-    public TransformSettings Transform { get; set; }
-    public LoadSettings Load { get; set; }
+    public TransformConfig Transform { get; set; }
+    public LoadTargetConfig Load { get; set; }
 
     public Dictionary<string, object> Data { get; set; }
 }

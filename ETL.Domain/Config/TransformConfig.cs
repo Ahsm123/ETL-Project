@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ETL.Domain.Model
 {
-    public class TransformSettings
+    public class TransformConfig
     {
         public List<FieldMapping> Mappings { get; set; }
         public List<FilterCondition> Filters { get; set; }
