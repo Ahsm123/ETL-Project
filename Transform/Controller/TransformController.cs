@@ -48,16 +48,19 @@ public class TransformController : BackgroundService
                     return;
                 }
 
-                var transformed = await _transformService.TransformDataAsync(payload);
-                await _producer.ProduceAsync("processedData", Guid.NewGuid().ToString(), transformed);
+                    var transformed = await _transformService.TransformDataAsync(payload);
+                    await _producer.ProduceAsync("processedData", Guid.NewGuid().ToString(), transformed);
 
-                _logger.LogInformation("Transformed payload with id {id}", payload.Id);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error transforming payload");
-            }
-        });
+                    _logger.LogInformation("Transformed payload with id {id}", payload.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error transforming payload");
+                }
+            });
+
+
+        }
     }
 }
 
