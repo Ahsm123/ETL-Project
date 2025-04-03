@@ -1,23 +1,24 @@
 ﻿using ETL.Domain.Config;
 using ETL.Domain.Events;
 using ETL.Domain.Sources;
-using ExtractAPI.DataSources;
 using ExtractAPI.Events;
 using ExtractAPI.ExtractedEvents;
-using ExtractAPI.Services;
+using ExtractAPI.Factories;
 using System.Text.Json;
+
+namespace ExtractAPI.Services;
 
 public class DataExtractionService : IDataExtractionService
 {
     private readonly IConfigService _configService;
-    private readonly Func<SourceInfoBase, IDataSourceProvider> _providerFactory;
+    private readonly ISourceProviderFactory _providerFactory;
     private readonly IEventDispatcher _eventDispatcher;
     private readonly DataFieldSelectorService _selectorService;
     private readonly ILogger<DataExtractionService> _logger;
 
     public DataExtractionService(
         IConfigService configService,
-        Func<SourceInfoBase, IDataSourceProvider> providerFactory,
+        ISourceProviderFactory providerFactory,
         IEventDispatcher eventDispatcher,
         DataFieldSelectorService selectorService,
         ILogger<DataExtractionService> logger)
@@ -75,7 +76,7 @@ public class DataExtractionService : IDataExtractionService
 
     private async Task<JsonElement> GetData(ConfigFile config)
     {
-        var provider = _providerFactory(config.SourceInfo);
+        var provider = _providerFactory.GetProvider(config.SourceInfo);
         return await provider.GetDataAsync(config.SourceInfo);
     }
 

@@ -1,6 +1,7 @@
 using ETL.Domain.Sources;
 using ExtractAPI.DataSources;
 using ExtractAPI.Events;
+using ExtractAPI.Factories;
 using ExtractAPI.Kafka;
 using ExtractAPI.Services;
 
@@ -23,20 +24,10 @@ builder.Services.AddSingleton<RestApiSourceProvider>();
 builder.Services.AddSingleton<ExcelDataSourceProvider>();
 
 // Register factory
-builder.Services.AddSingleton(provider =>
-{
-    Func<SourceInfoBase, IDataSourceProvider> factory = sourceInfo =>
-    {
-        return sourceInfo switch
-        {
-            RestApiSourceInfo => provider.GetRequiredService<RestApiSourceProvider>(),
-            ExcelSourceInfo => provider.GetRequiredService<ExcelDataSourceProvider>(),
-            _ => throw new NotSupportedException($"Unsupported source type: {sourceInfo.GetType().Name}")
-        };
-    };
+builder.Services.AddSingleton<RestApiSourceProvider>();
+builder.Services.AddSingleton<ExcelDataSourceProvider>();
+builder.Services.AddSingleton<ISourceProviderFactory, SourceProviderFactory>();
 
-    return factory;
-});
 
 
 
