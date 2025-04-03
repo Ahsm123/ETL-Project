@@ -1,60 +1,60 @@
 ﻿
-using ETL.Domain.Model.DTOs;
+using ETL.Domain.Events;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using Transform.Converters;
 using Transform.Kafka;
 using Transform.Services;
 
-namespace Transform.Controller
+namespace Transform.Controller;
+
+public class TransformController : BackgroundService
 {
-    public class TransformController : BackgroundService
+    private readonly IKafkaConsumer _consumer;
+    private readonly IKafkaProducer _producer;
+    private readonly ITransformService<string> _transformService;
+    private readonly ILogger<TransformController> _logger;
+
+    public TransformController(
+        IKafkaConsumer consumer,
+        IKafkaProducer producer,
+        ITransformService<string> transformService,
+        ILogger<TransformController> logger)
     {
-        private readonly IKafkaConsumer _consumer;
-        private readonly IKafkaProducer _producer;
-        private readonly ITransformService<string> _transformService;
-        private readonly ILogger<TransformController> _logger;
+        _consumer = consumer;
+        _producer = producer;
+        _transformService = transformService;
+        _logger = logger;
+    }
 
-        public TransformController(
-                IKafkaConsumer consumer,
-                IKafkaProducer producer,
-                ITransformService<string> transformService,
-                ILogger<TransformController> logger)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Transform service started");
+
+        await _consumer.ConsumeAsync(stoppingToken, async (string message) =>
         {
-            _consumer = consumer;
-            _producer = producer;
-            _transformService = transformService;
-            _logger = logger;
-        }
-
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            _logger.LogInformation("Transform service started");
-
-            await _consumer.ConsumeAsync(stoppingToken, async (string message) =>
+            try
             {
-                try
+                var options = new JsonSerializerOptions
                 {
-                    var payload = JsonSerializer.Deserialize<ExtractedPayload>(message);
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    PropertyNameCaseInsensitive = true
+                };
+                options.Converters.Add(new ExtractedEventConverter());
 
-                    if (payload is null)
-                    {
-                        _logger.LogWarning("Received null payload");
-                        return; // <<< prevent continuing
-                    }
+                var payload = JsonSerializer.Deserialize<ExtractedEvent>(message, options);
+
+                if (payload is null)
+                {
+                    _logger.LogWarning("Received null payload");
+                    return;
+                }
 
                     var transformed = await _transformService.TransformDataAsync(payload);
-
-                    if (transformed == null)
-                    {
-
-                        _logger.LogInformation("Payload with id {id} was filtered out and will not be produced", payload.Id);
-                        return; // <<< prevent producing null!
-                    }
-
                     await _producer.ProduceAsync("processedData", Guid.NewGuid().ToString(), transformed);
-                    _logger.LogInformation("Transformed and produced payload with id {id}", payload.Id);
+
+                    _logger.LogInformation("Transformed payload with id {id}", payload.Id);
                 }
                 catch (Exception ex)
                 {
@@ -62,10 +62,10 @@ namespace Transform.Controller
                 }
             });
 
+
         }
     }
 }
-
 
 
 

@@ -5,7 +5,7 @@ namespace Transform.Services;
 
 public class FilterService
 {
-    public bool ShouldInclude(Dictionary<string, object> item, List<FilterCondition> filters)
+    public bool ShouldInclude(Dictionary<string, object> item, List<FilterRule> filters)
     {
         foreach (var filter in filters)
         {

@@ -1,9 +1,10 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using ETL.Domain.Config;
 using ETL.Domain.Model;
-using ETL.Domain.Model.SourceInfo;
-using ETL.Domain.Model.TargetInfo;
+using ETL.Domain.Sources;
+using ETL.Domain.Targets;
 using ETL.Domain.Utilities;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ExtractAPI.Converters;
 
@@ -16,23 +17,23 @@ public class ConfigFileConverter : JsonConverter<ConfigFile>
 
         string sourceType = root.GetProperty("SourceType").GetString()!.ToLowerInvariant();
         string id = root.GetProperty("Id").GetString()!;
-        string targetType = root.GetProperty("Load").GetProperty("TargetType").GetString()!.ToLowerInvariant();
+        string targetType = root.GetProperty("LoadTargetConfig").GetProperty("TargetType").GetString()!.ToLowerInvariant();
 
         var sourceInfo = DeserializeSourceInfo(root.GetProperty("SourceInfo"), sourceType, options);
-        var extractSettings = JsonSerializer.Deserialize<ExtractSettings>(root.GetProperty("Extract"), options)!;
-        var transformSettings = JsonSerializer.Deserialize<TransformSettings>(root.GetProperty("Transform"), options)!;
+        var extractSettings = JsonSerializer.Deserialize<ExtractConfig>(root.GetProperty("ExtractConfig"), options)!;
+        var transformSettings = JsonSerializer.Deserialize<TransformConfig>(root.GetProperty("TransformConfig"), options)!;
 
         var targetInfoType = TargetTypeMapper.GetTargetInfoType(targetType);
         if (targetInfoType == null)
             throw new JsonException($"Unknown TargetType: {targetType}");
 
         var targetInfo = (TargetInfoBase)JsonSerializer.Deserialize(
-            root.GetProperty("Load").GetProperty("TargetInfo").GetRawText(),
+            root.GetProperty("LoadTargetConfig").GetProperty("TargetInfo").GetRawText(),
             targetInfoType,
             options
         )!;
 
-        var loadSettings = new LoadSettings
+        var loadSettings = new LoadTargetConfig
         {
             TargetType = targetType,
             TargetInfo = targetInfo
@@ -48,7 +49,6 @@ public class ConfigFileConverter : JsonConverter<ConfigFile>
             Load = loadSettings
         };
     }
-
 
     public override void Write(Utf8JsonWriter writer, ConfigFile value, JsonSerializerOptions options)
     {

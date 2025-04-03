@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ETL.Domain.Model.TargetInfo;
+namespace ETL.Domain.Sources;
 
-public abstract class TargetInfoBase
+public abstract class SourceInfoBase
 {
+
 }

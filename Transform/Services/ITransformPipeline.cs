@@ -1,9 +1,9 @@
-﻿using ETL.Domain.Model.DTOs;
+﻿using ETL.Domain.Events;
 
 namespace Transform.Services;
 
 public interface ITransformPipeline
 {
-    TransformPayload Execute(ExtractedPayload input);
+    TransformedEvent Execute(ExtractedEvent input);
 }
 

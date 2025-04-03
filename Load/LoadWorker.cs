@@ -1,4 +1,5 @@
-﻿using Load.Services;
+﻿using Load.Kafka;
+using Load.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,60 +13,35 @@ namespace Load;
 public class LoadWorker : BackgroundService
 {
     private readonly ILogger<LoadWorker> _logger;
+    private readonly IKafkaConsumer _kafkaConsumer;
     private readonly LoadService _loadService;
 
-    public LoadWorker(ILogger<LoadWorker> logger, LoadService loadService)
+    public LoadWorker(
+        ILogger<LoadWorker> logger,
+        IKafkaConsumer kafkaConsumer,
+        LoadService loadService)
     {
         _logger = logger;
+        _kafkaConsumer = kafkaConsumer;
         _loadService = loadService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("LoadWorker is running...");
+        _logger.LogInformation("LoadWorker is starting...");
 
-        while (!stoppingToken.IsCancellationRequested)
+        await _kafkaConsumer.StartAsync(async (message) =>
         {
             try
             {
-                // Simulate Kafka message consumption
-                var json = await SimulateKafkaReceive();
-
-                await _loadService.HandleMessageAsync(json);
+                await _loadService.HandleMessageAsync(message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while processing message in LoadWorker");
+                _logger.LogError(ex, "Failed to handle message.");
             }
-
-            await Task.Delay(1000, stoppingToken); // 
-        }
+        }, stoppingToken);
 
         _logger.LogInformation("LoadWorker is stopping...");
-    }
-
-    private Task<string> SimulateKafkaReceive()
-    {
-        // Simulate a JSON string from Kafka (replace with actual Kafka consumer)
-        var dummyJson = """
-        {
-            "PipelineId": "pipeline_001",
-            "SourceType": "api",
-            "Load": {
-                "TargetType": "mssql",
-                "TargetInfo": {
-                    "ConnectionString": "Server=db;User Id=admin;Password=secret;",
-                    "TableName": "approved_payments",
-                    "UseBulkInsert": true
-                }
-            },
-            "Data": {
-                "id": "123",
-                "total": 5500
-            }
-        }
-        """;
-
-        return Task.FromResult(dummyJson);
     }
 }

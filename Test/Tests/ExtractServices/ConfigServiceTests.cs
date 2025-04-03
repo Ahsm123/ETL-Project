@@ -1,4 +1,4 @@
-﻿using ETL.Domain.Model.SourceInfo;
+﻿using ETL.Domain.Sources;
 using ExtractAPI.Converters;
 using ExtractAPI.Services;
 using System;

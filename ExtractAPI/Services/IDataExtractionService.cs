@@ -1,8 +1,7 @@
-﻿using ETL.Domain.Model.DTOs;
+﻿using ETL.Domain.Events;
 
 namespace ExtractAPI.Services;
-
 public interface IDataExtractionService
 {
-    Task<ExtractResponseDto> ExtractAsync(string configId);
+    Task<ExtractResultEvent> ExtractAsync(string configId);
 }

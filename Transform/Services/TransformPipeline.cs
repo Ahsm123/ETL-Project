@@ -1,5 +1,4 @@
-﻿using ETL.Domain.Model.DTOs;
-using System.Text.Json;
+﻿using ETL.Domain.Events;
 
 namespace Transform.Services;
 
@@ -16,7 +15,7 @@ public class TransformPipeline : ITransformPipeline
         _filterService = filterService;
     }
 
-    public TransformPayload Execute(ExtractedPayload input)
+    public TransformedEvent Execute(ExtractedEvent input)
     {
         if (!_filterService.ShouldInclude(input.Data, input.Transform?.Filters ?? new()))
         {
@@ -28,13 +27,12 @@ public class TransformPipeline : ITransformPipeline
         Console.WriteLine(json);
         var jsonElement = JsonDocument.Parse(json).RootElement.Clone();
 
-        return new TransformPayload
+        return new TransformedEvent
         {
-            Id = input.Id,
+            PipelineId = input.Id,
             SourceType = input.SourceType,
-            Load = input.Load,
-            Data = jsonElement
+            LoadTargetConfig = input.LoadTargetConfig,
+            Data = mapped
         };
     }
-
 }

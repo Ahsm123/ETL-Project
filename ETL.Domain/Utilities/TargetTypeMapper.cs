@@ -1,5 +1,5 @@
 ﻿using ETL.Domain.Attributes;
-using ETL.Domain.Model.TargetInfo;
+using ETL.Domain.Targets;
 using System;
 using System.Collections.Generic;
 using System.Linq;

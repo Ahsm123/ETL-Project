@@ -1,12 +1,12 @@
-﻿using ETL.Domain.Model.DTOs;
+﻿using ETL.Domain.Events;
 
 namespace ExtractAPI.ExtractedEvents;
 
 public class DataExtractedEvent
 {
-    public ExtractedPayload Payload { get; }
+    public ExtractedEvent Payload { get; }
 
-    public DataExtractedEvent(ExtractedPayload payload)
+    public DataExtractedEvent(ExtractedEvent payload)
     {
         Payload = payload;
     }

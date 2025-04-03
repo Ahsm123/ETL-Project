@@ -1,9 +1,9 @@
-﻿using ETL.Domain.Model.DTOs;
+﻿using ETL.Domain.Events;
 
 namespace Transform.Services
 {
     public interface ITransformService<T>
     {
-        Task<T> TransformDataAsync(ExtractedPayload jsonPayload);
+        Task<T> TransformDataAsync(ExtractedEvent input);
     }
 }

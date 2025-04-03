@@ -1,11 +1,11 @@
-﻿using ETL.Domain.Model;
+﻿using ETL.Domain.Rules;
 
 namespace Transform.Services;
 
 // MappingService.cs
 public class MappingService
 {
-    public Dictionary<string, object?> Apply(Dictionary<string, object> item, List<FieldMapping> mappings)
+    public Dictionary<string, object?> Apply(Dictionary<string, object> item, List<FieldMapRule> mappings)
     {
         var result = new Dictionary<string, object?>(item);
 

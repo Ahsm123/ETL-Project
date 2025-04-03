@@ -1,6 +1,6 @@
 ﻿using ETL.Domain.Attributes;
-using ETL.Domain.Model.TargetInfo;
-using ETL.Domain.Model.TargetInfo.DbTargets;
+using ETL.Domain.Targets;
+using ETL.Domain.Targets.DbTargets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +19,11 @@ public class MsSqlTargetWriter : ITargetWriter
             throw new ArgumentException("Invalid target info type");
         }
 
-        Console.WriteLine($"Writing to MSSQL: {sqlInfo.TargetTable} | Data: {data.Count} fields");
+        Console.WriteLine($"[DEBUG] Simulating write to table '{sqlInfo.TargetTable}'");
+        Console.WriteLine($"         ConnectionString: {sqlInfo.ConnectionString}");
+        Console.WriteLine($"         UseBulkInsert: {sqlInfo.UseBulkInsert}");
+        Console.WriteLine($"         Data: {string.Join(", ", data.Select(kvp => $"{kvp.Key}={kvp.Value}"))}");
+
         await Task.CompletedTask;
     }
 }

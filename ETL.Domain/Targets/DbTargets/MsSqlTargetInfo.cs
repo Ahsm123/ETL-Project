@@ -1,15 +1,12 @@
 ﻿using ETL.Domain.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
-namespace ETL.Domain.Model.TargetInfo.DbTargets;
+namespace ETL.Domain.Targets.DbTargets;
 
 [TargetType("mssql")]
 public class MsSqlTargetInfo : DbTargetInfoBase
 {
+    [JsonPropertyName("useBulkInsert")]
     public bool UseBulkInsert { get; set; }
 
     public MsSqlTargetInfo()
