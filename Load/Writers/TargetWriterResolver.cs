@@ -1,10 +1,5 @@
 ﻿using ETL.Domain.Targets;
 using ETL.Domain.Targets.DbTargets;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Load.Writers;
 
@@ -38,8 +33,6 @@ public class TargetWriterResolver : ITargetWriterResolver
 
     private static Type GetHandledTargetType(Type writerType)
     {
-        // Default to MsSqlTargetInfo or base type
-        // You can replace this with attribute-based config if needed
         if (writerType == typeof(MsSqlTargetWriter))
             return typeof(MsSqlTargetInfo);
 

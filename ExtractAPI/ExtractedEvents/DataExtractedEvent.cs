@@ -4,10 +4,10 @@ namespace ExtractAPI.ExtractedEvents;
 
 public class DataExtractedEvent
 {
-    public ExtractedEvent Payload { get; }
+    public ExtractedEvent ExtractedEvent { get; }
 
-    public DataExtractedEvent(ExtractedEvent payload)
+    public DataExtractedEvent(ExtractedEvent extractedEvent)
     {
-        Payload = payload;
+        ExtractedEvent = extractedEvent;
     }
 }

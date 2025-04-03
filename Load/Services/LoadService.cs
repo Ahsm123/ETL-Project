@@ -15,7 +15,7 @@ public class LoadService
         _services = services;
     }
 
-    public async Task HandleMessageAsync(string json)
+    public async Task HandleEventAsync(string json)
     {
         var options = new JsonSerializerOptions
         {
@@ -25,7 +25,6 @@ public class LoadService
         var payload = JsonSerializer.Deserialize<TransformedEvent>(json, options)
             ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
-        // Use type directly from $type discriminator via System.Text.Json
         var targetInfo = payload.LoadTargetConfig.TargetInfo;
 
         var writer = _writerResolver.Resolve(targetInfo.GetType(), _services)
