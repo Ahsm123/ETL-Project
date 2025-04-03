@@ -1,4 +1,5 @@
 ﻿using ETL.Domain.Model.TargetInfo;
+using ETL.Domain.Model.TargetInfo.Converter;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -13,10 +14,10 @@ public class LoadSettings
 {
     public string TargetType { get; set; }
 
-    [JsonIgnore]
+    [JsonConverter(typeof(TargetInfoConverter))]
     public TargetInfoBase TargetInfo { get; set; }
 
-    [JsonPropertyName("TargetInfo")]
-    public object TargetInfoJson => TargetInfo;
+    //[JsonPropertyName("TargetInfo")]
+    //public object TargetInfoJson => TargetInfo; 
 }
 

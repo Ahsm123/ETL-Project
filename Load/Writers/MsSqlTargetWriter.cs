@@ -19,7 +19,7 @@ public class MsSqlTargetWriter : ITargetWriter
             throw new ArgumentException("Invalid target info type");
         }
 
-        Console.WriteLine($"Writing to MSSQL: {sqlInfo.TableName} | Data: {data.Count} fields");
+        Console.WriteLine($"Writing to MSSQL: {sqlInfo.TargetTable} | Data: {data.Count} fields");
         await Task.CompletedTask;
     }
 }
