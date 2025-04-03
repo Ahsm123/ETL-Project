@@ -1,11 +1,13 @@
 ﻿using ETL.Domain.Model;
+using ETL.Domain.Rules;
 using System.Text.Json;
 
 namespace Transform.Services;
 
 public class FilterService
 {
-    public bool ShouldInclude(Dictionary<string, object> item, List<FilterRule> filters)
+    public bool ShouldInclude(Dictionary<string, object> item, IEnumerable<FilterRule> filters)
+
     {
         foreach (var filter in filters)
         {
@@ -19,12 +21,11 @@ public class FilterService
         return true;
     }
 
-    private bool Evaluate(object fieldValue, FilterCondition filter)
+    private bool Evaluate(object fieldValue, FilterRule filter)
     {
         var op = filter.Operator.ToLower();
         var expectedValue = filter.Value;
 
-        // numeric case (finally correct)
         if (TryGetDouble(fieldValue, out var actualNum) && double.TryParse(expectedValue, out var expectedNum))
         {
             return op switch
@@ -36,7 +37,6 @@ public class FilterService
             };
         }
 
-        // fallback string case (JsonElement safe)
         var actualString = fieldValue is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.String
             ? jsonElement.GetString() ?? string.Empty
             : fieldValue?.ToString() ?? string.Empty;

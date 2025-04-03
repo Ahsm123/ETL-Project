@@ -1,4 +1,6 @@
 ﻿using ETL.Domain.Events;
+using ETL.Domain.Rules;
+using System.Text.Json;
 
 namespace Transform.Services;
 
@@ -17,12 +19,16 @@ public class TransformPipeline : ITransformPipeline
 
     public TransformedEvent Execute(ExtractedEvent input)
     {
-        if (!_filterService.ShouldInclude(input.Data, input.Transform?.Filters ?? new()))
+        if (!_filterService.ShouldInclude(
+    input.Data,
+    input.TransformConfig?.Filters ?? Enumerable.Empty<FilterRule>()))
         {
-            return null; // skip payload
+            return null;
         }
 
-        var mapped = _mappingService.Apply(input.Data, input.Transform?.Mappings ?? new());
+
+        var mapped = _mappingService.Apply(input.Data, input.TransformConfig?.Mappings ?? new());
+
         var json = JsonSerializer.Serialize(mapped);
         Console.WriteLine(json);
         var jsonElement = JsonDocument.Parse(json).RootElement.Clone();
