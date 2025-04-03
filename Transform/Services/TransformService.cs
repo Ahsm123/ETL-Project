@@ -1,6 +1,7 @@
 ﻿using ETL.Domain.Events;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Transform.Services;
 
@@ -22,23 +23,17 @@ public class TransformService : ITransformService<string>
         var resultToSerialize = new TransformedEvent
         {
             PipelineId = processed.PipelineId,
-            SourceType = processed.SourceType,
             LoadTargetConfig = processed.LoadTargetConfig,
             Data = processed.Data
         };
 
-
         var options = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = false
+            WriteIndented = false,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
         return Task.FromResult(JsonSerializer.Serialize(resultToSerialize, options));
     }
 }
-
-
-
-
-

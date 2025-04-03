@@ -1,10 +1,8 @@
 ﻿using System.Text.Json;
-using ETL.Domain.Attributes;
 using ETL.Domain.Sources;
 
 namespace ExtractAPI.DataSources;
 
-[SourceProviderType("api")]
 public class RestApiSourceProvider : IDataSourceProvider
 {
     private readonly HttpClient _httpClient;

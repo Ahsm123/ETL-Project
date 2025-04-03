@@ -8,5 +8,6 @@ namespace Load.Writers;
 
 public interface ITargetWriterResolver
 {
-    ITargetWriter? Resolve(string targetType, IServiceProvider services);
+    ITargetWriter? Resolve(Type targetInfoType, IServiceProvider services);
 }
+

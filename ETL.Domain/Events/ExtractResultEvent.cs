@@ -1,4 +1,6 @@
-﻿namespace ETL.Domain.Events;
+﻿using System.Text.Json.Serialization;
+
+namespace ETL.Domain.Events;
 
 public class ExtractResultEvent
 {

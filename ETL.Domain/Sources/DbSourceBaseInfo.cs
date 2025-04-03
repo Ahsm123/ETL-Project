@@ -1,16 +1,16 @@
-﻿using System.Text.Json.Serialization;
+﻿using ETL.Domain.Targets;
+using System.Text.Json.Serialization;
 
 namespace ETL.Domain.Sources;
 
 public class DbSourceBaseInfo : SourceInfoBase
 {
-    [JsonPropertyName("connectionString")]
+    [JsonPropertyName("ConnectionString")]
     public string ConnectionString { get; set; }
-    [JsonPropertyName("targetTable")]
-    public string TargetTable { get; set; }
-    [JsonPropertyName("query")]
-    public string Query { get; set; }
-    [JsonPropertyName("provider")]
-    public string Provider { get; set; }
 
+    [JsonPropertyName("Query")]
+    public string Query { get; set; }
+
+    [JsonPropertyName("Provider")]
+    public string Provider { get; set; }
 }

@@ -4,12 +4,12 @@ namespace ETL.Domain.Rules;
 
 public class FilterRule
 {
-    [JsonPropertyName("field")]
+    [JsonPropertyName("Field")]
     public string Field { get; set; }
 
-    [JsonPropertyName("operator")]
+    [JsonPropertyName("Operator")]
     public string Operator { get; set; }
 
-    [JsonPropertyName("value")]
+    [JsonPropertyName("Value")]
     public string Value { get; set; }
 }

@@ -1,11 +1,9 @@
-﻿using ETL.Domain.Attributes;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace ETL.Domain.Sources;
 
-[SourceType("excel")]
 public class ExcelSourceInfo : FileSourceBaseInfo
 {
-    [JsonPropertyName("sheetName")]
+    [JsonPropertyName("SheetName")]
     public string SheetName { get; set; } = "TestSheet";
 }

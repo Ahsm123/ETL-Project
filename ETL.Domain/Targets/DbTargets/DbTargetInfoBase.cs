@@ -4,9 +4,9 @@ namespace ETL.Domain.Targets.DbTargets;
 
 public abstract class DbTargetInfoBase : TargetInfoBase
 {
-    [JsonPropertyName("connectionString")]
+    [JsonPropertyName("ConnectionString")]
     public string ConnectionString { get; set; }
-    [JsonPropertyName("targetTable")]
+    [JsonPropertyName("TargetTable")]
     public string TargetTable { get; set; }
 
     protected DbTargetInfoBase()

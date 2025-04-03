@@ -3,17 +3,15 @@ using System.Text.Json.Serialization;
 
 namespace ETL.Domain.Events;
 
+
 public class TransformedEvent
 {
-    [JsonPropertyName("pipelineId")]
+    [JsonPropertyName("PipelineId")]
     public string PipelineId { get; set; }
 
-    [JsonPropertyName("sourceType")]
-    public string SourceType { get; set; }
-
-    [JsonPropertyName("loadTargetConfig")]
+    [JsonPropertyName("LoadTargetConfig")]
     public LoadTargetConfig LoadTargetConfig { get; set; }
 
-    [JsonPropertyName("data")]
+    [JsonPropertyName("Data")]
     public Dictionary<string, object> Data { get; set; }
 }

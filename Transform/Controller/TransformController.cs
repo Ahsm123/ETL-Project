@@ -3,7 +3,6 @@ using ETL.Domain.Events;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using Transform.Converters;
 using Transform.Kafka;
 using Transform.Services;
 
@@ -38,10 +37,8 @@ public class TransformController : BackgroundService
             {
                 var options = new JsonSerializerOptions
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     PropertyNameCaseInsensitive = true
                 };
-                options.Converters.Add(new ExtractedEventConverter());
 
                 var payload = JsonSerializer.Deserialize<ExtractedEvent>(message, options);
 

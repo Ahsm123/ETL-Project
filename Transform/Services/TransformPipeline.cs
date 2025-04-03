@@ -18,7 +18,6 @@ public class TransformPipeline : ITransformPipeline
         return new TransformedEvent
         {
             PipelineId = input.Id,
-            SourceType = input.SourceType,
             LoadTargetConfig = input.LoadTargetConfig,
             Data = mapped
         };

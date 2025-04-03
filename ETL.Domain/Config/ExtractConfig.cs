@@ -5,10 +5,10 @@ namespace ETL.Domain.Model;
 
 public class ExtractConfig
 {
-    [JsonPropertyName("fields")]
+    [JsonPropertyName("Fields")]
     public List<string> Fields { get; set; }
 
-    [JsonPropertyName("filters")]
+    [JsonPropertyName("Filters")]
     public List<FilterRule> Filters { get; set; }
 }
 

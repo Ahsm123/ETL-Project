@@ -11,11 +11,11 @@ builder.ConfigureServices(services =>
 {
     // Register writers
     services.AddSingleton<MsSqlTargetWriter>();
-    services.AddSingleton<ITargetWriter, MsSqlTargetWriter>(); 
+    services.AddSingleton<ITargetWriter, MsSqlTargetWriter>();
+    services.AddSingleton<ITargetWriterResolver, TargetWriterResolver>();
 
     // Register services
     services.AddSingleton<IKafkaConsumer, KafkaProcessedPayloadConsumer>();
-    services.AddSingleton<ITargetWriterResolver, TargetWriterResolver>();
     services.AddSingleton<LoadService>();
 
     // Register background worker

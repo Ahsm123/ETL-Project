@@ -1,15 +1,11 @@
-﻿using ETL.Domain.Attributes;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace ETL.Domain.Targets.ApiTargets;
 
-[TargetType("restapi")]
-public class RestApiTargetInfo
+public class RestApiTargetInfo : ApiTargetInfoBase
 {
-    [JsonPropertyName("method")]
+    [JsonPropertyName("Method")]
     public string Method { get; set; } = "POST";
 
-    public RestApiTargetInfo()
-    {
-    }
+    public RestApiTargetInfo() { }
 }

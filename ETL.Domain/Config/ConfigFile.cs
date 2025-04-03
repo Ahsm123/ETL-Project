@@ -6,21 +6,18 @@ namespace ETL.Domain.Config;
 
 public class ConfigFile
 {
-    [JsonPropertyName("id")]
+    [JsonPropertyName("Id")]
     public string Id { get; set; }
 
-    [JsonPropertyName("sourceType")]
-    public string SourceType { get; set; }
-
-    [JsonPropertyName("sourceInfo")]
+    [JsonPropertyName("SourceInfo")]
     public SourceInfoBase SourceInfo { get; set; }
 
-    [JsonPropertyName("extractConfig")]
-    public ExtractConfig Extract { get; set; }
+    [JsonPropertyName("ExtractConfig")]
+    public ExtractConfig ExtractConfig { get; set; }
 
-    [JsonPropertyName("transformConfig")]
-    public TransformConfig Transform { get; set; }
+    [JsonPropertyName("TransformConfig")]
+    public TransformConfig TransformConfig { get; set; }
 
-    [JsonPropertyName("loadTargetConfig")]
-    public LoadTargetConfig Load { get; set; }
+    [JsonPropertyName("LoadTargetConfig")]
+    public LoadTargetConfig LoadTargetConfig { get; set; }
 }

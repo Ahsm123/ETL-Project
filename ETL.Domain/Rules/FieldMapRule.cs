@@ -4,9 +4,9 @@ namespace ETL.Domain.Rules;
 
 public class FieldMapRule
 {
-    [JsonPropertyName("sourceField")]
+    [JsonPropertyName("SourceField")]
     public string SourceField { get; set; }
 
-    [JsonPropertyName("targetField")]
+    [JsonPropertyName("TargetField")]
     public string TargetField { get; set; }
 }

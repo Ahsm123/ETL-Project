@@ -1,14 +1,13 @@
-﻿using ETL.Domain.Attributes;
+﻿using ETL.Domain.Targets.ApiTargets;
 using System.Text.Json.Serialization;
 
 namespace ETL.Domain.Sources;
 
-[SourceType("api")]
 public class RestApiSourceInfo : SourceInfoBase
 {
-    [JsonPropertyName("url")]
+    [JsonPropertyName("Url")]
     public string Url { get; set; }
-    [JsonPropertyName("headers")]
-    public Dictionary<string, string> Headers { get; set; }
 
+    [JsonPropertyName("Headers")]
+    public Dictionary<string, string> Headers { get; set; }
 }

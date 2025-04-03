@@ -5,10 +5,10 @@ namespace ETL.Domain.Model;
 
 public class TransformConfig
 {
-    [JsonPropertyName("mappings")]
+    [JsonPropertyName("Mappings")]
     public List<FieldMapRule> Mappings { get; set; }
 
-    [JsonPropertyName("filters")]
+    [JsonPropertyName("Filters")]
     public List<FilterRule> Filters { get; set; }
 }
 

@@ -23,13 +23,14 @@ public class LoadService
         };
 
         var payload = JsonSerializer.Deserialize<TransformedEvent>(json, options)
-    ?? throw new InvalidOperationException("Failed to deserialize payload.");
+            ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
-        var writer = _writerResolver.Resolve(payload.LoadTargetConfig.TargetType, _services)
-            ?? throw new InvalidOperationException($"No writer found for '{payload.LoadTargetConfig.TargetType}'");
+        // Use type directly from $type discriminator via System.Text.Json
+        var targetInfo = payload.LoadTargetConfig.TargetInfo;
 
-        await writer.WriteAsync(payload.LoadTargetConfig.TargetInfo, payload.Data);
+        var writer = _writerResolver.Resolve(targetInfo.GetType(), _services)
+            ?? throw new InvalidOperationException($"No writer found for type '{targetInfo.GetType().Name}'");
 
+        await writer.WriteAsync(targetInfo, payload.Data);
     }
-
 }

@@ -5,14 +5,8 @@ namespace ETL.Domain.Config;
 
 public class LoadTargetConfig
 {
-    [JsonPropertyName("targetType")]
-    public string TargetType { get; set; }
-
-    [JsonIgnore]
+    [JsonPropertyName("TargetInfo")]
     public TargetInfoBase TargetInfo { get; set; }
-
-    [JsonPropertyName("targetInfo")]
-    public object TargetInfoJson => TargetInfo;
 }
 
 

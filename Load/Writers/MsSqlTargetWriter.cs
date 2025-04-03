@@ -1,5 +1,4 @@
-﻿using ETL.Domain.Attributes;
-using ETL.Domain.Targets;
+﻿using ETL.Domain.Targets;
 using ETL.Domain.Targets.DbTargets;
 using System;
 using System.Collections.Generic;
@@ -9,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace Load.Writers;
 
-[TargetType("mssql")]
 public class MsSqlTargetWriter : ITargetWriter
 {
     public async Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data)

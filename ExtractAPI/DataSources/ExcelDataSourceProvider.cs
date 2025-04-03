@@ -1,12 +1,10 @@
 ﻿using ClosedXML.Excel;
-using ETL.Domain.Attributes;
 using ETL.Domain.Sources;
 using System.ComponentModel;
 using System.Text.Json;
 
 namespace ExtractAPI.DataSources;
 
-[SourceProviderType("excel")]
 public class ExcelDataSourceProvider : IDataSourceProvider
 {
     public async Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo)

@@ -4,8 +4,9 @@ namespace ETL.Domain.Sources;
 
 public class FileSourceBaseInfo : SourceInfoBase
 {
-    [JsonPropertyName("filePath")]
+    [JsonPropertyName("FilePath")]
     public string FilePath { get; set; }
-    [JsonPropertyName("fileType")]
+
+    [JsonPropertyName("FileType")]
     public string FileType { get; set; }
 }
