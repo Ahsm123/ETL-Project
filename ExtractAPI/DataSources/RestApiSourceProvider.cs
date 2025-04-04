@@ -12,6 +12,11 @@ public class RestApiSourceProvider : IDataSourceProvider
         _httpClient = httpClient;
     }
 
+    public bool CanHandle(Type sourceInfoType)
+    {
+        return sourceInfoType == typeof(RestApiSourceInfo);
+    }
+
     public async Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo)
     {
         if (sourceInfo is not RestApiSourceInfo apiInfo)

@@ -6,7 +6,6 @@ using ExtractAPI.Kafka;
 using ExtractAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-
 var baseUrl = builder.Configuration["ConfigService:BaseUrl"];
 
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
@@ -14,22 +13,25 @@ builder.Services.AddScoped<IEventDispatcher, KafkaEventDispatcher>();
 builder.Services.AddScoped<DataFieldSelectorService>();
 builder.Services.AddScoped<IDataExtractionService, DataExtractionService>();
 
+// Register config service
 builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>
 {
     client.BaseAddress = new Uri(baseUrl);
 });
 
-builder.Services.AddHttpClient<RestApiSourceProvider>();
-builder.Services.AddSingleton<RestApiSourceProvider>();
-builder.Services.AddSingleton<ExcelDataSourceProvider>();
+// Register all IDataSourceProvider implementations automatically
+var providerTypes = typeof(IDataSourceProvider).Assembly
+    .GetTypes()
+    .Where(t => typeof(IDataSourceProvider).IsAssignableFrom(t) &&
+                t is { IsClass: true, IsAbstract: false });
 
-// Register factory
-builder.Services.AddSingleton<RestApiSourceProvider>();
-builder.Services.AddSingleton<ExcelDataSourceProvider>();
-builder.Services.AddSingleton<ISourceProviderFactory, SourceProviderFactory>();
+foreach (var type in providerTypes)
+{
+    builder.Services.AddSingleton(typeof(IDataSourceProvider), type);
+}
 
-
-
+// Register resolver
+builder.Services.AddSingleton<ISourceProviderResolver, SourceProviderResolver>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

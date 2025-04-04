@@ -11,20 +11,20 @@ namespace ExtractAPI.Services;
 public class DataExtractionService : IDataExtractionService
 {
     private readonly IConfigService _configService;
-    private readonly ISourceProviderFactory _providerFactory;
+    private readonly ISourceProviderResolver _resolver;
     private readonly IEventDispatcher _eventDispatcher;
     private readonly DataFieldSelectorService _selectorService;
     private readonly ILogger<DataExtractionService> _logger;
 
     public DataExtractionService(
         IConfigService configService,
-        ISourceProviderFactory providerFactory,
+        ISourceProviderResolver resolver,
         IEventDispatcher eventDispatcher,
         DataFieldSelectorService selectorService,
         ILogger<DataExtractionService> logger)
     {
         _configService = configService;
-        _providerFactory = providerFactory;
+        _resolver = resolver;
         _eventDispatcher = eventDispatcher;
         _selectorService = selectorService;
         _logger = logger;
@@ -76,9 +76,15 @@ public class DataExtractionService : IDataExtractionService
 
     private async Task<JsonElement> GetData(ConfigFile config)
     {
-        var provider = _providerFactory.GetProvider(config.SourceInfo);
-        return await provider.GetDataAsync(config.SourceInfo);
+        var sourceInfo = config.SourceInfo;
+
+        var provider = _resolver.Resolve(sourceInfo.GetType())
+               ?? throw new InvalidOperationException($"No provider found for type {sourceInfo.GetType()}");
+
+        return await provider.GetDataAsync(sourceInfo);
     }
+
+
 
     private async Task<ConfigFile> GetConfig(string configId)
     {

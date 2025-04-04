@@ -7,6 +7,10 @@ namespace ExtractAPI.DataSources;
 
 public class ExcelDataSourceProvider : IDataSourceProvider
 {
+    public bool CanHandle(Type sourceInfoType)
+    {
+        return sourceInfoType == typeof(ExcelSourceInfo);
+    }
     public async Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo)
     {
         if (sourceInfo is not ExcelSourceInfo excelInfo)
