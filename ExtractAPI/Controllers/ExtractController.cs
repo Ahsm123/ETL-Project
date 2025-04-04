@@ -1,5 +1,4 @@
 ﻿using ETL.Domain.Events;
-using ETL.Domain.Model;
 using ExtractAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,7 +25,7 @@ public class ExtractController : ControllerBase
         try
         {
             var result = await _dataExtractionService.ExtractAsync(configId);
-            return Ok(result); 
+            return Ok(result);
         }
         catch (Exception ex)
         {

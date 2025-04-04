@@ -17,7 +17,7 @@ public class KafkaEventDispatcher : IEventDispatcher
     {
         if (@event is DataExtractedEvent dataEvent)
         {
-            var json = JsonSerializer.Serialize(dataEvent.Payload);
+            var json = JsonSerializer.Serialize(dataEvent.ExtractedEvent);
             await _kafkaProducer.PublishAsync("rawData", Guid.NewGuid().ToString(), json);
         }
     }
