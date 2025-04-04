@@ -1,14 +1,11 @@
 ﻿using ETL.Domain.Config;
+using ETL.Domain.Json;
 using ExtractAPI.Services;
 using System.Text.Json;
 
 public class ConfigService : IConfigService
 {
     private readonly HttpClient _httpClient;
-    private readonly JsonSerializerOptions _options = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
 
     public ConfigService(HttpClient httpClient)
     {
@@ -20,6 +17,6 @@ public class ConfigService : IConfigService
         var response = await _httpClient.GetAsync($"/api/ConfigFile/{id}");
         if (!response.IsSuccessStatusCode) return null;
         var json = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<ConfigFile>(json, _options);
+        return JsonSerializer.Deserialize<ConfigFile>(json, JsonOptionsFactory.Default);
     }
 }

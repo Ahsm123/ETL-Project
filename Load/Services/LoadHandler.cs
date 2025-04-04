@@ -1,4 +1,5 @@
 ﻿using ETL.Domain.Events;
+using ETL.Domain.Json;
 using Load.Writers;
 using System;
 using System.Collections.Generic;
@@ -23,12 +24,8 @@ public class LoadHandler : ILoadHandler
     }
     public async Task HandleAsync(string json)
     {
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
 
-        var payload = JsonSerializer.Deserialize<TransformedEvent>(json, options)
+        var payload = JsonSerializer.Deserialize<TransformedEvent>(json, JsonOptionsFactory.Default)
                       ?? throw new InvalidOperationException("Invalid payload.");
 
         var targetInfo = payload.LoadTargetConfig.TargetInfo;

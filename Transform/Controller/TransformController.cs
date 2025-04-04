@@ -1,5 +1,6 @@
 ﻿
 using ETL.Domain.Events;
+using ETL.Domain.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -35,12 +36,8 @@ public class TransformController : BackgroundService
         {
             try
             {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
 
-                var payload = JsonSerializer.Deserialize<ExtractedEvent>(message, options);
+                var payload = JsonSerializer.Deserialize<ExtractedEvent>(message, JsonOptionsFactory.Default);
 
                 if (payload is null)
                 {
