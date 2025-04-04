@@ -4,23 +4,28 @@ using Load.Services;
 using Load.Writers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Reflection;
 
 var builder = Host.CreateDefaultBuilder(args);
-_ = typeof(MsSqlTargetWriter).Assembly; 
+
 builder.ConfigureServices(services =>
 {
-    // Register writers
-    services.AddSingleton<ITargetWriter, MsSqlTargetWriter>();
-    services.AddSingleton<ITargetWriter, RestApiTargetWriter>(); 
+    var writerTypes = typeof(ITargetWriter).Assembly
+        .GetTypes()
+        .Where(t => typeof(ITargetWriter).IsAssignableFrom(t) &&
+                    t is { IsClass: true, IsAbstract: false });
+
+    foreach (var type in writerTypes)
+    {
+        services.AddSingleton(typeof(ITargetWriter), type);
+    }
+
     services.AddSingleton<ITargetWriterResolver, TargetWriterResolver>();
 
-    // Register services
     services.AddSingleton<IKafkaConsumer, KafkaProcessedPayloadConsumer>();
     services.AddSingleton<ILoadHandler, LoadHandler>();
 
-    // Register background worker
     services.AddHostedService<LoadWorker>();
 });
-
 
 await builder.Build().RunAsync();

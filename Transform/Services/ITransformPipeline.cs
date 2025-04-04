@@ -4,6 +4,6 @@ namespace Transform.Services;
 
 public interface ITransformPipeline
 {
-    TransformedEvent Execute(ExtractedEvent input);
+    TransformedEvent? Execute(ExtractedEvent input);
 }
 

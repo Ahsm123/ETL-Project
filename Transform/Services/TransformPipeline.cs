@@ -3,7 +3,6 @@ using ETL.Domain.Rules;
 using System.Text.Json;
 
 namespace Transform.Services;
-
 public class TransformPipeline : ITransformPipeline
 {
     private readonly FilterService _filterService;
@@ -17,11 +16,11 @@ public class TransformPipeline : ITransformPipeline
         _filterService = filterService;
     }
 
-    public TransformedEvent Execute(ExtractedEvent input)
+    public TransformedEvent? Execute(ExtractedEvent input)
     {
         if (!_filterService.ShouldInclude(
-    input.Data,
-    input.TransformConfig?.Filters ?? Enumerable.Empty<FilterRule>()))
+            input.Data,
+            input.TransformConfig?.Filters ?? Enumerable.Empty<FilterRule>()))
         {
             return null;
         }
