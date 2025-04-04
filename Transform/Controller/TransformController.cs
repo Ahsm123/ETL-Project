@@ -36,7 +36,6 @@ public class TransformController : BackgroundService
         {
             try
             {
-
                 var payload = JsonSerializer.Deserialize<ExtractedEvent>(message, JsonOptionsFactory.Default);
 
                 if (payload is null)
@@ -44,7 +43,6 @@ public class TransformController : BackgroundService
                     _logger.LogWarning("Received null payload");
                     return;
                 }
-
                     var transformed = await _transformService.TransformDataAsync(payload);
                     await _producer.ProduceAsync("processedData", Guid.NewGuid().ToString(), transformed);
 

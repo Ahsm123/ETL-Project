@@ -18,7 +18,6 @@ var builder = Host.CreateDefaultBuilder(args)
         services.AddSingleton<IKafkaConsumer>(provider =>
             new KafkaConsumer("localhost:9092", "transform-group", "rawData"));
 
-
         // Transformation pipeline
         services.AddSingleton<MappingService>(); //Stateless mapper
         services.AddSingleton<ITransformPipeline, TransformPipeline>(); //Orchestrates mapping/filtering steps
