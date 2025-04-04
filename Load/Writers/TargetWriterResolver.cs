@@ -10,41 +10,18 @@ namespace Load.Writers;
 
 public class TargetWriterResolver : ITargetWriterResolver
 {
-    private readonly Dictionary<Type, Type> _map;
+    private readonly IEnumerable<ITargetWriter> _writers;
 
-    public TargetWriterResolver()
+    public TargetWriterResolver(IEnumerable<ITargetWriter> writers)
     {
-        _map = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(a => a.GetTypes())
-            .Where(t => typeof(ITargetWriter).IsAssignableFrom(t) && !t.IsAbstract)
-            .ToDictionary(
-                writerType => GetHandledTargetType(writerType),
-                writerType => writerType
-            );
+        _writers = writers;
     }
 
-    public ITargetWriter? Resolve(Type targetInfoType, IServiceProvider services)
+    public ITargetWriter? Resolve(Type targetInfoType, IServiceProvider _)
     {
-        foreach (var kv in _map)
-        {
-            if (kv.Key.IsAssignableFrom(targetInfoType))
-            {
-                return services.GetService(kv.Value) as ITargetWriter;
-            }
-        }
-
-        return null;
-    }
-
-    private static Type GetHandledTargetType(Type writerType)
-    {
-        // Default to MsSqlTargetInfo or base type
-        // You can replace this with attribute-based config if needed
-        if (writerType == typeof(MsSqlTargetWriter))
-            return typeof(MsSqlTargetInfo);
-
-        return typeof(TargetInfoBase);
+        return _writers.FirstOrDefault(writer => writer.CanHandle(targetInfoType));
     }
 }
+
 
 

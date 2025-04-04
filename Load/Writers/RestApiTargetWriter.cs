@@ -1,5 +1,5 @@
-﻿using ETL.Domain.Targets;
-using ETL.Domain.Targets.DbTargets;
+﻿using ETL.Domain.Targets.ApiTargets;
+using ETL.Domain.Targets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,17 +8,17 @@ using System.Threading.Tasks;
 
 namespace Load.Writers;
 
-public class MsSqlTargetWriter : ITargetWriter
+public class RestApiTargetWriter : ITargetWriter
 {
     public bool CanHandle(Type targetInfoType)
-        => typeof(MsSqlTargetInfo).IsAssignableFrom(targetInfoType);
+        => typeof(RestApiTargetInfo).IsAssignableFrom(targetInfoType);
 
     public async Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data)
     {
-        if (targetInfo is not MsSqlTargetInfo sqlInfo)
+        if (targetInfo is not RestApiTargetInfo apiInfo)
             throw new ArgumentException("Invalid target info type");
 
-        Console.WriteLine($"[SQL] Writing to {sqlInfo.TargetTable} with bulk insert = {sqlInfo.UseBulkInsert}");
+        Console.WriteLine($"[API] Sending {apiInfo.Method} to {apiInfo.Url}");
         await Task.CompletedTask;
     }
 }

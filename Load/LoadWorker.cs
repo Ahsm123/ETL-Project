@@ -14,16 +14,16 @@ public class LoadWorker : BackgroundService
 {
     private readonly ILogger<LoadWorker> _logger;
     private readonly IKafkaConsumer _kafkaConsumer;
-    private readonly LoadService _loadService;
+    private readonly ILoadHandler _loadHandler;
 
     public LoadWorker(
         ILogger<LoadWorker> logger,
         IKafkaConsumer kafkaConsumer,
-        LoadService loadService)
+        ILoadHandler loadHandler)
     {
         _logger = logger;
         _kafkaConsumer = kafkaConsumer;
-        _loadService = loadService;
+        _loadHandler = loadHandler;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -34,7 +34,7 @@ public class LoadWorker : BackgroundService
         {
             try
             {
-                await _loadService.HandleMessageAsync(message);
+                await _loadHandler.HandleAsync(message);
             }
             catch (Exception ex)
             {
@@ -45,3 +45,4 @@ public class LoadWorker : BackgroundService
         _logger.LogInformation("LoadWorker is stopping...");
     }
 }
+

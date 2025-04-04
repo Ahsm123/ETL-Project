@@ -10,4 +10,5 @@ namespace Load.Writers;
 public interface ITargetWriter
 {
     Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data);
+    bool CanHandle(Type targetInfoType);
 }
