@@ -1,6 +1,5 @@
 ﻿using ETL.Domain.Config;
 using ETL.Domain.Events;
-using ETL.Domain.Sources;
 using ExtractAPI.Events;
 using ExtractAPI.ExtractedEvents;
 using ExtractAPI.Factories;
@@ -8,20 +7,20 @@ using System.Text.Json;
 
 namespace ExtractAPI.Services;
 
-public class DataExtractionService : IDataExtractionService
+public class ExtractPipeline : IExtractPipeline
 {
     private readonly IConfigService _configService;
     private readonly ISourceProviderResolver _resolver;
     private readonly IEventDispatcher _eventDispatcher;
     private readonly DataFieldSelectorService _selectorService;
-    private readonly ILogger<DataExtractionService> _logger;
+    private readonly ILogger<ExtractPipeline> _logger;
 
-    public DataExtractionService(
+    public ExtractPipeline(
         IConfigService configService,
         ISourceProviderResolver resolver,
         IEventDispatcher eventDispatcher,
         DataFieldSelectorService selectorService,
-        ILogger<DataExtractionService> logger)
+        ILogger<ExtractPipeline> logger)
     {
         _configService = configService;
         _resolver = resolver;

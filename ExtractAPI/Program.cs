@@ -11,7 +11,7 @@ var baseUrl = builder.Configuration["ConfigService:BaseUrl"];
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 builder.Services.AddScoped<IEventDispatcher, KafkaEventDispatcher>();
 builder.Services.AddScoped<DataFieldSelectorService>();
-builder.Services.AddScoped<IDataExtractionService, DataExtractionService>();
+builder.Services.AddScoped<IExtractPipeline, ExtractPipeline>();
 
 // Register config service
 builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>

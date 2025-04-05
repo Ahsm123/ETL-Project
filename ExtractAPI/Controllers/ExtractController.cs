@@ -8,14 +8,14 @@ namespace ExtractAPI.Controllers;
 [Route("api/[controller]")]
 public class ExtractController : ControllerBase
 {
-    private readonly IDataExtractionService _dataExtractionService;
+    private readonly IExtractPipeline _extractPipeline;
     private readonly ILogger<ExtractController> _logger;
 
     public ExtractController(
-        IDataExtractionService dataExtractionService,
+        IExtractPipeline extractPipeline,
         ILogger<ExtractController> logger)
     {
-        _dataExtractionService = dataExtractionService;
+        _extractPipeline = extractPipeline;
         _logger = logger;
     }
 
@@ -24,7 +24,7 @@ public class ExtractController : ControllerBase
     {
         try
         {
-            var result = await _dataExtractionService.ExtractAsync(configId);
+            var result = await _extractPipeline.ExtractAsync(configId);
             return Ok(result);
         }
         catch (Exception ex)
