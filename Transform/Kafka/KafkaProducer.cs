@@ -1,14 +1,15 @@
-﻿    using Confluent.Kafka;
-    using Microsoft.Extensions.Configuration;
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
+﻿using Confluent.Kafka;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Transform.Kafka.Interfaces;
 
-    namespace Transform.Kafka
-    {
-        public class KafkaProducer : IKafkaProducer
+namespace Transform.Kafka
+{
+    public class KafkaProducer : IKafkaProducer
         {
             private readonly IProducer<string, string> _producer;
             public KafkaProducer(IConfiguration config)

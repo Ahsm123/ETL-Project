@@ -1,6 +1,6 @@
 ﻿using ETL.Domain.Events;
 
-namespace Transform.Services;
+namespace Transform.Services.Interfaces;
 
 public interface ITransformPipeline
 {

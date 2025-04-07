@@ -1,7 +1,7 @@
 ﻿using ETL.Domain.Sources;
-using ExtractAPI.DataSources;
+using ExtractAPI.DataSources.Interfaces;
 
-namespace ExtractAPI.Factories;
+namespace ExtractAPI.Factories.Interfaces;
 
 public interface ISourceProviderResolver
 {

@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using Load.Kafka.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;

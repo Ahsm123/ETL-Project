@@ -1,4 +1,4 @@
-﻿namespace ExtractAPI.Kafka
+﻿namespace ExtractAPI.Kafka.Interfaces
 {
     public interface IKafkaProducer
     {

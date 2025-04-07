@@ -3,7 +3,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Transform.Controller;
 using Transform.Kafka;
+using Transform.Kafka.Interfaces;
 using Transform.Services;
+using Transform.Services.Interfaces;
 
 var builder = Host.CreateDefaultBuilder(args)
     .ConfigureLogging(logging =>

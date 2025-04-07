@@ -1,9 +1,13 @@
 using ETL.Domain.Sources;
-using ExtractAPI.DataSources;
+using ExtractAPI.DataSources.Interfaces;
 using ExtractAPI.Events;
+using ExtractAPI.Events.Interfaces;
 using ExtractAPI.Factories;
+using ExtractAPI.Factories.Interfaces;
 using ExtractAPI.Kafka;
+using ExtractAPI.Kafka.Interfaces;
 using ExtractAPI.Services;
+using ExtractAPI.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 var baseUrl = builder.Configuration["ConfigService:BaseUrl"];

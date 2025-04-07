@@ -1,4 +1,4 @@
-﻿namespace Load.Writers;
+﻿namespace Load.Writers.Interfaces;
 
 public interface ITargetWriterResolver
 {

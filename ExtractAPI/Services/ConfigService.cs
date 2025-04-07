@@ -1,6 +1,6 @@
 ﻿using ETL.Domain.Config;
 using ETL.Domain.Json;
-using ExtractAPI.Services;
+using ExtractAPI.Services.Interfaces;
 using System.Text.Json;
 
 public class ConfigService : IConfigService

@@ -1,5 +1,6 @@
 ﻿using ETL.Domain.Sources;
-using ExtractAPI.DataSources;
+using ExtractAPI.DataSources.Interfaces;
+using ExtractAPI.Factories.Interfaces;
 
 namespace ExtractAPI.Factories;
 

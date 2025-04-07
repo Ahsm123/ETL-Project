@@ -1,4 +1,4 @@
-﻿namespace ExtractAPI.Events;
+﻿namespace ExtractAPI.Events.Interfaces;
 
 public interface IEventDispatcher
 {

@@ -1,7 +1,10 @@
 ﻿using Load;
 using Load.Kafka;
+using Load.Kafka.Interfaces;
 using Load.Services;
+using Load.Services.Interfaces;
 using Load.Writers;
+using Load.Writers.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
