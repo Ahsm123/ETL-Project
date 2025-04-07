@@ -1,6 +1,6 @@
 ﻿using Confluent.Kafka;
 using ExtractAPI.Kafka.Interfaces;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace ExtractAPI.Kafka;
 
@@ -8,16 +8,18 @@ public class KafkaProducer : IKafkaProducer, IDisposable
 {
     private readonly IProducer<string, string> _producer;
 
-    public KafkaProducer(IConfiguration config)
+    public KafkaProducer(IOptions<KafkaSettings> kafkaSettings)
     {
+        var settings = kafkaSettings.Value;
+
         var kafkaConfig = new ProducerConfig
         {
-            BootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092",
-            EnableIdempotence = true,
-            Acks = Acks.All,
-            MessageSendMaxRetries = 3,
-            RetryBackoffMs = 100,
-            CompressionType = CompressionType.Snappy 
+            BootstrapServers = settings.BootstrapServers,
+            EnableIdempotence = settings.EnableIdempotence,
+            Acks = Enum.TryParse<Acks>(settings.Acks, true, out var acks) ? acks : Acks.All,
+            MessageSendMaxRetries = settings.MessageSendMaxRetries,
+            RetryBackoffMs = settings.RetryBackoffMs,
+            CompressionType = Enum.TryParse<CompressionType>(settings.CompressionType, true, out var compression) ? compression : CompressionType.Snappy
         };
 
         _producer = new ProducerBuilder<string, string>(kafkaConfig).Build();
