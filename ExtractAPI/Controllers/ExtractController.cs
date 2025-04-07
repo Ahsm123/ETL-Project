@@ -22,15 +22,42 @@ public class ExtractController : ControllerBase
     [HttpPost("{configId}")]
     public async Task<ActionResult<ExtractResultEvent>> Trigger(string configId)
     {
+        if (string.IsNullOrWhiteSpace(configId))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = "Config ID cannot be null or empty.",
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
+
         try
         {
             var result = await _extractPipeline.ExtractAsync(configId);
+
+            if (result == null)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "Not Found",
+                    Detail = $"No config found or extraction failed for config ID: {configId}",
+                    Status = StatusCodes.Status404NotFound
+                });
+
+            }
+
             return Ok(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Fejl under extract for config med ID: {ConfigId}", configId);
-            return BadRequest(new { error = ex.Message });
+            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+            {
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred during extraction.",
+                Status = StatusCodes.Status500InternalServerError
+            });
         }
     }
 

@@ -1,7 +1,6 @@
-﻿namespace ExtractAPI.Kafka
+﻿namespace ExtractAPI.Kafka;
+
+public interface IKafkaProducer
 {
-    public interface IKafkaProducer
-    {
-        Task PublishAsync(string topic, string key, string jsonPayload);
-    }
+    Task PublishAsync(string topic, string key, string jsonPayload);
 }
