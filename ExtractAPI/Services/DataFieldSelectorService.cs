@@ -4,9 +4,13 @@ namespace ExtractAPI.Services;
 
 public class DataFieldSelectorService
 {
-    // Filtrer dataen baseret på de properties, der er specificeret i config
     public IEnumerable<Dictionary<string, object>> FilterFields(JsonElement data, List<string> fields)
     {
+        if(fields == null || fields.Count == 0)
+        {
+            return Enumerable.Empty<Dictionary<string, object>>();
+        }
+
         var result = new List<Dictionary<string, object>>();
 
         foreach (var item in data.EnumerateArray())
@@ -17,19 +21,24 @@ public class DataFieldSelectorService
             {
                 if (item.TryGetProperty(field, out var value))
                 {
-                    filteredItem[field] = value.ValueKind switch
-                    {
-                        JsonValueKind.Number => value.GetDouble(),
-                        JsonValueKind.String => value.GetString() ?? string.Empty,
-                        JsonValueKind.True => true,
-                        JsonValueKind.False => false,
-                        _ => value.ToString() ?? string.Empty
-                    };
+                    filteredItem[field] = ConvertValue(value);
                 }
             }
 
             result.Add(filteredItem);
         }
         return result;
+    }
+
+    private static object ConvertValue(JsonElement value)
+    {
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number => value.GetDouble(),
+            JsonValueKind.String => value.GetString() ?? string.Empty,
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => value.ToString() ?? string.Empty
+        };
     }
 }
