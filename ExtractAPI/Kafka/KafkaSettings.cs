@@ -1,7 +1,7 @@
 ﻿namespace ExtractAPI.Kafka;
 
-public class KafkaSettings
-{
+    public class KafkaSettings
+    {
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string RawDataTopic { get; set; } = "rawData";
     public bool EnableIdempotence { get; set; } = true;

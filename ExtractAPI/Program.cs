@@ -12,6 +12,8 @@ using ExtractAPI.Services.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 var baseUrl = builder.Configuration["ConfigService:BaseUrl"];
 
+builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
+
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 builder.Services.AddScoped<IEventDispatcher, KafkaEventDispatcher>();
 builder.Services.AddScoped<DataFieldSelectorService>();
