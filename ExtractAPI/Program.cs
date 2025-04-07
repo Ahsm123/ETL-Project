@@ -17,6 +17,11 @@ builder.Services.AddScoped<IEventDispatcher, KafkaEventDispatcher>();
 builder.Services.AddScoped<DataFieldSelectorService>();
 builder.Services.AddScoped<IExtractPipeline, ExtractPipeline>();
 
+// Kafka settings
+builder.Services.Configure<KafkaSettings>(
+    builder.Configuration.GetSection("Kafka"));
+
+
 // Register config service
 builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>
 {
