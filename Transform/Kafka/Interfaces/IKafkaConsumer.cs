@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 
-namespace Transform.Kafka;
+namespace Transform.Kafka.Interfaces;
 
 public interface IKafkaConsumer
 {
-    Task ConsumeAsync(CancellationToken cancellationToken, Func<string,Task> onMessageReceivedAsync);
+    Task ConsumeAsync(CancellationToken cancellationToken, Func<string, Task> onMessageReceivedAsync);
 }

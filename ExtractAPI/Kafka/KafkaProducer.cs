@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using ExtractAPI.Kafka.Interfaces;
 using Microsoft.Extensions.Configuration;
 
 namespace ExtractAPI.Kafka;

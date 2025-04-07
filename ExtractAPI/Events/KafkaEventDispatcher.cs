@@ -1,6 +1,7 @@
 ﻿
+using ExtractAPI.Events.Interfaces;
 using ExtractAPI.ExtractedEvents;
-using ExtractAPI.Kafka;
+using ExtractAPI.Kafka.Interfaces;
 using System.Text.Json;
 
 namespace ExtractAPI.Events;

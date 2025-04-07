@@ -1,6 +1,7 @@
 ﻿using ETL.Domain.Events;
 using ETL.Domain.Rules;
 using System.Text.Json;
+using Transform.Services.Interfaces;
 
 namespace Transform.Services;
 public class TransformPipeline : ITransformPipeline

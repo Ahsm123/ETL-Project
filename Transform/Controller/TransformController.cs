@@ -4,8 +4,8 @@ using ETL.Domain.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using Transform.Kafka;
-using Transform.Services;
+using Transform.Kafka.Interfaces;
+using Transform.Services.Interfaces;
 
 namespace Transform.Controller;
 

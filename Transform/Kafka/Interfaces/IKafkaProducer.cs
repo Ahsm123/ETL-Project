@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Transform.Kafka
+namespace Transform.Kafka.Interfaces
 {
     public interface IKafkaProducer
     {

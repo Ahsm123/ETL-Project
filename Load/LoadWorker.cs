@@ -1,5 +1,5 @@
-﻿using Load.Kafka;
-using Load.Services;
+﻿using Load.Kafka.Interfaces;
+using Load.Services.Interfaces;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 

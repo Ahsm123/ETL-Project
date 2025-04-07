@@ -1,6 +1,6 @@
 ﻿using ETL.Domain.Events;
 
-namespace ExtractAPI.Services;
+namespace ExtractAPI.Services.Interfaces;
 public interface IExtractPipeline
 {
     Task<ExtractResultEvent> ExtractAsync(string configId);

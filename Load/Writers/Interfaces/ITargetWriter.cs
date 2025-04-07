@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Load.Writers;
+namespace Load.Writers.Interfaces;
 
 public interface ITargetWriter
 {

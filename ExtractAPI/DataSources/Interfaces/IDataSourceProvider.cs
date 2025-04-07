@@ -1,7 +1,7 @@
 ﻿using ETL.Domain.Sources;
 using System.Text.Json;
 
-namespace ExtractAPI.DataSources;
+namespace ExtractAPI.DataSources.Interfaces;
 
 public interface IDataSourceProvider
 {

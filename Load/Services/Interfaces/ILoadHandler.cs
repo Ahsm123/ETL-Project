@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Load.Services;
+namespace Load.Services.Interfaces;
 
 public interface ILoadHandler
 {
