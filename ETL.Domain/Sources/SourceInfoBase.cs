@@ -10,7 +10,7 @@ namespace ETL.Domain.Sources;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(RestApiSourceInfo), "api")]
 [JsonDerivedType(typeof(ExcelSourceInfo), "excel")]
-[JsonDerivedType(typeof(DbSourceBaseInfo), "db")]
+[JsonDerivedType(typeof(MySQLSourceInfo), "mysql")]
 public abstract class SourceInfoBase
 {
 }
