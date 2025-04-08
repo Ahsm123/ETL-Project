@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace ETL.Domain.Sources;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(RestApiSourceInfo), "api")]
+[JsonDerivedType(typeof(RestApiSourceInfo), "restapi")]
 [JsonDerivedType(typeof(ExcelSourceInfo), "excel")]
 [JsonDerivedType(typeof(MySQLSourceInfo), "mysql")]
+[JsonDerivedType(typeof(MsSqlSourceInfo), "mssql")]
 public abstract class SourceInfoBase
 {
 }
