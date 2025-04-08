@@ -9,18 +9,18 @@ using Transform.Services.Interfaces;
 
 namespace Transform.Controller;
 
-public class TransformController : BackgroundService
+public class TransformWorker : BackgroundService
 {
     private readonly IKafkaConsumer _consumer;
     private readonly IKafkaProducer _producer;
     private readonly ITransformService<string> _transformService;
-    private readonly ILogger<TransformController> _logger;
+    private readonly ILogger<TransformWorker> _logger;
 
-    public TransformController(
+    public TransformWorker(
         IKafkaConsumer consumer,
         IKafkaProducer producer,
         ITransformService<string> transformService,
-        ILogger<TransformController> logger)
+        ILogger<TransformWorker> logger)
     {
         _consumer = consumer;
         _producer = producer;
@@ -53,7 +53,6 @@ public class TransformController : BackgroundService
                     _logger.LogError(ex, "Error transforming payload");
                 }
             });
-
 
         }
     }

@@ -26,7 +26,7 @@ var builder = Host.CreateDefaultBuilder(args)
         services.AddSingleton<ITransformService<string>, TransformService>(); //Coordinates entire process
         services.AddSingleton<FilterService>(); //Stateless filter
         // Background service to start consuming
-        services.AddHostedService<TransformController>();
+        services.AddHostedService<TransformWorker>();
     });
 
 await builder.Build().RunAsync();

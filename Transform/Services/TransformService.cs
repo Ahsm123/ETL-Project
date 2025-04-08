@@ -19,9 +19,9 @@ public class TransformService : ITransformService<string>
 
     public Task<string> TransformDataAsync(ExtractedEvent input)
     {
-        var processed = _pipeline.Execute(input);
+        var processed = _pipeline.Run(input);
 
-        var resultToSerialize = new TransformedEvent
+        var result = new TransformedEvent
         {
             PipelineId = processed.PipelineId,
             LoadTargetConfig = processed.LoadTargetConfig,
@@ -35,6 +35,6 @@ public class TransformService : ITransformService<string>
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
-        return Task.FromResult(JsonSerializer.Serialize(resultToSerialize, options));
+        return Task.FromResult(JsonSerializer.Serialize(result, options));
     }
 }

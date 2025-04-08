@@ -17,7 +17,7 @@ public class TransformPipeline : ITransformPipeline
         _filterService = filterService;
     }
 
-    public TransformedEvent? Execute(ExtractedEvent input)
+    public TransformedEvent? Run(ExtractedEvent input)
     {
         if (!_filterService.ShouldInclude(
             input.Data,
@@ -25,7 +25,6 @@ public class TransformPipeline : ITransformPipeline
         {
             return null;
         }
-
 
         var mapped = _mappingService.Apply(input.Data, input.TransformConfig?.Mappings ?? new());
 
