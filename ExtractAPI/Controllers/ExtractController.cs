@@ -20,7 +20,7 @@ public class ExtractController : ControllerBase
     }
 
     [HttpPost("{configId}")]
-    public async Task<ActionResult<ExtractResultEvent>> Trigger(string configId)
+    public async Task<ActionResult<ExtractResultEvent>> TriggerExtractionAsync(string configId)
     {
         if (string.IsNullOrWhiteSpace(configId))
         {
@@ -34,13 +34,13 @@ public class ExtractController : ControllerBase
 
         try
         {
-            var result = await _extractPipeline.ExtractAsync(configId);
+            var result = await _extractPipeline.RunPipelineAsync(configId);
 
             if (result == null)
             {
                 return NotFound(new ProblemDetails
                 {
-                    Title = "Not Found",
+                    Title = "Extraction failed",
                     Detail = $"No config found or extraction failed for config ID: {configId}",
                     Status = StatusCodes.Status404NotFound
                 });
