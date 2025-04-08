@@ -1,6 +1,6 @@
 ﻿using ETL.Domain.Targets;
 using ETL.Domain.Targets.DbTargets;
-using Load.Writers.Interfaces;
+using Load.Interfaces;
 
 namespace Load.Writers;
 

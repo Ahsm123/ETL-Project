@@ -1,6 +1,6 @@
 ﻿using ETL.Domain.Config;
 using ETL.Domain.Json;
-using ExtractAPI.Services.Interfaces;
+using ExtractAPI.Interfaces;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -25,7 +25,7 @@ public class ConfigService : IConfigService
 
         try
         {
-            var response = await _httpClient.GetAsync($"/api/ConfigFile/{id}");
+            var response = await _httpClient.GetAsync($"/api/Pipeline/{id}");
 
             if (!response.IsSuccessStatusCode)
             {

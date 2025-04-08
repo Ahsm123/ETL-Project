@@ -1,36 +1,30 @@
 using ETL.Domain.Sources;
-using ExtractAPI.DataSources.Interfaces;
-using ExtractAPI.Events;
-using ExtractAPI.Events.Interfaces;
-using ExtractAPI.Factories;
-using ExtractAPI.Factories.Interfaces;
+using ExtractAPI.Interfaces;
 using ExtractAPI.Kafka;
 using ExtractAPI.Kafka.Interfaces;
+using ExtractAPI.Messaging;
 using ExtractAPI.Services;
-using ExtractAPI.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Config base URL for ConfigService
 var baseUrl = builder.Configuration["ConfigService:BaseUrl"];
 
-builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
+// Register messaging 
+builder.Services.AddSingleton<IMessagePublisher, KafkaMessagePublisher>();
+builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
 
-builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
-builder.Services.AddScoped<IEventDispatcher, KafkaEventDispatcher>();
-builder.Services.AddScoped<DataFieldSelectorService>();
+// Register pipeline services
 builder.Services.AddScoped<IExtractPipeline, ExtractPipeline>();
+builder.Services.AddScoped<DataFieldSelectorService>();
 
-// Kafka settings
-builder.Services.Configure<KafkaSettings>(
-    builder.Configuration.GetSection("Kafka"));
-
-
-// Register config service
+// Register config service with HttpClient
 builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>
 {
     client.BaseAddress = new Uri(baseUrl);
 });
 
-// Register all IDataSourceProvider implementations automatically
+// Automatically register all IDataSourceProvider implementations
 var providerTypes = typeof(IDataSourceProvider).Assembly
     .GetTypes()
     .Where(t => typeof(IDataSourceProvider).IsAssignableFrom(t) &&
@@ -41,7 +35,7 @@ foreach (var type in providerTypes)
     builder.Services.AddSingleton(typeof(IDataSourceProvider), type);
 }
 
-// Register resolver
+// Register the provider resolver
 builder.Services.AddSingleton<ISourceProviderResolver, SourceProviderResolver>();
 
 builder.Services.AddControllers();

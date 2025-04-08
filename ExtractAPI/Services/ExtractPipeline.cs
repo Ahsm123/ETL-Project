@@ -1,9 +1,7 @@
 ﻿using ETL.Domain.Config;
 using ETL.Domain.Events;
-using ExtractAPI.Events.Interfaces;
-using ExtractAPI.ExtractedEvents;
-using ExtractAPI.Factories.Interfaces;
-using ExtractAPI.Services.Interfaces;
+using ExtractAPI.Interfaces;
+using ExtractAPI.Models;
 using System.Text.Json;
 
 namespace ExtractAPI.Services;

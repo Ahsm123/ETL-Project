@@ -1,18 +1,15 @@
-﻿using Load;
-using Load.Kafka;
-using Load.Kafka.Interfaces;
+﻿using Load.Interfaces;
+using Load.Messaging;
 using Load.Services;
-using Load.Services.Interfaces;
-using Load.Writers;
-using Load.Writers.Interfaces;
+using Load.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Reflection;
 
 var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureServices(services =>
 {
+    // Dynamisk registrering af alle ITargetWriter-implementeringer med constructor-injektion
     var writerTypes = typeof(ITargetWriter).Assembly
         .GetTypes()
         .Where(t => typeof(ITargetWriter).IsAssignableFrom(t) &&
@@ -20,14 +17,14 @@ builder.ConfigureServices(services =>
 
     foreach (var type in writerTypes)
     {
-        services.AddSingleton(typeof(ITargetWriter), type);
+        services.AddSingleton(typeof(ITargetWriter), serviceProvider =>
+            ActivatorUtilities.CreateInstance(serviceProvider, type));
     }
 
+    // Registrér resten af services
     services.AddSingleton<ITargetWriterResolver, TargetWriterResolver>();
-
-    services.AddSingleton<IKafkaConsumer, KafkaProcessedPayloadConsumer>();
+    services.AddSingleton<IMessageListener, KafkaMessageListener>();
     services.AddSingleton<ILoadHandler, LoadHandler>();
-
     services.AddHostedService<LoadWorker>();
 });
 

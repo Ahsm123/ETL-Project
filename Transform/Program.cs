@@ -1,32 +1,31 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Transform.Controller;
-using Transform.Kafka;
-using Transform.Kafka.Interfaces;
+using Transform.Interfaces;
+using Transform.Messaging;
 using Transform.Services;
-using Transform.Services.Interfaces;
+using Transform.Workers;
 
 var builder = Host.CreateDefaultBuilder(args)
     .ConfigureLogging(logging =>
     {
         logging.ClearProviders();
-        logging.AddConsole(); //Console logging
+        logging.AddConsole();
     })
-    .ConfigureServices((hostContext, services) =>
+    .ConfigureServices((context, services) =>
     {
-        // Kafka dependencies
-        services.AddSingleton<IKafkaProducer, KafkaProducer>();
-        services.AddSingleton<IKafkaConsumer>(provider =>
-            new KafkaConsumer("localhost:9092", "transform-group", "rawData"));
+        // Infrastructure
+        services.AddSingleton<IMessageListener, KafkaMessageListener>();
+        services.AddSingleton<IMessagePublisher, KafkaMessagePublisher>();
 
         // Transformation pipeline
-        services.AddSingleton<MappingService>(); //Stateless mapper
-        services.AddSingleton<ITransformPipeline, TransformPipeline>(); //Orchestrates mapping/filtering steps
-        services.AddSingleton<ITransformService<string>, TransformService>(); //Coordinates entire process
-        services.AddSingleton<FilterService>(); //Stateless filter
-        // Background service to start consuming
-        services.AddHostedService<TransformController>();
+        services.AddSingleton<FilterService>();
+        services.AddSingleton<MappingService>();
+        services.AddSingleton<ITransformPipeline, TransformPipeline>();
+        services.AddSingleton<ITransformService<string>, TransformService>();
+
+        // Worker
+        services.AddHostedService<TransformWorker>();
     });
 
 await builder.Build().RunAsync();
