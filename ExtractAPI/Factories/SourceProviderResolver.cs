@@ -1,20 +1,21 @@
-﻿using ETL.Domain.Sources;
+﻿using ETLDomain.Resolver;
 using ExtractAPI.DataSources.Interfaces;
 using ExtractAPI.Factories.Interfaces;
 
-namespace ExtractAPI.Factories;
-
 public class SourceProviderResolver : ISourceProviderResolver
 {
-    private readonly IEnumerable<IDataSourceProvider> _providers;
+    private readonly TypeHandlerResolver<IDataSourceProvider> _resolver;
 
     public SourceProviderResolver(IEnumerable<IDataSourceProvider> providers)
     {
-        _providers = providers;
+        _resolver = new TypeHandlerResolver<IDataSourceProvider>(
+            providers,
+            (provider, type) => provider.CanHandle(type)
+        );
     }
 
     public IDataSourceProvider? Resolve(Type sourceInfoType)
     {
-        return _providers.FirstOrDefault(p => p.CanHandle(sourceInfoType));
+        return _resolver.Resolve(sourceInfoType);
     }
 }
