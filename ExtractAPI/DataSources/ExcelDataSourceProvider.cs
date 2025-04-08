@@ -1,6 +1,6 @@
 ﻿using ClosedXML.Excel;
 using ETL.Domain.Sources;
-using ExtractAPI.DataSources.Interfaces;
+using ExtractAPI.Interfaces;
 using System.ComponentModel;
 using System.Text.Json;
 

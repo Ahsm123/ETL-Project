@@ -1,6 +1,6 @@
 ﻿using ETL.Domain.Events;
 
-namespace ExtractAPI.ExtractedEvents;
+namespace ExtractAPI.Models;
 
 public class DataExtractedEvent
 {

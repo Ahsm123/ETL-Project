@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using ETL.Domain.Sources;
-using ExtractAPI.DataSources.Interfaces;
+using ExtractAPI.Interfaces;
 
 namespace ExtractAPI.DataSources;
 

@@ -1,7 +1,7 @@
 ﻿using ETL.Domain.Events;
+using ETL.Domain.Json;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Transform.Interfaces;
 
 namespace Transform.Services;
@@ -21,6 +21,12 @@ public class TransformService : ITransformService<string>
     {
         var processed = _pipeline.Run(input);
 
+        if (processed is null)
+        {
+            _logger.LogWarning("Payload {Id} was filtered out by the pipeline", input.Id);
+            return Task.FromResult("{}");
+        }
+
         var result = new TransformedEvent
         {
             PipelineId = processed.PipelineId,
@@ -28,13 +34,6 @@ public class TransformService : ITransformService<string>
             Data = processed.Data
         };
 
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = false,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
-
-        return Task.FromResult(JsonSerializer.Serialize(result, options));
+        return Task.FromResult(JsonSerializer.Serialize(result, JsonOptionsFactory.Default));
     }
 }

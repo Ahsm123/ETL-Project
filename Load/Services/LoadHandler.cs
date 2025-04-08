@@ -24,15 +24,25 @@ public class LoadHandler : ILoadHandler
     }
     public async Task HandleAsync(string json)
     {
+        if (string.IsNullOrWhiteSpace(json) || json == "{}")
+        {
+            throw new InvalidOperationException("Received empty or invalid payload.");
+        }
 
-        var payload = JsonSerializer.Deserialize<TransformedEvent>(json, JsonOptionsFactory.Default)
-                      ?? throw new InvalidOperationException("Invalid payload.");
+        var payload = JsonSerializer.Deserialize<TransformedEvent>(json, JsonOptionsFactory.Default);
+
+        if (payload == null)
+            throw new InvalidOperationException("Deserialized payload was null.");
+
+        if (payload.LoadTargetConfig?.TargetInfo == null)
+            throw new InvalidOperationException("TargetInfo is missing from payload.");
 
         var targetInfo = payload.LoadTargetConfig.TargetInfo;
 
         var writer = _targetWriterResolver.Resolve(targetInfo.GetType(), _serviceProvider)
-                     ?? throw new InvalidOperationException($"No writer found for type '{targetInfo.GetType()}'");
+            ?? throw new InvalidOperationException($"No writer found for type '{targetInfo.GetType()}'");
 
         await writer.WriteAsync(targetInfo, payload.Data);
     }
+
 }

@@ -1,6 +1,6 @@
 ﻿using ETL.Domain.Config;
 
-namespace ExtractAPI.Services.Interfaces;
+namespace ExtractAPI.Interfaces;
 
 public interface IConfigService
 {

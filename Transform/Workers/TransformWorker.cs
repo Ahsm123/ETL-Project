@@ -43,9 +43,16 @@ public class TransformWorker : BackgroundService
                 }
 
                 var transformed = await _transformService.TransformDataAsync(payload);
-                await _publisher.PublishAsync("processedData", Guid.NewGuid().ToString(), transformed);
 
+                if (string.IsNullOrWhiteSpace(transformed) || transformed == "{}")
+                {
+                    _logger.LogInformation("Skipping filtered/empty payload with ID {Id}", payload.Id);
+                    return;
+                }
+
+                await _publisher.PublishAsync("processedData", Guid.NewGuid().ToString(), transformed);
                 _logger.LogInformation("Processed payload with ID {Id}", payload.Id);
+
             }
             catch (Exception ex)
             {
