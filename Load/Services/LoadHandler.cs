@@ -1,7 +1,6 @@
 ﻿using ETL.Domain.Events;
 using ETL.Domain.Json;
-using Load.Services.Interfaces;
-using Load.Writers.Interfaces;
+using Load.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;

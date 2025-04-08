@@ -1,18 +1,15 @@
-﻿using Load;
-using Load.Kafka;
-using Load.Kafka.Interfaces;
+﻿using Load.Interfaces;
+using Load.Messaging;
 using Load.Services;
-using Load.Services.Interfaces;
-using Load.Writers;
-using Load.Writers.Interfaces;
+using Load.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Reflection;
 
 var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureServices(services =>
 {
+    // Register all ITargetWriter implementations
     var writerTypes = typeof(ITargetWriter).Assembly
         .GetTypes()
         .Where(t => typeof(ITargetWriter).IsAssignableFrom(t) &&
@@ -25,7 +22,9 @@ builder.ConfigureServices(services =>
 
     services.AddSingleton<ITargetWriterResolver, TargetWriterResolver>();
 
-    services.AddSingleton<IKafkaConsumer, KafkaProcessedPayloadConsumer>();
+    // Abstracted Kafka listener
+    services.AddSingleton<IMessageListener, KafkaMessageListener>();
+
     services.AddSingleton<ILoadHandler, LoadHandler>();
 
     services.AddHostedService<LoadWorker>();

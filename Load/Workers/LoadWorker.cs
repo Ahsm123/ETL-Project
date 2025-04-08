@@ -1,35 +1,34 @@
-﻿using Load.Kafka.Interfaces;
-using Load.Services.Interfaces;
+﻿using Load.Interfaces;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Load;
+namespace Load.Workers;
 
 public class LoadWorker : BackgroundService
 {
     private readonly ILogger<LoadWorker> _logger;
-    private readonly IKafkaConsumer _kafkaConsumer;
-    private readonly ILoadHandler _loadHandler;
+    private readonly IMessageListener _messageListener;
+    private readonly ILoadHandler _handler;
 
     public LoadWorker(
         ILogger<LoadWorker> logger,
-        IKafkaConsumer kafkaConsumer,
-        ILoadHandler loadHandler)
+        IMessageListener messageListener,
+        ILoadHandler handler)
     {
         _logger = logger;
-        _kafkaConsumer = kafkaConsumer;
-        _loadHandler = loadHandler;
+        _messageListener = messageListener;
+        _handler = handler;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("LoadWorker is starting...");
+        _logger.LogInformation("LoadWorker starting...");
 
-        await _kafkaConsumer.StartAsync(async (message) =>
+        await _messageListener.ListenAsync(async (msg) =>
         {
             try
             {
-                await _loadHandler.HandleAsync(message);
+                await _handler.HandleAsync(msg);
             }
             catch (Exception ex)
             {
@@ -37,7 +36,7 @@ public class LoadWorker : BackgroundService
             }
         }, stoppingToken);
 
-        _logger.LogInformation("LoadWorker is stopping...");
+        _logger.LogInformation("LoadWorker stopping...");
     }
 }
 
