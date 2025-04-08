@@ -39,4 +39,3 @@ public class LoadWorker : BackgroundService
         _logger.LogInformation("LoadWorker stopping...");
     }
 }
-

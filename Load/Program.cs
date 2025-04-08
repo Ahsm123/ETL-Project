@@ -9,7 +9,7 @@ var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureServices(services =>
 {
-    // Register all ITargetWriter implementations
+    // Dynamisk registrering af alle ITargetWriter-implementeringer med constructor-injektion
     var writerTypes = typeof(ITargetWriter).Assembly
         .GetTypes()
         .Where(t => typeof(ITargetWriter).IsAssignableFrom(t) &&
@@ -17,16 +17,14 @@ builder.ConfigureServices(services =>
 
     foreach (var type in writerTypes)
     {
-        services.AddSingleton(typeof(ITargetWriter), type);
+        services.AddSingleton(typeof(ITargetWriter), serviceProvider =>
+            ActivatorUtilities.CreateInstance(serviceProvider, type));
     }
 
+    // Registrér resten af services
     services.AddSingleton<ITargetWriterResolver, TargetWriterResolver>();
-
-    // Abstracted Kafka listener
     services.AddSingleton<IMessageListener, KafkaMessageListener>();
-
     services.AddSingleton<ILoadHandler, LoadHandler>();
-
     services.AddHostedService<LoadWorker>();
 });
 
