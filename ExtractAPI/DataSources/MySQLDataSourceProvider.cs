@@ -1,11 +1,11 @@
 ﻿using ETL.Domain.Sources;
-using ExtractAPI.DataSources.Interfaces;
 using MySqlConnector;
 using System.Data;
 using System.Text.Json;
 using Dapper;
 using ExtractAPI.DataSources.DatabaseQueryBuilder;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
+using ExtractAPI.Interfaces;
 
 namespace ExtractAPI.DataSources
 {

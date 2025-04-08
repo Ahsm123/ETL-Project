@@ -28,11 +28,11 @@ public class ExtractPipeline : IExtractPipeline
         _logger = logger;
     }
 
-    public async Task<ExtractResultEvent> ExtractAsync(string configId)
+    public async Task<ExtractResultEvent> RunPipelineAsync(string configId)
     {
-        var config = await GetConfig(configId);
-        var data = await GetData(config);
-        var messagesSent = await FilterAndDispatchData(config, data);
+        var config = await FetchPipelineConfig(configId);
+        var data = await FetchSourceDataAsync(config);
+        var messagesSent = await SelectFieldsAndPublishEventAsync(config, data);
 
         return new ExtractResultEvent
         {
@@ -41,7 +41,7 @@ public class ExtractPipeline : IExtractPipeline
         };
     }
 
-    private async Task<int> FilterAndDispatchData(ConfigFile config, JsonElement data)
+    private async Task<int> SelectFieldsAndPublishEventAsync(ConfigFile config, JsonElement data)
     {
         var tasks = new List<Task>();
 
@@ -51,7 +51,7 @@ public class ExtractPipeline : IExtractPipeline
 
         foreach (var item in records!)
         {
-            tasks.Add(DispatchPayload(config, item!));
+            tasks.Add(PublishExtractedEvent(config, item!));
         }
 
         await Task.WhenAll(tasks);
@@ -59,7 +59,7 @@ public class ExtractPipeline : IExtractPipeline
         return tasks.Count;
     }
 
-    private async Task DispatchPayload(ConfigFile config, Dictionary<string, object> data)
+    private async Task PublishExtractedEvent(ConfigFile config, Dictionary<string, object> data)
     {
         var payload = new ExtractedEvent
         {
@@ -72,7 +72,7 @@ public class ExtractPipeline : IExtractPipeline
         await _eventDispatcher.DispatchAsync(new DataExtractedEvent(payload));
     }
 
-    private async Task<JsonElement> GetData(ConfigFile config)
+    private async Task<JsonElement> FetchSourceDataAsync(ConfigFile config)
     {
         var sourceInfo = config.ExtractConfig.SourceInfo;
 
@@ -84,7 +84,7 @@ public class ExtractPipeline : IExtractPipeline
 
 
 
-    private async Task<ConfigFile> GetConfig(string configId)
+    private async Task<ConfigFile> FetchPipelineConfig(string configId)
     {
         var config = await _configService.GetByIdAsync(configId);
         if (config == null)

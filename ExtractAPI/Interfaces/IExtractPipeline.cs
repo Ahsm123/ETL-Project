@@ -3,5 +3,5 @@
 namespace ExtractAPI.Interfaces;
 public interface IExtractPipeline
 {
-    Task<ExtractResultEvent> ExtractAsync(string configId);
+    Task<ExtractResultEvent> RunPipelineAsync(string configId);
 }
