@@ -25,7 +25,7 @@ public class ConfigService : IConfigService
 
         try
         {
-            var response = await _httpClient.GetAsync($"/api/ConfigFile/{id}");
+            var response = await _httpClient.GetAsync($"/api/Pipeline/{id}");
 
             if (!response.IsSuccessStatusCode)
             {

@@ -1,6 +1,6 @@
 ﻿using ETL.Domain.Events;
 
-namespace Transform.Services.Interfaces
+namespace Transform.Interfaces
 {
     public interface ITransformService<T>
     {
