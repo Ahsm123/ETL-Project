@@ -74,7 +74,7 @@ public class ExtractPipeline : IExtractPipeline
 
     private async Task<JsonElement> GetData(ConfigFile config)
     {
-        var sourceInfo = config.SourceInfo;
+        var sourceInfo = config.ExtractConfig.SourceInfo;
 
         var provider = _resolver.Resolve(sourceInfo.GetType())
                ?? throw new InvalidOperationException($"No provider found for type {sourceInfo.GetType()}");

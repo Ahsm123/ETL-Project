@@ -129,6 +129,7 @@ public class FilterServiceTest
         // Assert
         Assert.Equal(expectedResult, result);
     }
+
     [Theory]
     [InlineData(999, false)]
     [InlineData(1000, true)]

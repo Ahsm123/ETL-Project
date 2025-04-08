@@ -9,9 +9,6 @@ public class ConfigFile
     [JsonPropertyName("Id")]
     public string Id { get; set; }
 
-    [JsonPropertyName("SourceInfo")]
-    public SourceInfoBase SourceInfo { get; set; }
-
     [JsonPropertyName("ExtractConfig")]
     public ExtractConfig ExtractConfig { get; set; }
 
