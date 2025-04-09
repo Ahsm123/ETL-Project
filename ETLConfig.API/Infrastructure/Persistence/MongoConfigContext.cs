@@ -8,10 +8,10 @@ public class MongoConfigContext
     public IMongoDatabase Database { get; }
     public IMongoCollection<RawConfigFile> ConfigCollection { get; }
 
-    public MongoConfigContext(string connectionString, string dbName, string collectionName)
+    public MongoConfigContext(MongoDbSettings settings)
     {
-        var client = new MongoClient(connectionString);
-        Database = client.GetDatabase(dbName);
-        ConfigCollection = Database.GetCollection<RawConfigFile>(collectionName);
+        var client = new MongoClient(settings.ConnectionString);
+        var database = client.GetDatabase(settings.DatabaseName);
+        ConfigCollection = database.GetCollection<RawConfigFile>(settings.CollectionName);
     }
 }
