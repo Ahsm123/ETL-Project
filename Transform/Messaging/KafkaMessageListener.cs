@@ -39,19 +39,46 @@ public class KafkaMessageListener : IMessageListener
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var result = consumer.Consume(cancellationToken);
-                _logger.LogInformation("Consumed message: {Key}", result.Message.Key);
+                try
+                {
+                    var result = consumer.Consume(cancellationToken);
 
-                await handleMessage(result.Message.Value);
+                    if (result?.Message == null)
+                    {
+                        _logger.LogWarning("Received null message from Kafka");
+                        continue;
+                    }
+
+                    _logger.LogDebug("Consumed message with key: {Key}", result.Message.Key);
+
+                    try
+                    {
+                        await handleMessage(result.Message.Value);
+                    }
+                    catch (Exception handleEx)
+                    {
+                        _logger.LogError(handleEx, "Error while handling Kafka message: {Value}", result.Message.Value);
+                    }
+                }
+                catch (ConsumeException consumeEx)
+                {
+                    _logger.LogError(consumeEx, "Kafka consumption error: {Reason}", consumeEx.Error.Reason);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unexpected error during Kafka consumption");
+                }
             }
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("Kafka listener stopping...");
+            _logger.LogInformation("Kafka listener stopping due to cancellation...");
         }
         finally
         {
             consumer.Close();
+            _logger.LogInformation("Kafka consumer closed.");
         }
     }
+
 }

@@ -2,7 +2,6 @@
 using ETL.Domain.Rules;
 using ETL.Domain.Sources;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
-using MySqlConnector.Logging;
 using System.Text;
 using System.Text.RegularExpressions;
 
