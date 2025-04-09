@@ -33,9 +33,34 @@ public class KafkaMessagePublisher : IMessagePublisher
     {
         var message = new Message<string, string> { Key = key, Value = payload };
 
-        await _producer.ProduceAsync(topic, message);
+        try
+        {
+            var deliveryResult = await _producer.ProduceAsync(topic, message);
 
-        _logger.LogInformation("Published message to {Topic} with key {Key}", topic, key);
+            _logger.LogInformation(
+                "Published message to topic '{Topic}' | Partition: {Partition}, Offset: {Offset}, Key: {Key}",
+                deliveryResult.Topic,
+                deliveryResult.Partition,
+                deliveryResult.Offset,
+                key);
+        }
+        catch (ProduceException<string, string> ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to publish message to topic '{Topic}' with key '{Key}'. Error: {Reason}",
+                topic,
+                key,
+                ex.Error.Reason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Unexpected error while publishing message to topic '{Topic}' with key '{Key}'",
+                topic,
+                key);
+        }
     }
 }
 
