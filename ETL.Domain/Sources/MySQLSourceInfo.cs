@@ -2,10 +2,8 @@
 
 namespace ETL.Domain.Sources;
 
-public class MySQLSourceInfo : SourceInfoBase
+public class MySQLSourceInfo : DbSourceBaseInfo
 {
-    [JsonPropertyName("ConnectionString")]
-    public string ConnectionString { get; set; }
 
     [JsonPropertyName("Table")]
     public string Table { get; set; }

@@ -2,7 +2,7 @@
 
 namespace ETL.Domain.Sources;
 
-public class RestApiSourceInfo : SourceInfoBase
+public class RestApiSourceInfo : ApiSourceBaseInfo
 {
     [JsonPropertyName("Method")]
     public string Method { get; set; } = "GET";

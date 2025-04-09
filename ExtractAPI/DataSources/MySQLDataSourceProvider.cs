@@ -6,6 +6,7 @@ using Dapper;
 using ExtractAPI.DataSources.DatabaseQueryBuilder;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using ExtractAPI.Interfaces;
+using ETL.Domain.Rules;
 
 namespace ExtractAPI.DataSources
 {
@@ -23,7 +24,7 @@ namespace ExtractAPI.DataSources
             return sourceInfoType == typeof(MySQLSourceInfo);
         }
 
-        public async Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo)
+        public async Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo, List<FilterRule> filters)
         {
             if (sourceInfo is not MySQLSourceInfo dbInfo)
                 throw new ArgumentException("Invalid sourceInfo: must be of type DbSourceBaseInfo");
@@ -32,7 +33,7 @@ namespace ExtractAPI.DataSources
                 throw new ArgumentException("Connection string is required");
 
             // ✅ Build query from builder
-            var (query, parameters) = _queryBuilder.BuildSelectQuery(dbInfo);
+            var (query, parameters) = _queryBuilder.BuildSelectQuery(dbInfo, filters);
 
             var result = new List<Dictionary<string, object>>();
 

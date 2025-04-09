@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using ETL.Domain.Rules;
 using ETL.Domain.Sources;
 using ExtractAPI.Interfaces;
 
@@ -18,7 +19,7 @@ public class RestApiSourceProvider : IDataSourceProvider
         return sourceInfoType == typeof(RestApiSourceInfo);
     }
 
-    public async Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo)
+    public async Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo, List<FilterRule>? filters = null)
     {
         if (sourceInfo is not RestApiSourceInfo apiInfo)
             throw new ArgumentException("SourceInfo skal være af typen ApiSourceBaseInfo", nameof(sourceInfo));

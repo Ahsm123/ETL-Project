@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using ETL.Domain.Rules;
 using ETL.Domain.Sources;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using MySqlConnector.Logging;
@@ -19,7 +20,7 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
             ["less_or_equal"] = "<=",
         };
 
-        public (string sql, DynamicParameters parameters) BuildSelectQuery(MySQLSourceInfo info)
+        public (string sql, DynamicParameters parameters) BuildSelectQuery(MySQLSourceInfo info, List<FilterRule>? filters)
         {
             if (string.IsNullOrWhiteSpace(info.Table))
                 throw new ArgumentException("Table is required");
@@ -36,13 +37,13 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
 
             sb.Append($"SELECT {selectColumns} FROM {tableName}");
 
-            if (info.FilterRules != null && info.FilterRules.Any())
+            if (filters != null && filters.Any())
             {
                 var whereClauses = new List<string>();
 
-                for (int i = 0; i < info.FilterRules.Count; i++)
+                for (int i = 0; i < filters.Count; i++)
                 {
-                    var rule = info.FilterRules[i];
+                    var rule = filters[i];
 
                     var column = SanitizeIdentifier(rule.Field);
                     var paramName = $"@p{i}";
@@ -56,6 +57,7 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
 
                 sb.Append(" WHERE " + string.Join(" AND ", whereClauses));
             }
+
 
             var finalSql = sb.ToString();
             return (finalSql, parameters);

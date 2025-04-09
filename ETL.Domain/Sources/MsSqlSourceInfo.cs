@@ -2,7 +2,7 @@
 
 namespace ETL.Domain.Sources;
 
-public class MsSqlSourceInfo : DbSourceBase
+public class MsSqlSourceInfo : DbSourceBaseInfo
 {
     [JsonPropertyName("UseTrustedConnection")]
     public bool UseTrustedConnection { get; set; } = false;

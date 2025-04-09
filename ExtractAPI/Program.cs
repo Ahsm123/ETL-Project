@@ -1,4 +1,6 @@
 using ETL.Domain.Sources;
+using ExtractAPI.DataSources.DatabaseQueryBuilder;
+using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using ExtractAPI.Interfaces;
 using ExtractAPI.Kafka;
 using ExtractAPI.Kafka.Interfaces;
@@ -34,6 +36,8 @@ foreach (var type in providerTypes)
 {
     builder.Services.AddSingleton(typeof(IDataSourceProvider), type);
 }
+
+builder.Services.AddSingleton<ISqlQueryBuilder, MySQLQueryBuilder>();
 
 // Register the provider resolver
 builder.Services.AddSingleton<ISourceProviderResolver, SourceProviderResolver>();
