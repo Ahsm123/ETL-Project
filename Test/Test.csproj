@@ -20,16 +20,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ETLConfig.API\ETLConfig.API.csproj" />
     <ProjectReference Include="..\ExtractAPI\ExtractAPI.csproj" />
     <ProjectReference Include="..\Transform\Transform.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ETLConfig.API\" />
   </ItemGroup>
 
 </Project>

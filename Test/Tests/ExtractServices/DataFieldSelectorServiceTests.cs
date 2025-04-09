@@ -1,10 +1,5 @@
 ﻿using ExtractAPI.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Test.Tests.Services;
 
@@ -38,19 +33,16 @@ public class DataFieldSelectorServiceTests
     }
 
     [Fact]
-    public void FilterFields_EmptyFields_ReturnsEmptyObjects()
+    public void FilterFields_EmptyFields_ReturnsNoResults()
     {
-        //Arrange
         var json = "[{ \"id\": 1, \"name\": \"test\" }]";
         var data = JsonSerializer.Deserialize<JsonElement>(json);
 
-        //Act
         var result = _service.FilterFields(data!, new List<string>()).ToList();
 
-        //Assert
-        Assert.Single(result);
-        Assert.Empty(result[0]);
+        Assert.Empty(result);
     }
+
 
     [Fact]
     public void FilterFields_NonExistentFields_ReturnsEmptyObjects()
