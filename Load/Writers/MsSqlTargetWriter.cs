@@ -9,7 +9,7 @@ public class MsSqlTargetWriter : ITargetWriter
     public bool CanHandle(Type targetInfoType)
         => typeof(MsSqlTargetInfo).IsAssignableFrom(targetInfoType);
 
-    public async Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data)
+    public async Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data, string? pipelineId = null)
     {
         if (targetInfo is not MsSqlTargetInfo sqlInfo)
             throw new ArgumentException("Invalid target info type");

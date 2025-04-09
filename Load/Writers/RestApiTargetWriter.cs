@@ -17,7 +17,7 @@ public class RestApiTargetWriter : ITargetWriter
     public bool CanHandle(Type targetInfoType)
         => typeof(RestApiTargetInfo).IsAssignableFrom(targetInfoType);
 
-    public async Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data)
+    public async Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data, string? pipelineId = null)
     {
         try
         {

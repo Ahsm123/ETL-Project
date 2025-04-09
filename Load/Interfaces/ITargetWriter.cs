@@ -9,6 +9,6 @@ namespace Load.Interfaces;
 
 public interface ITargetWriter
 {
-    Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data);
+    Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data, string? pipelineId = null);
     bool CanHandle(Type targetInfoType);
 }
