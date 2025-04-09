@@ -1,56 +1,46 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ETL.Domain.Rules;
 using ETL.Domain.Sources;
-using ExtractAPI.DataSources.DatabaseQueryBuilder;
 using ExtractAPI.DataSources;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ExtractAPI.DataSources.DatabaseQueryBuilder;
+using Xunit;
 
 namespace Test.Tests.DataSourceProviderTest
 {
     public class MySQLDataSourceProviderTest
     {
-        [Fact]
-        public async Task GetDataAsync_ReturnsUsersWithAgeGreaterThan30()
-        {
-            // Arrange
-            var builder = new MySQLQueryBuilder();
-            var provider = new MySQLDataSourceProvider(builder);
+        private const string ConnectionString = "Server=localhost;Port=3306;Database=mydb;Uid=user;Pwd=password;";
+        private readonly MySQLDataSourceProvider _provider = new(new MySQLQueryBuilder());
 
-            var dbInfo = new MySQLSourceInfo
+        [Fact]
+        public async Task GetDataAsync_FiltersUsersByAge()
+        {
+            var sourceInfo = new MySQLSourceInfo
             {
-                ConnectionString = "Server=localhost;Port=3306;Database=testdb;Uid=root;Pwd=root;",
+                ConnectionString = ConnectionString,
                 Table = "users",
-                Columns = new List<string> { "id", "name", "email" },
-                FilterRules = new List<FilterRule>
-            {
-                new FilterRule
-                {
-                    Field = "age",
-                    Operator = "greater_than",
-                    Value = "30"
-                }
-            },
-                Provider = "mysql"
+                Columns = new() { "id", "name", "age" }
             };
 
-            // Act
-            var result = await provider.GetDataAsync(dbInfo);
+            var filters = new List<FilterRule>
+            {
+                new FilterRule { Field = "age", Operator = "greater_than", Value = "30" }
+            };
 
-            // Assert
-            var json = result.ToString();
-            Assert.Contains("Charlie Stone", json);  // age 35
-            Assert.Contains("Eve Monroe", json);     // age 40
-            Assert.DoesNotContain("Alice Smith", json); // age 30
-            Assert.DoesNotContain("Bob Johnson", json); // age 25
+            var result = await _provider.GetDataAsync(sourceInfo, filters);
+
+            Assert.Equal(JsonValueKind.Array, result.ValueKind);
+
+            var users = result.EnumerateArray().ToList();
+
+            Assert.All(users, user =>
+                Assert.True(user.GetProperty("age").GetInt32() > 30));
+
+            Assert.Contains(users, user => user.GetProperty("name").GetString() == "Bob");
+            Assert.Contains(users, user => user.GetProperty("name").GetString() == "Charlie");
         }
     }
 }
-
