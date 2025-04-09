@@ -17,23 +17,36 @@ public class TransformService : ITransformService<string>
         _logger = logger;
     }
 
-    public Task<string> TransformDataAsync(ExtractedEvent input)
+    public async Task<string> TransformDataAsync(ExtractedEvent input)
     {
-        var processed = _pipeline.Run(input);
-
-        if (processed is null)
+        try
         {
-            _logger.LogWarning("Payload {Id} was filtered out by the pipeline", input.Id);
-            return Task.FromResult("{}");
+            var processed = _pipeline.Run(input);
+
+            if (processed is null)
+            {
+                _logger.LogWarning("Payload {Id} was filtered out by the pipeline", input.Id);
+                return "{}";
+            }
+
+            var result = new TransformedEvent
+            {
+                PipelineId = processed.PipelineId,
+                LoadTargetConfig = processed.LoadTargetConfig,
+                Data = processed.Data
+            };
+
+            return JsonSerializer.Serialize(result, JsonOptionsFactory.Default);
         }
-
-        var result = new TransformedEvent
+        catch (JsonException jsonEx)
         {
-            PipelineId = processed.PipelineId,
-            LoadTargetConfig = processed.LoadTargetConfig,
-            Data = processed.Data
-        };
-
-        return Task.FromResult(JsonSerializer.Serialize(result, JsonOptionsFactory.Default));
+            _logger.LogError(jsonEx, "JSON serialization failed for event with ID: {Id}", input.Id);
+            return "{}";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while transforming data for event with ID: {Id}", input.Id);
+            return "{}";
+        }
     }
 }

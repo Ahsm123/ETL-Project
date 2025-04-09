@@ -35,10 +35,22 @@ public class TransformWorker : BackgroundService
         {
             try
             {
-                var payload = JsonSerializer.Deserialize<ExtractedEvent>(message, JsonOptionsFactory.Default);
+                _logger.LogDebug("Received message: {Message}", message);
+
+                ExtractedEvent? payload;
+                try
+                {
+                    payload = JsonSerializer.Deserialize<ExtractedEvent>(message, JsonOptionsFactory.Default);
+                }
+                catch (JsonException jsonEx)
+                {
+                    _logger.LogError(jsonEx, "Failed to deserialize message: {Message}", message);
+                    return;
+                }
+
                 if (payload == null)
                 {
-                    _logger.LogWarning("Received null or invalid payload");
+                    _logger.LogWarning("Deserialized payload is null");
                     return;
                 }
 
@@ -46,20 +58,20 @@ public class TransformWorker : BackgroundService
 
                 if (string.IsNullOrWhiteSpace(transformed) || transformed == "{}")
                 {
-                    _logger.LogInformation("Skipping filtered/empty payload with ID {Id}", payload.Id);
+                    _logger.LogInformation("Skipping filtered or empty payload with ID {Id}", payload.Id);
                     return;
                 }
 
                 await _publisher.PublishAsync("processedData", Guid.NewGuid().ToString(), transformed);
-                _logger.LogInformation("Processed payload with ID {Id}", payload.Id);
-
+                _logger.LogInformation("Published transformed payload with ID {Id}", payload.Id);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing message");
+                _logger.LogError(ex, "Unexpected error while processing message");
             }
         }, stoppingToken);
     }
+
 }
 
 
