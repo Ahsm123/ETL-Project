@@ -82,4 +82,27 @@ public class ConfigProcessingServiceTests
         await Assert.ThrowsAsync<ValidationException>(() =>
             _service.ProcessSingleConfigAsync(parsedConfig));
     }
+
+    [Fact]
+    public async Task ValidateConfig_MissingSourceInfo_ThrowsValidationException()
+    {
+        var jsonConfig = """
+    {
+        "Id": "pipeline_no_sourceinfo",
+        "ExtractConfig": {
+            "Fields": ["name"]
+        },
+        "TransformConfig": {},
+        "LoadTargetConfig": {
+            "TargetInfo": { "$type": "mssql", "ConnectionString": "conn", "TargetTable": "Customers" }
+        }
+    }
+    """;
+
+        var parsedConfig = JsonDocument.Parse(jsonConfig).RootElement;
+
+        await Assert.ThrowsAsync<ValidationException>(() =>
+            _service.ProcessSingleConfigAsync(parsedConfig));
+    }
+
 }

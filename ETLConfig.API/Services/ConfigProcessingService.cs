@@ -78,7 +78,21 @@ public class ConfigProcessingService : IConfigProcessingService
 
     private void ValidateConfig(ConfigFile config)
     {
-        var context = new ValidationContext(config);
-        Validator.ValidateObject(config, context, validateAllProperties: true);
+        ValidateObject(config);
+        ValidateObject(config.ExtractConfig);
+        ValidateObject(config.ExtractConfig?.SourceInfo!);
+        ValidateObject(config.TransformConfig);
+        ValidateObject(config.LoadTargetConfig);
+        ValidateObject(config.LoadTargetConfig?.TargetInfo!);
     }
+
+    private static void ValidateObject(object? obj)
+    {
+        if (obj == null)
+            throw new ValidationException("Missing or null configuration section.");
+
+        var context = new ValidationContext(obj);
+        Validator.ValidateObject(obj, context, validateAllProperties: true);
+    }
+
 }
