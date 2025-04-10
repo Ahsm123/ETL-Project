@@ -44,7 +44,6 @@ public class ExtractController : ControllerBase
                     Detail = $"No config found or extraction failed for config ID: {configId}",
                     Status = StatusCodes.Status404NotFound
                 });
-
             }
 
             return Ok(result);
