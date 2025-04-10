@@ -1,7 +1,7 @@
 ﻿using ExtractAPI.Services;
 using System.Text.Json;
 
-namespace Test.Tests.Services;
+namespace Test.ExstractAPITest.ExtractServices;
 
 public class DataFieldSelectorServiceTests
 {

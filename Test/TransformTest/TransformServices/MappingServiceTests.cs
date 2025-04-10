@@ -1,7 +1,7 @@
 ﻿using ETL.Domain.Rules;
 using Transform.Services;
 
-namespace Test.Tests.TransformServices;
+namespace Test.TransformTest.TransformServices;
 
 public class MappingServiceTests
 {
