@@ -21,8 +21,7 @@ public class MsSqlDataSourceProvider : IDataSourceProvider
 
     public async Task<JsonElement> GetDataAsync(ExtractConfig config)
     {
-        if (config.SourceInfo is not MsSqlSourceInfo dbInfo)
-            throw new ArgumentException("Invalid sourceInfo: must be of type MsSqlSourceInfo");
+        var dbInfo = ValidateSourceInfo(config);
 
         var (query, parameters) = _queryBuilder.GenerateSelectQuery(dbInfo, config.Fields, config.Filters ?? new());
 
@@ -31,5 +30,12 @@ public class MsSqlDataSourceProvider : IDataSourceProvider
 
         using var doc = JsonDocument.Parse(json);
         return doc.RootElement.Clone();
+    }
+
+    private static MsSqlSourceInfo ValidateSourceInfo(ExtractConfig config)
+    {
+        if (config.SourceInfo is not MsSqlSourceInfo dbInfo)
+            throw new ArgumentException("Invalid sourceInfo: must be of type MsSqlSourceInfo");
+        return dbInfo;
     }
 }
