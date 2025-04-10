@@ -42,51 +42,46 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
 
         }
 
-        public (string sql, DynamicParameters parameters) BuildSelectQuery(MySQLSourceInfo info, List<FilterRule>? filters)
+        public (string sql, DynamicParameters parameters) BuildSelectQuery(MySQLSourceInfo info,List<string> fields,List<FilterRule>? filters)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(info.TargetTable))
+                throw new ArgumentException("Target table is required");
+
+            var tableName = SanitizeIdentifier(info.TargetTable);
+
+            var selectColumns = (fields != null && fields.Any())
+                ? string.Join(", ", fields.Select(SanitizeIdentifier))
+                      : "*";
+
+            var sqlBuilder = new StringBuilder();
+            var parameters = new DynamicParameters();
+
+            sqlBuilder.Append($"SELECT {selectColumns} FROM {tableName}");
+
+            if (filters != null && filters.Any())
+            {
+                var whereClauses = new List<string>();
+
+                for (int i = 0; i < filters.Count; i++)
+                {
+                    var rule = filters[i];
+                    var column = SanitizeIdentifier(rule.Field);
+                    var paramName = $"@p{i}";
+
+                    if (!AllowedOperators.TryGetValue(rule.Operator.ToLower(), out var sqlOperator))
+                        throw new ArgumentException($"Unsupported operator '{rule.Operator}'");
+
+                    whereClauses.Add($"{column} {sqlOperator} {paramName}");
+                    parameters.Add(paramName, rule.Value);
+                }
+
+                sqlBuilder.Append(" WHERE " + string.Join(" AND ", whereClauses));
+            }
+
+            sqlBuilder.Append(";");
+            return (sqlBuilder.ToString(), parameters);
         }
-        //{
-        //    if (string.IsNullOrWhiteSpace(info.Table))
-        //        throw new ArgumentException("Table is required");
-
-        //    var tableName = SanitizeIdentifier(info.Table);
-
-        //    // If no columns are specified, default to all
-        //    var selectColumns = (info.Columns != null && info.Columns.Any())
-        //        ? string.Join(", ", info.Columns.Select(SanitizeIdentifier))
-        //        : "*";
-
-        //    var sb = new StringBuilder();
-        //    var parameters = new DynamicParameters();
-
-        //    sb.Append($"SELECT {selectColumns} FROM {tableName}");
-
-        //    if (filters != null && filters.Any())
-        //    {
-        //        var whereClauses = new List<string>();
-
-        //        for (int i = 0; i < filters.Count; i++)
-        //        {
-        //            var rule = filters[i];
-
-        //            var column = SanitizeIdentifier(rule.Field);
-        //            var paramName = $"@p{i}";
-
-        //            if (!AllowedOperators.TryGetValue(rule.Operator, out var sqlOperator))
-        //                throw new ArgumentException($"Unsupported operator '{rule.Operator}'");
-
-        //            whereClauses.Add($"{column} {sqlOperator} {paramName}");
-        //            parameters.Add(paramName, rule.Value);
-        //        }
-
-        //        sb.Append(" WHERE " + string.Join(" AND ", whereClauses));
-        //    }
-
-
-        //    var finalSql = sb.ToString();
-        //    return (finalSql, parameters);
-        //}
+       
 
 
 

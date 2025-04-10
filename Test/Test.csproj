@@ -23,6 +23,7 @@
     <ProjectReference Include="..\ETLConfig.API\ETLConfig.API.csproj" />
     <ProjectReference Include="..\ExtractAPI\ExtractAPI.csproj" />
     <ProjectReference Include="..\Transform\Transform.csproj" />
+	<ProjectReference Include="..\ETL.Domain\ETL.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

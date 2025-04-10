@@ -7,37 +7,43 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Dapper;
 
 namespace Test.Tests.DataSourceProviderTest
 {
     public class MySQLQueryBuilderTest
     {
-        //private readonly MySQLQueryBuilder _queryBuilder = new MySQLQueryBuilder();
+        [Fact]
+        public void BuildSelectQuery_GeneratesValidSqlAndParameters()
+        {
+            // Arrange
+            var queryBuilder = new MySQLQueryBuilder();
 
-        //[Fact]
-        //public void BuildSelectQuery_ValidInput_ReturnsCorrectSql()
-        //{
-        //    // Arrange
-        //    var sourceInfo = new MySQLSourceInfo
-        //    {
-        //        Table = "users",
-        //        Columns = new List<string> { "id", "name", "age" }
-        //    };
+            var sourceInfo = new MySQLSourceInfo
+            {
+                TargetTable = "approved_highvalue_payments"
+            };
 
-        //    var filters = new List<FilterRule>
-        //    {
-        //        new FilterRule { Field = "age", Operator = "greater_than", Value = "30" },
-        //        new FilterRule { Field = "name", Operator = "equals", Value = "John" }
-        //    };
+            var fields = new List<string> { "account_id", "cost", "status" };
 
-        //    // Act
-        //    var (sql, parameters) = _queryBuilder.BuildSelectQuery(sourceInfo, filters);
+            var filters = new List<FilterRule>
+            {
+                new FilterRule { Field = "cost", Operator = "greater_than", Value = "1000" },
+                new FilterRule { Field = "status", Operator = "equals", Value = "approved" }
+            };
 
-        //    // Assert
-        //    var expectedSql = "SELECT `id`, `name`, `age` FROM `users` WHERE `age` > @p0 AND `name` = @p1";
-        //    Assert.Equal(expectedSql, sql);
-        //    Assert.Equal("30", parameters.Get<string>("@p0"));
-        //    Assert.Equal("John", parameters.Get<string>("@p1"));
-        //}
+            // Act
+            var (sql, parameters) = queryBuilder.BuildSelectQuery(sourceInfo, fields, filters);
+
+            // Assert
+            var expectedSql =
+                "SELECT `account_id`, `cost`, `status` FROM `approved_highvalue_payments` WHERE `cost` > @p0 AND `status` = @p1;";
+
+            Assert.Equal(expectedSql, sql.Trim());
+            Assert.Equal(2, parameters.ParameterNames.AsList().Count);
+            Assert.Equal("1000", parameters.Get<string>("@p0"));
+            Assert.Equal("approved", parameters.Get<object>("@p1"));
+        }
     }
+    
 }

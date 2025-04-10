@@ -79,7 +79,7 @@ public class ExtractPipeline : IExtractPipeline
         var provider = _resolver.Resolve(sourceInfo.GetType())
                ?? throw new InvalidOperationException($"No provider found for type {sourceInfo.GetType()}");
 
-        return await provider.GetDataAsync(sourceInfo, config.ExtractConfig.Filters);
+        return await provider.GetDataAsync(config.ExtractConfig);
     }
 
 

@@ -13,7 +13,7 @@ public class ExtractConfig
     public List<string> Fields { get; set; }
 
     [JsonPropertyName("Filters")]
-    public List<FilterRule> Filters { get; set; }
+    public List<FilterRule>? Filters { get; set; }
 }
-
+//select all from "targettable" where "apply filter"
 

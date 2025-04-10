@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using ETL.Domain.Model;
 using ETL.Domain.Rules;
 using ETL.Domain.Sources;
 using ExtractAPI.Interfaces;
@@ -13,9 +14,9 @@ public class ExcelDataSourceProvider : IDataSourceProvider
     {
         return sourceInfoType == typeof(ExcelSourceInfo);
     }
-    public async Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo, List<FilterRule>? filters = null)
+    public async Task<JsonElement> GetDataAsync(ExtractConfig extractConfig)
     {
-        if (sourceInfo is not ExcelSourceInfo excelInfo)
+        if (extractConfig.SourceInfo is not ExcelSourceInfo excelInfo)
             throw new ArgumentException("Invalid sourceInfo for excel source");
 
         if (!File.Exists(excelInfo.FilePath))

@@ -7,6 +7,7 @@ using ExtractAPI.DataSources.DatabaseQueryBuilder;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using ExtractAPI.Interfaces;
 using ETL.Domain.Rules;
+using ETL.Domain.Model;
 
 namespace ExtractAPI.DataSources
 {
@@ -24,16 +25,17 @@ namespace ExtractAPI.DataSources
             return sourceInfoType == typeof(MySQLSourceInfo);
         }
 
-        public async Task<JsonElement> GetDataAsync(SourceInfoBase sourceInfo, List<FilterRule> filters)
+        public async Task<JsonElement> GetDataAsync(ExtractConfig extractConfig)
         {
-            if (sourceInfo is not MySQLSourceInfo dbInfo)
-                throw new ArgumentException("Invalid sourceInfo: must be of type DbSourceBaseInfo");
+            if (extractConfig.SourceInfo is not MySQLSourceInfo dbInfo)
+                throw new ArgumentException("Invalid sourceInfo: must be of type MySQLSourceInfo");
 
             if (string.IsNullOrWhiteSpace(dbInfo.ConnectionString))
                 throw new ArgumentException("Connection string is required");
 
-            // ✅ Build query from builder
-            var (query, parameters) = _queryBuilder.BuildSelectQuery(dbInfo, filters);
+            // ✅ Pass the fields list to the query builder
+            
+            var (query, parameters) = _queryBuilder.BuildSelectQuery(dbInfo,extractConfig.Fields,extractConfig.Filters);
 
             var result = new List<Dictionary<string, object>>();
 

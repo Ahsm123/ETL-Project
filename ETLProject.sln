@@ -20,9 +20,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{44B7745D-C2D4-47AA-99FC-6C450973D28B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "Benchmark\Benchmark.csproj", "{6BB5AD79-B3AF-44CF-B464-61A718A4E723}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benchmark.csproj", "{6BB5AD79-B3AF-44CF-B464-61A718A4E723}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETLConfig.API", "ETLConfig.API\ETLConfig.API.csproj", "{31A8F188-2618-44BE-9792-DAA9B025C820}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ETLConfig.API", "ETLConfig.API\ETLConfig.API.csproj", "{31A8F188-2618-44BE-9792-DAA9B025C820}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +61,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6BB5AD79-B3AF-44CF-B464-61A718A4E723} = {AC6F1D42-0E6B-40A8-99DB-EAF361481D56}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F8141F32-D37D-4911-A6EE-8498DC25FC3D}
