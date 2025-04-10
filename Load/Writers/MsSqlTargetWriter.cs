@@ -1,6 +1,7 @@
 ﻿using ETL.Domain.Targets;
 using ETL.Domain.Targets.DbTargets;
 using Load.Interfaces;
+using MySqlConnector;
 
 namespace Load.Writers;
 
@@ -17,5 +18,6 @@ public class MsSqlTargetWriter : ITargetWriter
         Console.WriteLine($"[SQL] Writing to {sqlInfo.TargetTable} with bulk insert = {sqlInfo.UseBulkInsert}");
         await Task.CompletedTask;
     }
+
 }
 
