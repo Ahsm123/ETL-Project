@@ -20,7 +20,7 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
             ["less_or_equal"] = "<=",
         };
 
-        public (string sql, DynamicParameters parameters) BuildInsertQuery(MySqlTargetInfo info, Dictionary<string, object> data)
+        public (string sql, DynamicParameters parameters) BuildInsertQuery(DbSourceBaseInfo info, Dictionary<string, object> data)
         {
             if (string.IsNullOrWhiteSpace(info.TargetTable))
                 throw new ArgumentException("Target table is required");
@@ -42,7 +42,7 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
 
         }
 
-        public (string sql, DynamicParameters parameters) BuildSelectQuery(MySQLSourceInfo info,List<string> fields,List<FilterRule>? filters)
+        public (string sql, DynamicParameters parameters) BuildSelectQuery(DbSourceBaseInfo info,List<string> fields,List<FilterRule>? filters)
         {
             if (string.IsNullOrWhiteSpace(info.TargetTable))
                 throw new ArgumentException("Target table is required");

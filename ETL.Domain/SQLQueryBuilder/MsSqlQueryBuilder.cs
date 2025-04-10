@@ -16,7 +16,7 @@ public static class MsSqlQueryBuilder
     };
 
     public static (string query, Dictionary<string, object> parameters) BuildSafeSelectQuery(
-        MsSqlSourceInfo source,
+        DbSourceBaseInfo source,
         List<string> fields,
         List<FilterRule> filters)
     {
