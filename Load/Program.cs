@@ -1,4 +1,6 @@
-﻿using Load.Interfaces;
+﻿using ExtractAPI.DataSources.DatabaseQueryBuilder;
+using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
+using Load.Interfaces;
 using Load.Messaging;
 using Load.Services;
 using Load.Workers;
@@ -23,6 +25,7 @@ builder.ConfigureServices(services =>
 
     // Registrér resten af services
     services.AddSingleton<ITargetWriterResolver, TargetWriterResolver>();
+    services.AddSingleton<ISqlQueryBuilder, MySQLQueryBuilder>();
     services.AddSingleton<IMessageListener, KafkaMessageListener>();
     services.AddSingleton<ILoadHandler, LoadHandler>();
     services.AddHostedService<LoadWorker>();

@@ -7,6 +7,6 @@ public abstract class DbSourceBaseInfo : SourceInfoBase
     [JsonPropertyName("ConnectionString")]
     public string ConnectionString { get; set; }
 
-    //[JsonPropertyName("Query")]
-    //public string Query { get; set; }
+    [JsonPropertyName("Query")]
+    public string Query { get; set; }
 }

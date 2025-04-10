@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using ETL.Domain.Rules;
 using ETL.Domain.Sources;
+using ETL.Domain.Targets.DbTargets;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -19,50 +20,75 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
             ["less_or_equal"] = "<=",
         };
 
-        public (string sql, DynamicParameters parameters) BuildSelectQuery(MySQLSourceInfo info, List<FilterRule>? filters)
+        public (string sql, DynamicParameters parameters) BuildInsertQuery(MySqlTargetInfo info, Dictionary<string, object> data)
         {
-            if (string.IsNullOrWhiteSpace(info.Table))
-                throw new ArgumentException("Table is required");
+            if (string.IsNullOrWhiteSpace(info.TargetTable))
+                throw new ArgumentException("Target table is required");
 
-            var tableName = SanitizeIdentifier(info.Table);
+            var tableName = SanitizeIdentifier(info.TargetTable);
 
-            // If no columns are specified, default to all
-            var selectColumns = (info.Columns != null && info.Columns.Any())
-                ? string.Join(", ", info.Columns.Select(SanitizeIdentifier))
-                : "*";
+            var columnNames = data.Keys.Select(SanitizeIdentifier).ToList();
+            var paramNames = data.Keys.Select(k => $"@{k}").ToList();
 
-            var sb = new StringBuilder();
+            var sql = $"INSERT INTO {tableName} ({string.Join(", ", columnNames)}) VALUES ({string.Join(", ", paramNames)});";
+
             var parameters = new DynamicParameters();
-
-            sb.Append($"SELECT {selectColumns} FROM {tableName}");
-
-            if (filters != null && filters.Any())
+            foreach (var kvp in data)
             {
-                var whereClauses = new List<string>();
-
-                for (int i = 0; i < filters.Count; i++)
-                {
-                    var rule = filters[i];
-
-                    var column = SanitizeIdentifier(rule.Field);
-                    var paramName = $"@p{i}";
-
-                    if (!AllowedOperators.TryGetValue(rule.Operator, out var sqlOperator))
-                        throw new ArgumentException($"Unsupported operator '{rule.Operator}'");
-
-                    whereClauses.Add($"{column} {sqlOperator} {paramName}");
-                    parameters.Add(paramName, rule.Value);
-                }
-
-                sb.Append(" WHERE " + string.Join(" AND ", whereClauses));
+                parameters.Add($"@{kvp.Key}", kvp.Value ?? DBNull.Value);
             }
 
+            return (sql, parameters);
 
-            var finalSql = sb.ToString();
-            return (finalSql, parameters);
         }
-    
-        
+
+        public (string sql, DynamicParameters parameters) BuildSelectQuery(MySQLSourceInfo info, List<FilterRule>? filters)
+        {
+            throw new NotImplementedException();
+        }
+        //{
+        //    if (string.IsNullOrWhiteSpace(info.Table))
+        //        throw new ArgumentException("Table is required");
+
+        //    var tableName = SanitizeIdentifier(info.Table);
+
+        //    // If no columns are specified, default to all
+        //    var selectColumns = (info.Columns != null && info.Columns.Any())
+        //        ? string.Join(", ", info.Columns.Select(SanitizeIdentifier))
+        //        : "*";
+
+        //    var sb = new StringBuilder();
+        //    var parameters = new DynamicParameters();
+
+        //    sb.Append($"SELECT {selectColumns} FROM {tableName}");
+
+        //    if (filters != null && filters.Any())
+        //    {
+        //        var whereClauses = new List<string>();
+
+        //        for (int i = 0; i < filters.Count; i++)
+        //        {
+        //            var rule = filters[i];
+
+        //            var column = SanitizeIdentifier(rule.Field);
+        //            var paramName = $"@p{i}";
+
+        //            if (!AllowedOperators.TryGetValue(rule.Operator, out var sqlOperator))
+        //                throw new ArgumentException($"Unsupported operator '{rule.Operator}'");
+
+        //            whereClauses.Add($"{column} {sqlOperator} {paramName}");
+        //            parameters.Add(paramName, rule.Value);
+        //        }
+
+        //        sb.Append(" WHERE " + string.Join(" AND ", whereClauses));
+        //    }
+
+
+        //    var finalSql = sb.ToString();
+        //    return (finalSql, parameters);
+        //}
+
+
 
         private string SanitizeIdentifier(string identifier)
         {

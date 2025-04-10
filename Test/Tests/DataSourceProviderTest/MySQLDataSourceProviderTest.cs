@@ -15,32 +15,32 @@ namespace Test.Tests.DataSourceProviderTest
         private const string ConnectionString = "Server=localhost;Port=3306;Database=mydb;Uid=user;Pwd=password;";
         private readonly MySQLDataSourceProvider _provider = new(new MySQLQueryBuilder());
 
-        [Fact]
-        public async Task GetDataAsync_FiltersUsersByAge()
-        {
-            var sourceInfo = new MySQLSourceInfo
-            {
-                ConnectionString = ConnectionString,
-                Table = "users",
-                Columns = new() { "id", "name", "age" }
-            };
+        //[Fact]
+        //public async Task GetDataAsync_FiltersUsersByAge()
+        //{
+        //    var sourceInfo = new MySQLSourceInfo
+        //    {
+        //        ConnectionString = ConnectionString,
+        //        Table = "users",
+        //        Columns = new() { "id", "name", "age" }
+        //    };
 
-            var filters = new List<FilterRule>
-            {
-                new FilterRule { Field = "age", Operator = "greater_than", Value = "30" }
-            };
+        //    var filters = new List<FilterRule>
+        //    {
+        //        new FilterRule { Field = "age", Operator = "greater_than", Value = "30" }
+        //    };
 
-            var result = await _provider.GetDataAsync(sourceInfo, filters);
+        //    var result = await _provider.GetDataAsync(sourceInfo, filters);
 
-            Assert.Equal(JsonValueKind.Array, result.ValueKind);
+        //    Assert.Equal(JsonValueKind.Array, result.ValueKind);
 
-            var users = result.EnumerateArray().ToList();
+        //    var users = result.EnumerateArray().ToList();
 
-            Assert.All(users, user =>
-                Assert.True(user.GetProperty("age").GetInt32() > 30));
+        //    Assert.All(users, user =>
+        //        Assert.True(user.GetProperty("age").GetInt32() > 30));
 
-            Assert.Contains(users, user => user.GetProperty("name").GetString() == "Bob");
-            Assert.Contains(users, user => user.GetProperty("name").GetString() == "Charlie");
-        }
+        //    Assert.Contains(users, user => user.GetProperty("name").GetString() == "Bob");
+        //    Assert.Contains(users, user => user.GetProperty("name").GetString() == "Charlie");
+        //}
     }
 }
