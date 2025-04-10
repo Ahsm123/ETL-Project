@@ -1,49 +1,50 @@
-using ETL.Domain.Sources;
 using ETL.Domain.SQLQueryBuilder;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
 using ExtractAPI.DataSources.DatabaseQueryBuilder;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using ExtractAPI.Interfaces;
-using ExtractAPI.Kafka;
 using ExtractAPI.Kafka.Interfaces;
 using ExtractAPI.Messaging;
 using ExtractAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Config base URL for ConfigService
+// Base URL for config service
 var baseUrl = builder.Configuration["ConfigService:BaseUrl"];
 
-// Register messaging 
+// Kafka & Event system
 builder.Services.AddSingleton<IMessagePublisher, KafkaMessagePublisher>();
 builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
 
-// Register pipeline services
+// Pipeline
 builder.Services.AddScoped<IExtractPipeline, ExtractPipeline>();
 builder.Services.AddScoped<DataFieldSelectorService>();
-builder.Services.AddSingleton<ISqlExecutor, MySqlExecutor>();
 
-// Register config service with HttpClient
+// SqlExecutors
+builder.Services.AddScoped<ISqlExecutor, MySqlExecutor>();
+builder.Services.AddScoped<ISqlExecutor, MsSqlExecutor>();
+
+// Query builders
+builder.Services.AddScoped<ISqlQueryBuilder, MySQLQueryBuilder>();
+builder.Services.AddScoped<ISqlQueryBuilder, MsSqlQueryBuilder>();
+
+// ConfigService HTTP client
 builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>
 {
     client.BaseAddress = new Uri(baseUrl);
 });
 
-// Automatically register all IDataSourceProvider implementations
+// Automatically register all IDataSourceProviders
 var providerTypes = typeof(IDataSourceProvider).Assembly
     .GetTypes()
-    .Where(t => typeof(IDataSourceProvider).IsAssignableFrom(t) &&
-                t is { IsClass: true, IsAbstract: false });
+    .Where(t => typeof(IDataSourceProvider).IsAssignableFrom(t) && t is { IsClass: true, IsAbstract: false });
 
 foreach (var type in providerTypes)
 {
     builder.Services.AddSingleton(typeof(IDataSourceProvider), type);
 }
 
-
-builder.Services.AddSingleton<ISqlQueryBuilder, MySQLQueryBuilder>();
-
-// Register the provider resolver
+// Source provider resolver
 builder.Services.AddSingleton<ISourceProviderResolver, SourceProviderResolver>();
 
 builder.Services.AddControllers();
