@@ -23,7 +23,7 @@ public class MsSqlDataSourceProviderTests
         new Dictionary<string, object> { { "Id", 1 }, { "Name", "Test User" } }
     };
 
-        mockQueryBuilder.Setup(b => b.BuildSelectQuery(
+        mockQueryBuilder.Setup(b => b.GenerateSelectQuery(
         It.IsAny<DbSourceBaseInfo>(),
         It.IsAny<List<string>>(),
         It.IsAny<List<FilterRule>>()))

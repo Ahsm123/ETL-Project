@@ -31,7 +31,7 @@ public class MsSqlQueryBuilderTests
     };
 
         // Act
-        var (query, parameters) = _queryBuilder.BuildSelectQuery(source, fields, filters);
+        var (query, parameters) = _queryBuilder.GenerateSelectQuery(source, fields, filters);
 
         // Assert
         Assert.Equal("SELECT [Id], [Name] FROM [Users] WHERE [Role] = @param0", query);
@@ -47,7 +47,7 @@ public class MsSqlQueryBuilderTests
     {
         var source = new MsSqlSourceInfo { TargetTable = "Users" };
 
-        var (query, _) = _queryBuilder.BuildSelectQuery(source, null, null);
+        var (query, _) = _queryBuilder.GenerateSelectQuery(source, null, null);
 
         Assert.Equal("SELECT * FROM [Users]", query);
     }
@@ -60,7 +60,7 @@ public class MsSqlQueryBuilderTests
         var fields = new List<string> { "Id", "Name;", "DROP TABLE" };
 
         Assert.Throws<ArgumentException>(() =>
-            _queryBuilder.BuildSelectQuery(source, fields, new()));
+            _queryBuilder.GenerateSelectQuery(source, fields, new()));
     }
 
     [Fact]
@@ -73,6 +73,6 @@ public class MsSqlQueryBuilderTests
         };
 
         Assert.Throws<NotSupportedException>(() =>
-            _queryBuilder.BuildSelectQuery(source, new List<string>(), filters));
+            _queryBuilder.GenerateSelectQuery(source, new List<string>(), filters));
     }
 }

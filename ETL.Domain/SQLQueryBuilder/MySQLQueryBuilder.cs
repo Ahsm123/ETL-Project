@@ -20,14 +20,14 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
             ["less_or_equal"] = "<=",
         };
 
-        public (string sql, DynamicParameters parameters) BuildInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)
+        public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)
         {
             if (string.IsNullOrWhiteSpace(info.TargetTable))
                 throw new ArgumentException("Target table is required");
 
-            var tableName = SanitizeIdentifier(info.TargetTable);
+            var tableName = ProtectFromSqlInjection(info.TargetTable);
 
-            var columnNames = data.Keys.Select(SanitizeIdentifier).ToList();
+            var columnNames = data.Keys.Select(ProtectFromSqlInjection).ToList();
             var paramNames = data.Keys.Select(k => $"@{k}").ToList();
 
             var sql = $"INSERT INTO {tableName} ({string.Join(", ", columnNames)}) VALUES ({string.Join(", ", paramNames)});";
@@ -42,15 +42,15 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
 
         }
 
-        public (string sql, DynamicParameters parameters) BuildSelectQuery(DbSourceBaseInfo info,List<string> fields,List<FilterRule>? filters)
+        public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string> fields, List<FilterRule>? filters)
         {
             if (string.IsNullOrWhiteSpace(info.TargetTable))
                 throw new ArgumentException("Target table is required");
 
-            var tableName = SanitizeIdentifier(info.TargetTable);
+            var tableName = ProtectFromSqlInjection(info.TargetTable);
 
             var selectColumns = (fields != null && fields.Any())
-                ? string.Join(", ", fields.Select(SanitizeIdentifier))
+                ? string.Join(", ", fields.Select(ProtectFromSqlInjection))
                       : "*";
 
             var sqlBuilder = new StringBuilder();
@@ -65,7 +65,7 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
                 for (int i = 0; i < filters.Count; i++)
                 {
                     var rule = filters[i];
-                    var column = SanitizeIdentifier(rule.Field);
+                    var column = ProtectFromSqlInjection(rule.Field);
                     var paramName = $"@p{i}";
 
                     if (!AllowedOperators.TryGetValue(rule.Operator.ToLower(), out var sqlOperator))
@@ -81,11 +81,11 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
             sqlBuilder.Append(";");
             return (sqlBuilder.ToString(), parameters);
         }
-       
 
 
 
-        private string SanitizeIdentifier(string identifier)
+
+        private string ProtectFromSqlInjection(string identifier)
         {
             if (!Regex.IsMatch(identifier, @"^[a-zA-Z_][a-zA-Z0-9_]*$"))
                 throw new ArgumentException($"Invalid identifier: {identifier}");

@@ -37,7 +37,7 @@ namespace ExtractAPI.DataSources
             if (string.IsNullOrWhiteSpace(dbInfo.ConnectionString))
                 throw new ArgumentException("Connection string is required");
 
-            var (query, parameters) = _queryBuilder.BuildSelectQuery(dbInfo, extractConfig.Fields, extractConfig.Filters);
+            var (query, parameters) = _queryBuilder.GenerateSelectQuery(dbInfo, extractConfig.Fields, extractConfig.Filters);
 
             var rows = await _sqlExecutor.ExecuteQueryAsync(dbInfo.ConnectionString, query, parameters);
 

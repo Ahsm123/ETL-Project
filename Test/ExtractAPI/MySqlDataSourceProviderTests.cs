@@ -29,7 +29,7 @@ public class MySQLDataSourceProviderTests
         new Dictionary<string, object> { { "Id", 1 }, { "Name", "Test" } }
     };
 
-        mockBuilder.Setup(b => b.BuildSelectQuery(
+        mockBuilder.Setup(b => b.GenerateSelectQuery(
              It.IsAny<DbSourceBaseInfo>(),
             It.IsAny<List<string>>(),
              It.IsAny<List<FilterRule>>()))

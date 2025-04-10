@@ -21,20 +21,20 @@ public class MsSqlQueryBuilder : ISqlQueryBuilder
         ["less_or_equal"] = "<=",
     };
 
-    public (string sql, DynamicParameters parameters) BuildSelectQuery(DbSourceBaseInfo info, List<string> fields, List<FilterRule>? filters)
+    public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string> fields, List<FilterRule>? filters)
     {
         if (string.IsNullOrWhiteSpace(info.TargetTable))
             throw new ArgumentException("Target table is required");
 
-        var tableName = SanitizeIdentifier(info.TargetTable);
+        var tableName = ProtectFromSqlInjection(info.TargetTable);
 
         var selectColumns = (fields != null && fields.Any())
-            ? string.Join(", ", fields.Select(SanitizeIdentifier))
+            ? string.Join(", ", fields.Select(ProtectFromSqlInjection))
             : "*";
 
         var baseQuery = string.Format(BaseSelectQuery, selectColumns, tableName);
 
-        var (whereClause, parameters) = BuildWhereClause(filters);
+        var (whereClause, parameters) = GenerateWhereCondition(filters);
 
         var finalQuery = string.IsNullOrWhiteSpace(whereClause)
             ? baseQuery
@@ -43,7 +43,7 @@ public class MsSqlQueryBuilder : ISqlQueryBuilder
         return (finalQuery, parameters);
     }
 
-    private static (string clause, DynamicParameters parameters) BuildWhereClause(List<FilterRule>? filters)
+    private static (string clause, DynamicParameters parameters) GenerateWhereCondition(List<FilterRule>? filters)
     {
         var clauseParts = new List<string>();
         var parameters = new DynamicParameters();
@@ -59,14 +59,14 @@ public class MsSqlQueryBuilder : ISqlQueryBuilder
             if (!OperatorMap.TryGetValue(rule.Operator.ToLower(), out var sqlOperator))
                 throw new NotSupportedException($"Unsupported operator: {rule.Operator}");
 
-            clauseParts.Add($"{SanitizeIdentifier(rule.Field)} {sqlOperator} {paramName}");
+            clauseParts.Add($"{ProtectFromSqlInjection(rule.Field)} {sqlOperator} {paramName}");
             parameters.Add(paramName, rule.Value);
         }
 
         return (string.Join(" AND ", clauseParts), parameters);
     }
 
-    private static string SanitizeIdentifier(string identifier)
+    private static string ProtectFromSqlInjection(string identifier)
     {
         if (string.IsNullOrWhiteSpace(identifier))
             throw new ArgumentException("Field/table name cannot be empty.");
@@ -77,7 +77,7 @@ public class MsSqlQueryBuilder : ISqlQueryBuilder
         return $"[{identifier}]";
     }
 
-    public (string sql, DynamicParameters parameters) BuildInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)
+    public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)
     {
         throw new NotImplementedException();
     }

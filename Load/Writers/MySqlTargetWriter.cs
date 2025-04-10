@@ -31,7 +31,7 @@ namespace Load.Writers
             if (targetInfo is not MySqlTargetInfo info)
                 throw new ArgumentException("Invalid target info type");
 
-            var (sql, parameters) = _queryBuilder.BuildInsertQuery(info, data);
+            var (sql, parameters) = _queryBuilder.GenerateInsertQuery(info, data);
             try
             {
 

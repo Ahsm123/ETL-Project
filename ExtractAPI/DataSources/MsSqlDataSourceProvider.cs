@@ -24,7 +24,7 @@ public class MsSqlDataSourceProvider : IDataSourceProvider
         if (config.SourceInfo is not MsSqlSourceInfo dbInfo)
             throw new ArgumentException("Invalid sourceInfo: must be of type MsSqlSourceInfo");
 
-        var (query, parameters) = _queryBuilder.BuildSelectQuery(dbInfo, config.Fields, config.Filters ?? new());
+        var (query, parameters) = _queryBuilder.GenerateSelectQuery(dbInfo, config.Fields, config.Filters ?? new());
 
         var rows = await _executor.ExecuteQueryAsync(dbInfo.ConnectionString, query, parameters);
         var json = JsonSerializer.Serialize(rows);
