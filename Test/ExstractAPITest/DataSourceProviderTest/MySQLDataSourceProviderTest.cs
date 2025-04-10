@@ -9,7 +9,7 @@ using ExtractAPI.DataSources;
 using ExtractAPI.DataSources.DatabaseQueryBuilder;
 using Xunit;
 
-namespace Test.Tests.DataSourceProviderTest
+namespace Test.ExstractAPITest.DataSourceProviderTest
 {
     public class MySQLDataSourceProviderTest
     {

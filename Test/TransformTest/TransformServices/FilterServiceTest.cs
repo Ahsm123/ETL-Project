@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Transform.Services;
 
-namespace Test.Tests.TransformServices;
+namespace Test.TransformTest.TransformServices;
 public class FilterServiceTest
 {
     [Fact]
@@ -59,7 +59,7 @@ public class FilterServiceTest
                 Operator = "greaterthan",
                 Value = "2000"
             },
-           
+
         };
         //Act
         var result = filterservice.ShouldInclude(item, filters);

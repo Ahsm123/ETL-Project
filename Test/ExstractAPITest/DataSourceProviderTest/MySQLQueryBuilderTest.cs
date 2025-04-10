@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Dapper;
 
-namespace Test.Tests.DataSourceProviderTest
+namespace Test.ExstractAPITest.DataSourceProviderTest
 {
     public class MySQLQueryBuilderTest
     {
@@ -45,5 +45,5 @@ namespace Test.Tests.DataSourceProviderTest
             Assert.Equal("approved", parameters.Get<object>("@p1"));
         }
     }
-    
+
 }
