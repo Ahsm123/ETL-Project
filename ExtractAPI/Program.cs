@@ -1,4 +1,6 @@
 using ETL.Domain.Sources;
+using ETL.Domain.SQLQueryBuilder;
+using ETL.Domain.SQLQueryBuilder.Interfaces;
 using ExtractAPI.DataSources.DatabaseQueryBuilder;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using ExtractAPI.Interfaces;
@@ -19,6 +21,7 @@ builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
 // Register pipeline services
 builder.Services.AddScoped<IExtractPipeline, ExtractPipeline>();
 builder.Services.AddScoped<DataFieldSelectorService>();
+builder.Services.AddSingleton<ISqlExecutor, MySqlExecutor>();
 
 // Register config service with HttpClient
 builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>
@@ -36,6 +39,7 @@ foreach (var type in providerTypes)
 {
     builder.Services.AddSingleton(typeof(IDataSourceProvider), type);
 }
+
 
 builder.Services.AddSingleton<ISqlQueryBuilder, MySQLQueryBuilder>();
 

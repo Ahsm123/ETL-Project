@@ -20,7 +20,7 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
             ["less_or_equal"] = "<=",
         };
 
-        public (string sql, DynamicParameters parameters) BuildInsertQuery(DbSourceBaseInfo info, Dictionary<string, object> data)
+        public (string sql, DynamicParameters parameters) BuildInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)
         {
             if (string.IsNullOrWhiteSpace(info.TargetTable))
                 throw new ArgumentException("Target table is required");

@@ -8,16 +8,20 @@ using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using ExtractAPI.Interfaces;
 using ETL.Domain.Rules;
 using ETL.Domain.Model;
+using ETL.Domain.SQLQueryBuilder.Interfaces;
+using ETL.Domain.SQLQueryBuilder;
 
 namespace ExtractAPI.DataSources
 {
     public class MySQLDataSourceProvider : IDataSourceProvider
     {
         private readonly ISqlQueryBuilder _queryBuilder;
+        private readonly ISqlExecutor _sqlExecutor;
 
-        public MySQLDataSourceProvider(ISqlQueryBuilder queryBuilder)
+        public MySQLDataSourceProvider(ISqlQueryBuilder queryBuilder, ISqlExecutor sqlExecutor)
         {
             _queryBuilder = queryBuilder;
+            _sqlExecutor = sqlExecutor;
         }
 
         public bool CanHandle(Type sourceInfoType)
@@ -33,30 +37,11 @@ namespace ExtractAPI.DataSources
             if (string.IsNullOrWhiteSpace(dbInfo.ConnectionString))
                 throw new ArgumentException("Connection string is required");
 
-            // ✅ Pass the fields list to the query builder
-            
-            var (query, parameters) = _queryBuilder.BuildSelectQuery(dbInfo,extractConfig.Fields,extractConfig.Filters);
+            var (query, parameters) = _queryBuilder.BuildSelectQuery(dbInfo, extractConfig.Fields, extractConfig.Filters);
 
-            var result = new List<Dictionary<string, object>>();
+            var rows = await _sqlExecutor.ExecuteQueryAsync(dbInfo.ConnectionString, query, parameters);
 
-            await using var connection = new MySqlConnection(dbInfo.ConnectionString);
-            await connection.OpenAsync().ConfigureAwait(false);
-
-            var rows = await connection.QueryAsync(query, parameters).ConfigureAwait(false);
-
-            foreach (var row in rows)
-            {
-                var rowDict = new Dictionary<string, object>();
-
-                foreach (var kv in (IDictionary<string, object>)row)
-                {
-                    rowDict[kv.Key] = kv.Value is DBNull ? null : kv.Value;
-                }
-
-                result.Add(rowDict);
-            }
-
-            var json = JsonSerializer.Serialize(result);
+            var json = JsonSerializer.Serialize(rows);
             using var doc = JsonDocument.Parse(json);
             return doc.RootElement.Clone();
         }
