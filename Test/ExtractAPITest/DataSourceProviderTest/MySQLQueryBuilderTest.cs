@@ -11,7 +11,6 @@ using Dapper;
 using ETL.Domain.Targets.DbTargets;
 
 namespace Test.ExstractAPITest.DataSourceProviderTest;
-{
     public class MySQLQueryBuilderTest
     {
         [Fact]
@@ -149,7 +148,7 @@ namespace Test.ExstractAPITest.DataSourceProviderTest;
         {
             // Arrange
             var queryBuilder = new MySQLQueryBuilder();
-            var targetInfo = new MySqlTargetInfo { TargetTable = null };
+            var targetInfo = new MySqlTargetInfo { TargetTable = string.Empty };
             var data = new Dictionary<string, object> { { "username", "king" } };
 
             // Act & Assert
@@ -159,4 +158,3 @@ namespace Test.ExstractAPITest.DataSourceProviderTest;
             Assert.Equal("Target table is required", ex.Message);
         }
     }
-}
