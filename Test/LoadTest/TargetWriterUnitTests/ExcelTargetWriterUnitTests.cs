@@ -20,7 +20,7 @@ public class ExcelTargetWriterUnitTests : IDisposable
     }
 
     [Fact]
-    public async Task WriteAsync_CreatesFileWithHeadersAndData()
+    public async Task WriteAsync_WhenIncludeHeadersIsTrueAndDataIsValid_ThenFileIsCreatedWithHeadersAndValues()
     {
         // Arrange
         var filePath = Path.Combine(_testDirectory, "output.xlsx");
@@ -55,7 +55,7 @@ public class ExcelTargetWriterUnitTests : IDisposable
     }
 
     [Fact]
-    public async Task WriteAsync_AppendsToExistingFile()
+    public async Task WriteAsync_WhenFileExists_ThenAppendsNewRowsBelowExistingData()
     {
         // Arrange
         var filePath = Path.Combine(_testDirectory, "append_test.xlsx");
@@ -86,7 +86,7 @@ public class ExcelTargetWriterUnitTests : IDisposable
     }
 
     [Fact]
-    public async Task WriteAsync_ThrowsOnInvalidTargetInfo()
+    public async Task WriteAsync_WhenTargetInfoIsInvalid_ThenThrowsArgumentException()
     {
         // Arrange
         var invalidTarget = new FakeTargetInfo(); 
