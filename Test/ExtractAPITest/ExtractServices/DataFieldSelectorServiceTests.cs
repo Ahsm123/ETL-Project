@@ -1,5 +1,7 @@
-﻿using ExtractAPI.Services;
+﻿using ETL.Domain.Rules;
+using ExtractAPI.Services;
 using System.Text.Json;
+using Transform.Services;
 
 namespace Test.ExstractAPITest.ExtractServices;
 
@@ -59,4 +61,107 @@ public class DataFieldSelectorServiceTests
         Assert.Single(result);
         Assert.Empty(result[0]);
     }
+    [Fact]
+    public void ShouldInclude_ReturnsFalse_WhenFieldIsMissing()
+    {
+        // Arrange
+        var filterService = new FilterService();
+        var item = new Dictionary<string, object>(); // Tomt item
+
+        var filters = new List<FilterRule>
+    {
+        new FilterRule { Field = "nonexistent", Operator = "equals", Value = "test" }
+    };
+
+        // Act
+        var result = filterService.ShouldInclude(item, filters);
+
+        // Assert
+        Assert.False(result);
+    }
+    [Fact]
+    public void ShouldInclude_ReturnsFalse_WhenOperatorIsUnknown()
+    {
+        // Arrange
+        var filterService = new FilterService();
+        var item = new Dictionary<string, object>
+    {
+        { "status", JsonDocument.Parse("\"Accepted\"").RootElement }
+    };
+
+        var filters = new List<FilterRule>
+    {
+        new FilterRule { Field = "status", Operator = "notanoperator", Value = "Accepted" }
+    };
+
+        // Act
+        var result = filterService.ShouldInclude(item, filters);
+
+        // Assert
+        Assert.False(result);
+    }
+    [Fact]
+    public void ShouldInclude_ReturnsFalse_WhenFieldValueIsNull()
+    {
+        // Arrange
+        var filterService = new FilterService();
+        var item = new Dictionary<string, object>
+    {
+        { "status", JsonDocument.Parse("null").RootElement }
+    };
+
+        var filters = new List<FilterRule>
+    {
+        new FilterRule { Field = "status", Operator = "equals", Value = "Accepted" }
+    };
+
+        // Act
+        var result = filterService.ShouldInclude(item, filters);
+
+        // Assert
+        Assert.False(result);
+    }
+    [Fact]
+    public void ShouldInclude_ReturnsFalse_IfOneOfMultipleFiltersFails()
+    {
+        // Arrange
+        var filterService = new FilterService();
+        var item = new Dictionary<string, object>
+    {
+        { "cost", JsonDocument.Parse("1500").RootElement },
+        { "status", JsonDocument.Parse("\"Declined\"").RootElement }
+    };
+
+        var filters = new List<FilterRule>
+    {
+        new FilterRule { Field = "cost", Operator = "greaterthan", Value = "1000" },
+        new FilterRule { Field = "status", Operator = "equals", Value = "Accepted" }
+    };
+
+        // Act
+        var result = filterService.ShouldInclude(item, filters);
+
+        // Assert
+        Assert.False(result);
+    }
+    [Theory]
+    [InlineData("Declined", true)]
+    [InlineData("Accepted", false)]
+    public void ShouldInclude_Notequals_WorksAsExpected(string status, bool expected)
+    {
+        var filterService = new FilterService();
+        var item = new Dictionary<string, object>
+    {
+        { "status", JsonDocument.Parse($"\"{status}\"").RootElement }
+    };
+
+        var filters = new List<FilterRule>
+    {
+        new FilterRule { Field = "status", Operator = "notequals", Value = "Accepted" }
+    };
+
+        var result = filterService.ShouldInclude(item, filters);
+        Assert.Equal(expected, result);
+    }
+
 }
