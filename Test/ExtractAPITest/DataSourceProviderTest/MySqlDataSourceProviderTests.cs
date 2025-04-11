@@ -13,7 +13,7 @@ using Moq;
 using ETL.Domain.Rules;
 using Dapper;
 
-namespace Test.ExtractAPI;
+namespace Test.ExtractAPITest.DataSourceProviderTest;
 
 public class MySQLDataSourceProviderTests
 {

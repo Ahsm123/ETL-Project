@@ -7,7 +7,7 @@ using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using Moq;
 using System.Text.Json;
 
-namespace Test.ExtractAPI;
+namespace Test.ExtractAPITest.DataSourceProviderTest;
 
 public class MsSqlDataSourceProviderTests
 {

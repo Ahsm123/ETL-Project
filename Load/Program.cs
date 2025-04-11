@@ -1,4 +1,6 @@
-﻿using ExtractAPI.DataSources.DatabaseQueryBuilder;
+﻿using ETL.Domain.SQLQueryBuilder.Interfaces;
+using ETL.Domain.SQLQueryBuilder;
+using ExtractAPI.DataSources.DatabaseQueryBuilder;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using Load.Interfaces;
 using Load.Messaging;
@@ -11,7 +13,15 @@ var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureServices(services =>
 {
-    // Dynamisk registrering af alle ITargetWriter-implementeringer med constructor-injektion
+    // Register dependencies for MsSqlTargetWriter
+    services.AddSingleton<IMsSqlQueryBuilder, MsSqlQueryBuilder>();
+    services.AddSingleton<IMsSqlExecutor, MsSqlExecutor>();
+
+    // Register dependencies for MySqlTargetWriter (if needed)
+    services.AddSingleton<IMySqlQueryBuilder, MySQLQueryBuilder>();
+    services.AddSingleton<IMySqlExecutor, MySqlExecutor>();
+
+    // Dynamically register all ITargetWriter implementations
     var writerTypes = typeof(ITargetWriter).Assembly
         .GetTypes()
         .Where(t => typeof(ITargetWriter).IsAssignableFrom(t) &&
@@ -23,12 +33,12 @@ builder.ConfigureServices(services =>
             ActivatorUtilities.CreateInstance(serviceProvider, type));
     }
 
-    // Registrér resten af services
+    // Register other services
     services.AddSingleton<ITargetWriterResolver, TargetWriterResolver>();
-    services.AddSingleton<ISqlQueryBuilder, MySQLQueryBuilder>();
     services.AddSingleton<IMessageListener, KafkaMessageListener>();
     services.AddSingleton<ILoadHandler, LoadHandler>();
     services.AddHostedService<LoadWorker>();
 });
+
 
 await builder.Build().RunAsync();

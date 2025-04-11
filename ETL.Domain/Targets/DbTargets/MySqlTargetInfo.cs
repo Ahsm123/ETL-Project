@@ -15,6 +15,4 @@ namespace ETL.Domain.Targets.DbTargets
         {
         }
     }
-    
-    
 }

@@ -5,46 +5,67 @@ using Load.Interfaces;
 
 public class ExcelTargetWriter : ITargetWriter
 {
-    public Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data, string? pipelineId = null)
+    public async Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data, string? pipelineId = null)
     {
         if (targetInfo is not ExcelTargetInfo excelInfo)
             throw new ArgumentException("Invalid targetInfo for Excel target");
 
-        // Construct the filename with pipelineId and date
+        string fullPath = GenerateFilePath(excelInfo, pipelineId);
+        EnsureDirectoryExists(fullPath);
+
+        using var workbook = File.Exists(fullPath)
+            ? new XLWorkbook(fullPath)
+            : new XLWorkbook();
+
+        var sheetName = excelInfo.SheetName ?? "Sheet1";
+        var worksheet = workbook.Worksheets.FirstOrDefault(ws => ws.Name == sheetName)
+                     ?? workbook.Worksheets.Add(sheetName);
+
+        if (IsNewSheet(worksheet) && excelInfo.IncludeHeaders)
+        {
+            WriteHeaders(worksheet, data.Keys);
+        }
+
+        WriteRow(worksheet, data, excelInfo.IncludeHeaders);
+        workbook.SaveAs(fullPath);
+
+        await Task.CompletedTask;
+    }
+
+    public bool CanHandle(Type targetInfoType) => targetInfoType == typeof(ExcelTargetInfo);
+
+    private static string GenerateFilePath(ExcelTargetInfo info, string? pipelineId)
+    {
         var currentDate = DateTime.Now.ToString("yyyyMMdd");
-        var basePath = Path.GetDirectoryName(excelInfo.FilePath) ?? "Exports";
-        Directory.CreateDirectory(basePath); // ensure directory exists
+        var basePath = Path.GetDirectoryName(info.FilePath) ?? "Exports";
+        var fileBaseName = Path.GetFileNameWithoutExtension(info.FilePath);
+        var finalName = $"{(pipelineId ?? fileBaseName)}_{currentDate}.xlsx";
+        return Path.Combine(basePath, finalName);
+    }
 
-        var fileBaseName = Path.GetFileNameWithoutExtension(excelInfo.FilePath);
-        var fileName = $"{(pipelineId ?? fileBaseName)}_{currentDate}.xlsx";
-        var fullPath = Path.Combine(basePath, fileName);
+    private static void EnsureDirectoryExists(string fullPath)
+    {
+        var directory = Path.GetDirectoryName(fullPath);
+        if (!string.IsNullOrWhiteSpace(directory))
+            Directory.CreateDirectory(directory);
+    }
 
-        XLWorkbook workbook;
-        IXLWorksheet worksheet;
+    private static bool IsNewSheet(IXLWorksheet worksheet)
+        => worksheet.LastRowUsed() == null;
 
-        if (File.Exists(fullPath))
+    private static void WriteHeaders(IXLWorksheet worksheet, IEnumerable<string> keys)
+    {
+        int col = 1;
+        foreach (var key in keys)
         {
-            workbook = new XLWorkbook(fullPath);
-            worksheet = workbook.Worksheet(excelInfo.SheetName ?? "Sheet1");
+            worksheet.Cell(1, col++).Value = key;
         }
-        else
-        {
-            workbook = new XLWorkbook();
-            worksheet = workbook.Worksheets.Add(excelInfo.SheetName ?? "Sheet1");
+    }
 
-            if (excelInfo.IncludeHeaders)
-            {
-                int headerCol = 1;
-                foreach (var key in data.Keys)
-                {
-                    worksheet.Cell(1, headerCol++).Value = key;
-                }
-            }
-        }
-
-        // Find next empty row
+    private static void WriteRow(IXLWorksheet worksheet, Dictionary<string, object> data, bool headersIncluded)
+    {
         int row = worksheet.LastRowUsed()?.RowNumber() + 1 ?? 1;
-        if (row == 1 && excelInfo.IncludeHeaders)
+        if (row == 1 && headersIncluded)
             row = 2;
 
         int col = 1;
@@ -52,13 +73,5 @@ public class ExcelTargetWriter : ITargetWriter
         {
             worksheet.Cell(row, col++).Value = data[key]?.ToString();
         }
-
-        workbook.SaveAs(fullPath);
-        return Task.CompletedTask;
-    }
-
-    public bool CanHandle(Type targetInfoType)
-    {
-        return targetInfoType == typeof(ExcelTargetInfo);
     }
 }

@@ -10,8 +10,7 @@ using System.Threading.Tasks;
 using Dapper;
 using ETL.Domain.Targets.DbTargets;
 
-namespace Test.ExstractAPITest.DataSourceProviderTest
-{
+namespace Test.ExstractAPITest.DataSourceProviderTest;
     public class MySQLQueryBuilderTest
     {
         [Fact]
@@ -63,6 +62,7 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
                 "SELECT `account_id`, `cost`, `status` FROM `approved_highvalue_payments`;";
             Assert.Equal(expectedSql, sql.Trim());
         }
+
         [Fact]
         public void GenerateSelectQuery_GeneratesValidSQLWithEmptyFields()
         {
@@ -80,6 +80,7 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
                 "SELECT * FROM `approved_highvalue_payments`;";
             Assert.Equal(expectedSql, sql.Trim());
         }
+
         [Fact]
         public void GenerateSelectQuery_ThrowsExceptionWhenEmptyEmptyTargetTable()
         {
@@ -95,8 +96,8 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
                 queryBuilder.GenerateSelectQuery(sourceInfo, fields, null));
 
             Assert.Equal("Target table is required", ex.Message);
-
         }
+
         [Fact]
         public void GenerateSelectQuery_WhenFilterRuleIsMissingAttribute_ThrowsException()
         {
@@ -118,6 +119,7 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
 
             Assert.Equal("Unsupported operator ''", ex.Message);
         }
+
         [Fact]
         public void GenerateInsertQuery_ReturnsCorrectSqlAndParametersWhenValidInput()
         {
@@ -144,12 +146,13 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
             Assert.Equal(expectedSql, sql.Trim());
             Assert.Equal(3, parameters.ParameterNames.AsList().Count);
         }
+
         [Fact]
         public void GenerateInsertQuery_NullTargetTable_ThrowsArgumentException()
         {
             // Arrange
             var queryBuilder = new MySQLQueryBuilder();
-            var targetInfo = new MySqlTargetInfo { TargetTable = null };
+            var targetInfo = new MySqlTargetInfo { TargetTable = string.Empty };
             var data = new Dictionary<string, object> { { "username", "king" } };
 
             // Act & Assert
@@ -193,4 +196,3 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
             Assert.Null(parameters.Get<object>("@message"));
         }
     }
-}
