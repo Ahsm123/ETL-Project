@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Test.ExtractAPI
+namespace Test.ExtractAPITest.DataSourceProviderTest
 {
     public class ExcelDataSourceProviderTests
     {
@@ -82,7 +82,7 @@ namespace Test.ExtractAPI
         {
             // Arrange
             var tempDirectory = Path.Combine(Path.GetTempPath(), "ExcelDataSourceProviderTests");
-            Directory.CreateDirectory(tempDirectory); 
+            Directory.CreateDirectory(tempDirectory);
             var filePath = Path.Combine(tempDirectory, "test.xlsx");
 
             var extractConfig = new ExtractConfig
@@ -104,8 +104,8 @@ namespace Test.ExtractAPI
             var result = await _excelDataSourceProvider.GetDataAsync(extractConfig);
 
             // Assert
-            Assert.IsType<JsonElement>(result); 
-            Assert.Equal("[]", result.GetRawText()); 
+            Assert.IsType<JsonElement>(result);
+            Assert.Equal("[]", result.GetRawText());
 
             File.Delete(filePath);
             await Task.Delay(1000);
@@ -118,7 +118,7 @@ namespace Test.ExtractAPI
         {
             // Arrange
             var tempDirectory = Path.Combine(Path.GetTempPath(), "ExcelDataSourceProviderTests");
-            Directory.CreateDirectory(tempDirectory); 
+            Directory.CreateDirectory(tempDirectory);
             var filePath = Path.Combine(tempDirectory, "test_invalid_headers.xlsx");
 
             var extractConfig = new ExtractConfig
@@ -132,8 +132,8 @@ namespace Test.ExtractAPI
 
             var workbook = new ClosedXML.Excel.XLWorkbook();
             var worksheet = workbook.AddWorksheet("Sheet1");
-            worksheet.Cell("A1").Value = "";  
-            worksheet.Cell("B1").Value = "";  
+            worksheet.Cell("A1").Value = "";
+            worksheet.Cell("B1").Value = "";
             workbook.SaveAs(filePath);
 
             // Act & Assert
