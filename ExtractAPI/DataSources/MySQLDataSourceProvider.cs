@@ -15,10 +15,10 @@ namespace ExtractAPI.DataSources
 {
     public class MySQLDataSourceProvider : IDataSourceProvider
     {
-        private readonly ISqlQueryBuilder _queryBuilder;
-        private readonly ISqlExecutor _sqlExecutor;
+        private readonly IMySqlQueryBuilder _queryBuilder;
+        private readonly IMySqlExecutor _sqlExecutor;
 
-        public MySQLDataSourceProvider(ISqlQueryBuilder queryBuilder, ISqlExecutor sqlExecutor)
+        public MySQLDataSourceProvider(IMySqlQueryBuilder queryBuilder, IMySqlExecutor sqlExecutor)
         {
             _queryBuilder = queryBuilder;
             _sqlExecutor = sqlExecutor;
@@ -37,7 +37,7 @@ namespace ExtractAPI.DataSources
             if (string.IsNullOrWhiteSpace(dbInfo.ConnectionString))
                 throw new ArgumentException("Connection string is required");
 
-            var (query, parameters) = _queryBuilder.BuildSelectQuery(dbInfo, extractConfig.Fields, extractConfig.Filters);
+            var (query, parameters) = _queryBuilder.GenerateSelectQuery(dbInfo, extractConfig.Fields, extractConfig.Filters);
 
             var rows = await _sqlExecutor.ExecuteQueryAsync(dbInfo.ConnectionString, query, parameters);
 

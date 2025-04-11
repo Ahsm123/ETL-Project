@@ -1,11 +1,18 @@
-﻿using ETL.Domain.Rules;
+﻿using Dapper;
+using ETL.Domain.Rules;
 using ETL.Domain.Sources;
+using ETL.Domain.SQLQueryBuilder.Interfaces;
+using ETL.Domain.Targets.DbTargets;
+using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
+using System.Text.RegularExpressions;
 
 namespace ETL.Domain.SQLQueryBuilder;
 
-public static class MsSqlQueryBuilder
+public class MsSqlQueryBuilder : IMsSqlQueryBuilder
 {
-    private static readonly Dictionary<string, string> _operatorMap = new(StringComparer.OrdinalIgnoreCase)
+    private const string BaseSelectQuery = "SELECT {0} FROM {1}";
+
+    private static readonly Dictionary<string, string> OperatorMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["equals"] = "=",
         ["not_equals"] = "!=",
@@ -15,63 +22,66 @@ public static class MsSqlQueryBuilder
         ["less_or_equal"] = "<=",
     };
 
-    public static (string query, Dictionary<string, object> parameters) BuildSafeSelectQuery(
-        DbSourceBaseInfo source,
-        List<string> fields,
-        List<FilterRule> filters)
+    public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string> fields, List<FilterRule>? filters)
     {
-        string fieldList = BuildFieldList(fields);
-        string fromClause = SanitizeIdentifier(source.TargetTable);
-        string baseQuery = $"SELECT {fieldList} FROM {fromClause}";
+        if (string.IsNullOrWhiteSpace(info.TargetTable))
+            throw new ArgumentException("Target table is required");
 
-        var (whereClause, parameters) = BuildWhereClause(filters);
+        var sanitizedTableName = ProtectFromSqlInjection(info.TargetTable);
 
-        string finalQuery = string.IsNullOrWhiteSpace(whereClause)
-            ? baseQuery
-            : $"{baseQuery} WHERE {whereClause}";
+        var columnSelection = (fields != null && fields.Any())
+            ? string.Join(", ", fields.Select(ProtectFromSqlInjection))
+            : "*";
 
-        return (finalQuery, parameters);
+        var selectStatement = string.Format(BaseSelectQuery, columnSelection, sanitizedTableName);
+
+        var (whereClause, whereParameters) = GenerateWhereCondition(filters);
+
+        var completeQuery = string.IsNullOrWhiteSpace(whereClause)
+            ? selectStatement
+            : $"{selectStatement} WHERE {whereClause}";
+
+        return (completeQuery, whereParameters);
     }
 
-    private static string BuildFieldList(List<string> fields)
+    private static (string clause, DynamicParameters parameters) GenerateWhereCondition(List<FilterRule>? filters)
     {
-        if (fields == null || fields.Count == 0)
-            return "*";
-
-        return string.Join(", ", fields.Select(SanitizeIdentifier));
-    }
-
-    private static (string clause, Dictionary<string, object> parameters) BuildWhereClause(List<FilterRule> filters)
-    {
-        var clauseParts = new List<string>();
-        var parameters = new Dictionary<string, object>();
+        var whereConditions = new List<string>();
+        var dynamicParams = new DynamicParameters();
 
         if (filters == null || filters.Count == 0)
-            return (string.Empty, parameters);
+            return (string.Empty, dynamicParams);
 
-        for (int i = 0; i < filters.Count; i++)
+        for (int index = 0; index < filters.Count; index++)
         {
-            var rule = filters[i];
-            var paramName = $"@param{i}";
+            var filter = filters[index];
+            var parameterName = $"@param{index}";
 
-            if (!_operatorMap.TryGetValue(rule.Operator.ToLower(), out var sqlOperator))
-                throw new NotSupportedException($"Unsupported operator: {rule.Operator}");
+            if (!OperatorMap.TryGetValue(filter.Operator.ToLower(), out var sqlOperator))
+                throw new NotSupportedException($"Unsupported operator: {filter.Operator}");
 
-            clauseParts.Add($"{SanitizeIdentifier(rule.Field)} {sqlOperator} {paramName}");
-            parameters[paramName] = rule.Value;
+            var escapedFieldName = ProtectFromSqlInjection(filter.Field);
+            whereConditions.Add($"{escapedFieldName} {sqlOperator} {parameterName}");
+            dynamicParams.Add(parameterName, filter.Value);
         }
 
-        return (string.Join(" AND ", clauseParts), parameters);
+        return (string.Join(" AND ", whereConditions), dynamicParams);
     }
 
-    private static string SanitizeIdentifier(string identifier)
+    private static string ProtectFromSqlInjection(string identifier)
     {
         if (string.IsNullOrWhiteSpace(identifier))
             throw new ArgumentException("Field/table name cannot be empty.");
 
-        if (identifier.Any(c => !char.IsLetterOrDigit(c) && c != '_'))
+        if (!Regex.IsMatch(identifier, "^[a-zA-Z_][a-zA-Z0-9_]*$"))
             throw new ArgumentException($"Invalid characters in identifier: {identifier}");
 
-        return $"[{identifier}]";
+        return $"[{identifier}]"; 
+    }
+
+    public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)
+    {
+        throw new NotImplementedException();
     }
 }
+

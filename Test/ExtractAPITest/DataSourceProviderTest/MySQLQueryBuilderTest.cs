@@ -33,7 +33,7 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
             };
 
             // Act
-            var (sql, parameters) = queryBuilder.BuildSelectQuery(sourceInfo, fields, filters);
+            var (sql, parameters) = queryBuilder.GenerateSelectQuery(sourceInfo, fields, filters);
 
             // Assert
             var expectedSql =

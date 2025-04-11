@@ -21,15 +21,15 @@ public class MySQLDataSourceProviderTests
     public async Task GetDataAsync_Returns_ValidJson()
     {
         // Arrange
-        var mockBuilder = new Mock<ISqlQueryBuilder>();
-        var mockExecutor = new Mock<ISqlExecutor>();
+        var mockBuilder = new Mock<IMySqlQueryBuilder>();
+        var mockExecutor = new Mock<IMySqlExecutor>();
 
         var expectedRows = new List<IDictionary<string, object>>
     {
         new Dictionary<string, object> { { "Id", 1 }, { "Name", "Test" } }
     };
 
-        mockBuilder.Setup(b => b.BuildSelectQuery(
+        mockBuilder.Setup(b => b.GenerateSelectQuery(
              It.IsAny<DbSourceBaseInfo>(),
             It.IsAny<List<string>>(),
              It.IsAny<List<FilterRule>>()))
