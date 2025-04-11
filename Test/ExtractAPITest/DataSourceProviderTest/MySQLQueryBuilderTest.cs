@@ -62,6 +62,7 @@ namespace Test.ExstractAPITest.DataSourceProviderTest;
                 "SELECT `account_id`, `cost`, `status` FROM `approved_highvalue_payments`;";
             Assert.Equal(expectedSql, sql.Trim());
         }
+
         [Fact]
         public void GenerateSelectQuery_GeneratesValidSQLWithEmptyFields()
         {
@@ -79,6 +80,7 @@ namespace Test.ExstractAPITest.DataSourceProviderTest;
                 "SELECT * FROM `approved_highvalue_payments`;";
             Assert.Equal(expectedSql, sql.Trim());
         }
+
         [Fact]
         public void GenerateSelectQuery_ThrowsExceptionWhenEmptyEmptyTargetTable()
         {
@@ -94,8 +96,8 @@ namespace Test.ExstractAPITest.DataSourceProviderTest;
                 queryBuilder.GenerateSelectQuery(sourceInfo, fields, null));
 
             Assert.Equal("Target table is required", ex.Message);
-
         }
+
         [Fact]
         public void GenerateSelectQuery_WhenFilterRuleIsMissingAttribute_ThrowsException()
         {
@@ -117,6 +119,7 @@ namespace Test.ExstractAPITest.DataSourceProviderTest;
 
             Assert.Equal("Unsupported operator ''", ex.Message);
         }
+
         [Fact]
         public void GenerateInsertQuery_ReturnsCorrectSqlAndParametersWhenValidInput()
         {
@@ -143,6 +146,7 @@ namespace Test.ExstractAPITest.DataSourceProviderTest;
             Assert.Equal(expectedSql, sql.Trim());
             Assert.Equal(3, parameters.ParameterNames.AsList().Count);
         }
+
         [Fact]
         public void GenerateInsertQuery_NullTargetTable_ThrowsArgumentException()
         {
