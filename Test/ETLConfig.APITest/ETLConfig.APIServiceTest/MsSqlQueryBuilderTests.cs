@@ -16,7 +16,7 @@ public class MsSqlQueryBuilderTests
     }
 
     [Fact]
-    public void BuildSelectQuery_WithFieldsAndFilters_BuildsCorrectSql()
+    public void GenerateSelectQuery_WithFieldsAndFilters_BuildsCorrectSql()
     {
         // Arrange
         var source = new MsSqlSourceInfo
@@ -43,7 +43,7 @@ public class MsSqlQueryBuilderTests
 
 
     [Fact]
-    public void BuildSelectQuery_WithoutFields_ReturnsSelectAll()
+    public void GenerateSelectQuery_WithoutFields_ReturnsSelectAll()
     {
         var source = new MsSqlSourceInfo { TargetTable = "Users" };
 
@@ -53,7 +53,7 @@ public class MsSqlQueryBuilderTests
     }
 
     [Fact]
-    public void BuildSelectQuery_WithInvalidField_ThrowsException()
+    public void GenerateSelectQuery_WithInvalidField_ThrowsException()
     {
         var source = new MsSqlSourceInfo { TargetTable = "Users" };
 
@@ -64,7 +64,7 @@ public class MsSqlQueryBuilderTests
     }
 
     [Fact]
-    public void BuildSelectQuery_WithUnsupportedOperator_ThrowsException()
+    public void GenerateSelectQuery_WithUnsupportedOperator_ThrowsException()
     {
         var source = new MsSqlSourceInfo { TargetTable = "Products" };
         var filters = new List<FilterRule>
@@ -75,4 +75,5 @@ public class MsSqlQueryBuilderTests
         Assert.Throws<NotSupportedException>(() =>
             _queryBuilder.GenerateSelectQuery(source, new List<string>(), filters));
     }
+ 
 }

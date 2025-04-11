@@ -8,13 +8,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Dapper;
+using ETL.Domain.Targets.DbTargets;
 
 namespace Test.ExstractAPITest.DataSourceProviderTest
 {
     public class MySQLQueryBuilderTest
     {
         [Fact]
-        public void BuildSelectQuery_GeneratesValidSqlAndParameters()
+        public void GenerateSelectQuery_GeneratesValidSqlAndParameters()
         {
             // Arrange
             var queryBuilder = new MySQLQueryBuilder();
@@ -46,7 +47,7 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
         }
 
         [Fact]
-        public void BuildSelectQuery_GeneratesValidSQLWithoutFilter()
+        public void GenerateSelectQuery_GeneratesValidSQLWithoutFilter()
         {
             //arrange
             var queryBuilder = new MySQLQueryBuilder();
@@ -56,14 +57,14 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
             };
             var fields = new List<string> { "account_id", "cost", "status" };
             //Act
-            var (sql, parameters) = queryBuilder.BuildSelectQuery(sourceInfo, fields, null);
+            var (sql, parameters) = queryBuilder.GenerateSelectQuery(sourceInfo, fields, null);
             //Assert
             var expectedSql =
                 "SELECT `account_id`, `cost`, `status` FROM `approved_highvalue_payments`;";
             Assert.Equal(expectedSql, sql.Trim());
         }
         [Fact]
-        public void BuildSelectQuery_GeneratesValidSQLWithEmptyFields()
+        public void GenerateSelectQuery_GeneratesValidSQLWithEmptyFields()
         {
             //arrange
             var queryBuilder = new MySQLQueryBuilder();
@@ -73,14 +74,14 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
             };
             var fields = new List<string>();
             //Act
-            var (sql, parameters) = queryBuilder.BuildSelectQuery(sourceInfo, fields, null);
+            var (sql, parameters) = queryBuilder.GenerateSelectQuery(sourceInfo, fields, null);
             //Assert
             var expectedSql =
                 "SELECT * FROM `approved_highvalue_payments`;";
             Assert.Equal(expectedSql, sql.Trim());
         }
         [Fact]
-        public void BuildSelectQuery_ThrowsExceptionWhenEmptyEmptyTargetTable()
+        public void GenerateSelectQuery_ThrowsExceptionWhenEmptyEmptyTargetTable()
         {
             //Arrange
             var queryBuilder = new MySQLQueryBuilder();
@@ -91,13 +92,13 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
             var fields = new List<string> { "account_id", "cost", "status" };
             // Act & Assert
             var ex = Assert.Throws<ArgumentException>(() =>
-                queryBuilder.BuildSelectQuery(sourceInfo, fields, null));
+                queryBuilder.GenerateSelectQuery(sourceInfo, fields, null));
 
             Assert.Equal("Target table is required", ex.Message);
 
         }
         [Fact]
-        public void BuildSelectQuery_WhenFilterRuleIsMissingAttribute_ThrowsException()
+        public void GenerateSelectQuery_WhenFilterRuleIsMissingAttribute_ThrowsException()
         {
             // Arrange
             var queryBuilder = new MySQLQueryBuilder();
@@ -113,9 +114,49 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
 
             // Act & Assert
             var ex = Assert.Throws<ArgumentException>(() =>
-                queryBuilder.BuildSelectQuery(sourceInfo, fields, filters));
+                queryBuilder.GenerateSelectQuery(sourceInfo, fields, filters));
 
             Assert.Equal("Unsupported operator ''", ex.Message);
+        }
+        [Fact]
+        public void GenerateInsertQuery_ReturnsCorrectSqlAndParametersWhenValidInput()
+        {
+            // Arrange
+            var queryBuilder = new MySQLQueryBuilder();
+            var targetInfo = new MySqlTargetInfo
+            {
+                TargetTable = "approved_highvalue_payments"
+            };
+            var rowData = new Dictionary<string, object>
+            {
+                { "account_id", 123 },
+                { "cost", 1500.50 },
+                { "status", "approved" }
+            };
+
+            // Act
+            var (sql, parameters) = queryBuilder.GenerateInsertQuery(targetInfo, rowData);
+
+            // Assert
+            var expectedSql =
+                "INSERT INTO `approved_highvalue_payments` (`account_id`, `cost`, `status`) VALUES (@account_id, @cost, @status);";
+
+            Assert.Equal(expectedSql, sql.Trim());
+            Assert.Equal(3, parameters.ParameterNames.AsList().Count);
+        }
+        [Fact]
+        public void GenerateInsertQuery_NullTargetTable_ThrowsArgumentException()
+        {
+            // Arrange
+            var queryBuilder = new MySQLQueryBuilder();
+            var targetInfo = new MySqlTargetInfo { TargetTable = null };
+            var data = new Dictionary<string, object> { { "username", "king" } };
+
+            // Act & Assert
+            var ex = Assert.Throws<ArgumentException>(() =>
+                queryBuilder.GenerateInsertQuery(targetInfo, data));
+
+            Assert.Equal("Target table is required", ex.Message);
         }
     }
 }
