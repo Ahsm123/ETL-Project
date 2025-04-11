@@ -18,7 +18,7 @@ namespace Test.ExtractAPITest.DataSourceProviderTest;
 public class MySQLDataSourceProviderTests
 {
     [Fact]
-    public async Task GetDataAsync_Returns_ValidJson()
+    public async Task GetDataAsync_WithValidConfig_ReturnsExpectedJsonArray()
     {
         // Arrange
         var mockBuilder = new Mock<IMySqlQueryBuilder>();

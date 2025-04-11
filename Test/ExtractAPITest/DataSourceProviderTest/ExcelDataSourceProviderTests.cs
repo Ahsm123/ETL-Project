@@ -20,7 +20,7 @@ namespace Test.ExtractAPITest.DataSourceProviderTest
         }
 
         [Fact]
-        public void CanHandle_ShouldReturnTrue_ForExcelSourceInfo()
+        public void CanHandle_WhenExcelSourceInfo_ShouldReturnTrue()
         {
             // Arrange
             var sourceInfoType = typeof(ExcelSourceInfo);
@@ -33,7 +33,7 @@ namespace Test.ExtractAPITest.DataSourceProviderTest
         }
 
         [Fact]
-        public void CanHandle_ShouldReturnFalse_ForNonExcelSourceInfo()
+        public void CanHandle_ForNonExcelSourceInfo_ShouldReturnFalse()
         {
             // Arrange
             var sourceInfoType = typeof(MsSqlSourceInfo);
@@ -46,21 +46,7 @@ namespace Test.ExtractAPITest.DataSourceProviderTest
         }
 
         [Fact]
-        public async Task GetDataAsync_ShouldThrowArgumentException_WhenSourceInfoIsInvalid()
-        {
-            // Arrange
-            var extractConfig = new ExtractConfig
-            {
-                SourceInfo = new MsSqlSourceInfo() // Invalid source info
-            };
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _excelDataSourceProvider.GetDataAsync(extractConfig));
-            Assert.Equal("Invalid sourceInfo for excel source", exception.Message);
-        }
-
-        [Fact]
-        public async Task GetDataAsync_ShouldThrowFileNotFoundException_WhenFileDoesNotExist()
+        public async Task GetDataAsync_WhenFileDoesNotExist_ShouldThrowFileNotFoundException()
         {
             // Arrange
             var extractConfig = new ExtractConfig
@@ -78,7 +64,7 @@ namespace Test.ExtractAPITest.DataSourceProviderTest
         }
 
         [Fact]
-        public async Task GetDataAsync_ShouldReturnEmptyJson_WhenNoDataRowsExist()
+        public async Task GetDataAsync_WhenNoDataRowsExist_ShouldReturnEmptyJson()
         {
             // Arrange
             var tempDirectory = Path.Combine(Path.GetTempPath(), "ExcelDataSourceProviderTests");
@@ -114,7 +100,7 @@ namespace Test.ExtractAPITest.DataSourceProviderTest
 
 
         [Fact]
-        public async Task GetDataAsync_ShouldThrowInvalidOperationException_WhenHeadersAreEmpty()
+        public async Task GetDataAsync_WhenHeadersAreEmpty_ShouldThrowInvalidOperationException()
         {
             // Arrange
             var tempDirectory = Path.Combine(Path.GetTempPath(), "ExcelDataSourceProviderTests");

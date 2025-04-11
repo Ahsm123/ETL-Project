@@ -15,7 +15,7 @@ namespace Test.ExtractAPITest.DataSourceProviderTest;
 public class ApiDataSourceProviderTests
 {
     [Fact]
-    public async Task GetDataAsync_ShouldReturnJsonElement_WhenResponseIsValid()
+    public async Task GetDataAsync_WhenResponseIsValid_ShouldReturnJsonElement()
     {
         // Arrange
         var expectedJson = "{\"message\":\"Hello World\"}";
@@ -52,7 +52,7 @@ public class ApiDataSourceProviderTests
     }
 
     [Fact]
-    public async Task GetDataAsync_ShouldThrow_WhenResponseIsError()
+    public async Task GetDataAsync_WhenResponseIsError_ShouldThrow()
     {
         // Arrange
         var httpResponse = new HttpResponseMessage(HttpStatusCode.BadRequest)

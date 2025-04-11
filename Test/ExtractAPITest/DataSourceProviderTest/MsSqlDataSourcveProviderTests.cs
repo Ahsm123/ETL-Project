@@ -12,7 +12,7 @@ namespace Test.ExtractAPITest.DataSourceProviderTest;
 public class MsSqlDataSourceProviderTests
 {
     [Fact]
-    public async Task GetDataAsync_Returns_ValidJson()
+    public async Task GetDataAsync_WithValidConfig_ReturnsExpectedJsonArray()
     {
         // Arrange
         var mockExecutor = new Mock<IMsSqlExecutor>();
