@@ -158,5 +158,39 @@ namespace Test.ExstractAPITest.DataSourceProviderTest
 
             Assert.Equal("Target table is required", ex.Message);
         }
+        [Fact]
+        public void GenerateInsertQuery_TableNameWithSqlInjection_ThrowsArgumentException()
+        {
+            // Arrange
+            var queryBuilder = new MySQLQueryBuilder();
+            var targetInfo = new MySqlTargetInfo { TargetTable = "users; DROP TABLE users;" };
+            var data = new Dictionary<string, object> { { "username", "king" } };
+
+            // Act & Assert
+            var ex = Assert.Throws<ArgumentException>(() =>
+                queryBuilder.GenerateInsertQuery(targetInfo, data));
+
+            Assert.Contains("Invalid identifier", ex.Message);
+        }
+        [Fact]
+        public void GenerateInsertQuery_NullValue_UsesDBNull()
+        {
+            // Denne unit test verificerer, at null-værdier oversættes til DBNull.Value,
+            // så en fremtidig SQL INSERT vil indsætte en NULL i databasen.
+            // Arrange
+            var queryBuilder = new MySQLQueryBuilder();
+            var targetInfo = new MySqlTargetInfo { TargetTable = "logs" };
+            var data = new Dictionary<string, object>
+                {
+                    { "message", null }
+                };
+
+            // Act
+            var (sql, parameters) = queryBuilder.GenerateInsertQuery(targetInfo, data);
+
+            // Assert
+            Assert.Equal("INSERT INTO `logs` (`message`) VALUES (@message);", sql);
+            Assert.Null(parameters.Get<object>("@message"));
+        }
     }
 }
