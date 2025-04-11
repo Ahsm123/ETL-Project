@@ -1,13 +1,14 @@
 ﻿using Dapper;
 using ETL.Domain.Rules;
 using ETL.Domain.Sources;
+using ETL.Domain.SQLQueryBuilder.Interfaces;
 using ETL.Domain.Targets.DbTargets;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using System.Text.RegularExpressions;
 
 namespace ETL.Domain.SQLQueryBuilder;
 
-public class MsSqlQueryBuilder : ISqlQueryBuilder
+public class MsSqlQueryBuilder : IMsSqlQueryBuilder
 {
     private const string BaseSelectQuery = "SELECT {0} FROM {1}";
 

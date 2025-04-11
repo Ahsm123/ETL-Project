@@ -7,10 +7,10 @@ using System.Text.Json;
 
 public class MsSqlDataSourceProvider : IDataSourceProvider
 {
-    private readonly ISqlExecutor _executor;
-    private readonly ISqlQueryBuilder _queryBuilder;
+    private readonly IMsSqlExecutor _executor;
+    private readonly IMsSqlQueryBuilder _queryBuilder;
 
-    public MsSqlDataSourceProvider(ISqlExecutor executor, ISqlQueryBuilder queryBuilder)
+    public MsSqlDataSourceProvider(IMsSqlExecutor executor, IMsSqlQueryBuilder queryBuilder)
     {
         _executor = executor;
         _queryBuilder = queryBuilder;

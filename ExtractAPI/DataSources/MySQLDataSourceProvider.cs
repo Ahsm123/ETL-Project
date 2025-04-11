@@ -15,10 +15,10 @@ namespace ExtractAPI.DataSources
 {
     public class MySQLDataSourceProvider : IDataSourceProvider
     {
-        private readonly ISqlQueryBuilder _queryBuilder;
-        private readonly ISqlExecutor _sqlExecutor;
+        private readonly IMySqlQueryBuilder _queryBuilder;
+        private readonly IMySqlExecutor _sqlExecutor;
 
-        public MySQLDataSourceProvider(ISqlQueryBuilder queryBuilder, ISqlExecutor sqlExecutor)
+        public MySQLDataSourceProvider(IMySqlQueryBuilder queryBuilder, IMySqlExecutor sqlExecutor)
         {
             _queryBuilder = queryBuilder;
             _sqlExecutor = sqlExecutor;

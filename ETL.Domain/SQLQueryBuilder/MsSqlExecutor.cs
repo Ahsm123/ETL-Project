@@ -4,7 +4,7 @@ using Microsoft.Data.SqlClient;
 
 namespace ETL.Domain.SQLQueryBuilder;
 
-public class MsSqlExecutor : ISqlExecutor
+public class MsSqlExecutor : IMsSqlExecutor
 {
     public async Task<IEnumerable<IDictionary<string, object>>> ExecuteQueryAsync(
         string connectionString,

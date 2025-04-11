@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ETL.Domain.SQLQueryBuilder;
 
-public class MySqlExecutor : ISqlExecutor
+public class MySqlExecutor : IMySqlExecutor
 {
     public async Task<IEnumerable<IDictionary<string, object>>> ExecuteQueryAsync(string connectionString, string query, object parameters)
     {

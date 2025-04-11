@@ -21,12 +21,12 @@ builder.Services.AddScoped<IExtractPipeline, ExtractPipeline>();
 builder.Services.AddScoped<DataFieldSelectorService>();
 
 // SqlExecutors
-builder.Services.AddScoped<ISqlExecutor, MySqlExecutor>();
-builder.Services.AddScoped<ISqlExecutor, MsSqlExecutor>();
+builder.Services.AddSingleton<IMySqlExecutor, MySqlExecutor>();
+builder.Services.AddSingleton<IMsSqlExecutor, MsSqlExecutor>();
 
 // Query builders
-builder.Services.AddScoped<ISqlQueryBuilder, MySQLQueryBuilder>();
-builder.Services.AddScoped<ISqlQueryBuilder, MsSqlQueryBuilder>();
+builder.Services.AddSingleton<IMySqlQueryBuilder, MySQLQueryBuilder>();
+builder.Services.AddSingleton<IMsSqlQueryBuilder, MsSqlQueryBuilder>();
 
 // ConfigService HTTP client
 builder.Services.AddHttpClient<IConfigService, ConfigService>(client =>

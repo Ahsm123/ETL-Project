@@ -15,8 +15,8 @@ public class MsSqlDataSourceProviderTests
     public async Task GetDataAsync_Returns_ValidJson()
     {
         // Arrange
-        var mockExecutor = new Mock<ISqlExecutor>();
-        var mockQueryBuilder = new Mock<ISqlQueryBuilder>();
+        var mockExecutor = new Mock<IMsSqlExecutor>();
+        var mockQueryBuilder = new Mock<IMsSqlQueryBuilder>();
 
         var expectedData = new List<IDictionary<string, object>>
     {
