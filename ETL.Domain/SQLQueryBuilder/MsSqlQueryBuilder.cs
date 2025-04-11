@@ -26,44 +26,45 @@ public class MsSqlQueryBuilder : ISqlQueryBuilder
         if (string.IsNullOrWhiteSpace(info.TargetTable))
             throw new ArgumentException("Target table is required");
 
-        var tableName = ProtectFromSqlInjection(info.TargetTable);
+        var sanitizedTableName = ProtectFromSqlInjection(info.TargetTable);
 
-        var selectColumns = (fields != null && fields.Any())
+        var columnSelection = (fields != null && fields.Any())
             ? string.Join(", ", fields.Select(ProtectFromSqlInjection))
             : "*";
 
-        var baseQuery = string.Format(BaseSelectQuery, selectColumns, tableName);
+        var selectStatement = string.Format(BaseSelectQuery, columnSelection, sanitizedTableName);
 
-        var (whereClause, parameters) = GenerateWhereCondition(filters);
+        var (whereClause, whereParameters) = GenerateWhereCondition(filters);
 
-        var finalQuery = string.IsNullOrWhiteSpace(whereClause)
-            ? baseQuery
-            : $"{baseQuery} WHERE {whereClause}";
+        var completeQuery = string.IsNullOrWhiteSpace(whereClause)
+            ? selectStatement
+            : $"{selectStatement} WHERE {whereClause}";
 
-        return (finalQuery, parameters);
+        return (completeQuery, whereParameters);
     }
 
     private static (string clause, DynamicParameters parameters) GenerateWhereCondition(List<FilterRule>? filters)
     {
-        var clauseParts = new List<string>();
-        var parameters = new DynamicParameters();
+        var whereConditions = new List<string>();
+        var dynamicParams = new DynamicParameters();
 
         if (filters == null || filters.Count == 0)
-            return (string.Empty, parameters);
+            return (string.Empty, dynamicParams);
 
-        for (int i = 0; i < filters.Count; i++)
+        for (int index = 0; index < filters.Count; index++)
         {
-            var rule = filters[i];
-            var paramName = $"@param{i}";
+            var filter = filters[index];
+            var parameterName = $"@param{index}";
 
-            if (!OperatorMap.TryGetValue(rule.Operator.ToLower(), out var sqlOperator))
-                throw new NotSupportedException($"Unsupported operator: {rule.Operator}");
+            if (!OperatorMap.TryGetValue(filter.Operator.ToLower(), out var sqlOperator))
+                throw new NotSupportedException($"Unsupported operator: {filter.Operator}");
 
-            clauseParts.Add($"{ProtectFromSqlInjection(rule.Field)} {sqlOperator} {paramName}");
-            parameters.Add(paramName, rule.Value);
+            var escapedFieldName = ProtectFromSqlInjection(filter.Field);
+            whereConditions.Add($"{escapedFieldName} {sqlOperator} {parameterName}");
+            dynamicParams.Add(parameterName, filter.Value);
         }
 
-        return (string.Join(" AND ", clauseParts), parameters);
+        return (string.Join(" AND ", whereConditions), dynamicParams);
     }
 
     private static string ProtectFromSqlInjection(string identifier)
@@ -74,7 +75,7 @@ public class MsSqlQueryBuilder : ISqlQueryBuilder
         if (!Regex.IsMatch(identifier, "^[a-zA-Z_][a-zA-Z0-9_]*$"))
             throw new ArgumentException($"Invalid characters in identifier: {identifier}");
 
-        return $"[{identifier}]";
+        return $"[{identifier}]"; 
     }
 
     public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)

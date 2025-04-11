@@ -20,66 +20,66 @@ namespace ExtractAPI.DataSources.DatabaseQueryBuilder
             ["less_or_equal"] = "<=",
         };
 
-        public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)
+        public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase targetInfo, Dictionary<string, object> rowData)
         {
-            if (string.IsNullOrWhiteSpace(info.TargetTable))
+            if (string.IsNullOrWhiteSpace(targetInfo.TargetTable))
                 throw new ArgumentException("Target table is required");
 
-            var tableName = ProtectFromSqlInjection(info.TargetTable);
+            var escapedTableName = ProtectFromSqlInjection(targetInfo.TargetTable);
 
-            var columnNames = data.Keys.Select(ProtectFromSqlInjection).ToList();
-            var paramNames = data.Keys.Select(k => $"@{k}").ToList();
+            var escapedColumnNames = rowData.Keys.Select(ProtectFromSqlInjection).ToList();
+            var parameterPlaceholders = rowData.Keys.Select(columnName => $"@{columnName}").ToList();
 
-            var sql = $"INSERT INTO {tableName} ({string.Join(", ", columnNames)}) VALUES ({string.Join(", ", paramNames)});";
+            var insertQuery = $"INSERT INTO {escapedTableName} ({string.Join(", ", escapedColumnNames)}) VALUES ({string.Join(", ", parameterPlaceholders)});";
 
-            var parameters = new DynamicParameters();
-            foreach (var kvp in data)
+            var sqlParameters = new DynamicParameters();
+            foreach (var (columnName, value) in rowData)
             {
-                parameters.Add($"@{kvp.Key}", kvp.Value ?? DBNull.Value);
+                sqlParameters.Add($"@{columnName}", value ?? DBNull.Value);
             }
 
-            return (sql, parameters);
-
+            return (insertQuery, sqlParameters);
         }
 
-        public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string> fields, List<FilterRule>? filters)
+        public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo sourceInfo, List<string> selectedFields, List<FilterRule>? filterRules)
         {
-            if (string.IsNullOrWhiteSpace(info.TargetTable))
+            if (string.IsNullOrWhiteSpace(sourceInfo.TargetTable))
                 throw new ArgumentException("Target table is required");
 
-            var tableName = ProtectFromSqlInjection(info.TargetTable);
+            var escapedTableName = ProtectFromSqlInjection(sourceInfo.TargetTable);
 
-            var selectColumns = (fields != null && fields.Any())
-                ? string.Join(", ", fields.Select(ProtectFromSqlInjection))
-                      : "*";
+            var selectClause = (selectedFields != null && selectedFields.Any())
+                ? string.Join(", ", selectedFields.Select(ProtectFromSqlInjection))
+                : "*";
 
-            var sqlBuilder = new StringBuilder();
-            var parameters = new DynamicParameters();
+            var queryBuilder = new StringBuilder();
+            var sqlParameters = new DynamicParameters();
 
-            sqlBuilder.Append($"SELECT {selectColumns} FROM {tableName}");
+            queryBuilder.Append($"SELECT {selectClause} FROM {escapedTableName}");
 
-            if (filters != null && filters.Any())
+            if (filterRules != null && filterRules.Any())
             {
-                var whereClauses = new List<string>();
+                var whereConditions = new List<string>();
 
-                for (int i = 0; i < filters.Count; i++)
+                for (int index = 0; index < filterRules.Count; index++)
                 {
-                    var rule = filters[i];
-                    var column = ProtectFromSqlInjection(rule.Field);
-                    var paramName = $"@p{i}";
+                    var filter = filterRules[index];
+                    var escapedColumn = ProtectFromSqlInjection(filter.Field);
+                    var parameterName = $"@p{index}";
 
-                    if (!AllowedOperators.TryGetValue(rule.Operator.ToLower(), out var sqlOperator))
-                        throw new ArgumentException($"Unsupported operator '{rule.Operator}'");
+                    if (!AllowedOperators.TryGetValue(filter.Operator.ToLower(), out var sqlOperator))
+                        throw new ArgumentException($"Unsupported operator '{filter.Operator}'");
 
-                    whereClauses.Add($"{column} {sqlOperator} {paramName}");
-                    parameters.Add(paramName, rule.Value);
+                    whereConditions.Add($"{escapedColumn} {sqlOperator} {parameterName}");
+                    sqlParameters.Add(parameterName, filter.Value);
                 }
 
-                sqlBuilder.Append(" WHERE " + string.Join(" AND ", whereClauses));
+                queryBuilder.Append(" WHERE " + string.Join(" AND ", whereConditions));
             }
 
-            sqlBuilder.Append(";");
-            return (sqlBuilder.ToString(), parameters);
+            queryBuilder.Append(";");
+
+            return (queryBuilder.ToString(), sqlParameters);
         }
 
 
