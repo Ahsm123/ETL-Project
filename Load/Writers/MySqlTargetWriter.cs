@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using ETL.Domain.SQLQueryBuilder.Interfaces;
 using ETL.Domain.Targets;
 using ETL.Domain.Targets.DbTargets;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
@@ -14,9 +15,9 @@ namespace Load.Writers
 {
     public class MySqlTargetWriter : ITargetWriter
     {
-        private readonly ISqlQueryBuilder _queryBuilder;
+        private readonly IMySqlQueryBuilder _queryBuilder;
 
-        public MySqlTargetWriter(ISqlQueryBuilder queryBuilder)
+        public MySqlTargetWriter(IMySqlQueryBuilder queryBuilder)
         {
             _queryBuilder = queryBuilder;
         }

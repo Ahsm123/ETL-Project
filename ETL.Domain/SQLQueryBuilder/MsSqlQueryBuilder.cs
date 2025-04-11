@@ -81,7 +81,34 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
 
     public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)
     {
-        throw new NotImplementedException();
+        if (info is not MsSqlTargetInfo sqlInfo)
+            throw new ArgumentException("Invalid target info type");
+
+        if (string.IsNullOrWhiteSpace(sqlInfo.TargetTable))
+            throw new ArgumentException("Target table is required");
+
+        if (data == null || !data.Any())
+            throw new ArgumentException("No data provided for insert");
+
+        var sanitizedTable = ProtectFromSqlInjection(sqlInfo.TargetTable);
+
+        var columns = new List<string>();
+        var parameterNames = new List<string>();
+        var parameters = new DynamicParameters();
+
+        foreach (var (key, value) in data)
+        {
+            var column = ProtectFromSqlInjection(key);
+            var parameterName = $"@{key}";
+            columns.Add(column);
+            parameterNames.Add(parameterName);
+            parameters.Add(parameterName, value);
+        }
+
+        var sql = $"INSERT INTO {sanitizedTable} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", parameterNames)})";
+
+        return (sql, parameters);
     }
+
 }
 
