@@ -1,4 +1,5 @@
-﻿using ETL.Domain.SQLQueryBuilder.Interfaces;
+﻿using ETL.Domain.Rules;
+using ETL.Domain.SQLQueryBuilder.Interfaces;
 using ETL.Domain.Targets;
 using ETL.Domain.Targets.DbTargets;
 using Load.Interfaces;
@@ -25,12 +26,11 @@ public class MsSqlTargetWriter : ITargetWriter
             throw new ArgumentException("Invalid target info type");
 
         if (info.UseBulkInsert)
-        {
-            // Placeholder
             throw new NotImplementedException("Bulk insert is not implemented yet.");
-        }
 
-        var (sql, parameters) = _queryBuilder.GenerateInsertQuery(info, data);
+        var mappedData = ApplyTargetMappings(data, info.TargetMappings);
+
+        var (sql, parameters) = _queryBuilder.GenerateInsertQuery(info, mappedData);
 
         try
         {
@@ -41,4 +41,25 @@ public class MsSqlTargetWriter : ITargetWriter
             throw new Exception($"Failed to write to MSSQL target: {ex.Message}", ex);
         }
     }
+
+    private Dictionary<string, object> ApplyTargetMappings(
+        Dictionary<string, object> data,
+        List<LoadFieldMapRule> mappings)
+    {
+        if (mappings == null || mappings.Count == 0)
+            return data;
+
+        var mapped = new Dictionary<string, object>();
+
+        foreach (var map in mappings)
+        {
+            if (data.TryGetValue(map.SourceField, out var value))
+            {
+                mapped[map.TargetColumn] = value;
+            }
+        }
+
+        return mapped;
+    }
+
 }
