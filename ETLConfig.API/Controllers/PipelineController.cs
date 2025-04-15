@@ -142,7 +142,7 @@ public class PipelineController : ControllerBase
             ["$type"] = "mssql",
             ["ConnectionString"] = "Server=localhost;Database=mydb;Trusted_Connection=True;",
             ["TargetTable"] = "Users",
-            ["UseTrustedConnection"] = true
+            ["UseTrustedConnection"] = false
         };
 
         var targetInfo = new Dictionary<string, object>
@@ -150,7 +150,7 @@ public class PipelineController : ControllerBase
             ["$type"] = "mssql",
             ["ConnectionString"] = "Server=localhost;Database=targetdb;Trusted_Connection=True;",
             ["TargetTable"] = "ActiveUsers",
-            ["UseTrustedConnection"] = true
+            ["UseBulkInsert"] = false
         };
 
         var example = new
