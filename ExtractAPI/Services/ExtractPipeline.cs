@@ -80,9 +80,30 @@ public class ExtractPipeline : IExtractPipeline
 
         return hasFieldSelection
             ? _selectorService.FilterFields(rawData, config.ExtractConfig.Fields)
-            : rawData.EnumerateArray()
-                .Select(item => JsonSerializer.Deserialize<Dictionary<string, object>>(item.GetRawText())!);
+            : SafeDeserializeRecords(rawData);
     }
+
+    private IEnumerable<Dictionary<string, object>> SafeDeserializeRecords(JsonElement array)
+    {
+        foreach (var element in array.EnumerateArray())
+        {
+            Dictionary<string, object>? parsed = null;
+            try
+            {
+                parsed = JsonSerializer.Deserialize<Dictionary<string, object>>(element.GetRawText());
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to deserialize element: {Element}", element.GetRawText());
+            }
+
+            if (parsed != null)
+                yield return parsed;
+            else
+                _logger.LogWarning("Skipping null or invalid record in raw data array");
+        }
+    }
+
 
     private async Task DispatchExtractedEventAsync(ConfigFile config, Dictionary<string, object> record)
     {
@@ -94,7 +115,8 @@ public class ExtractPipeline : IExtractPipeline
             Data = record
         };
 
-        await _eventDispatcher.DispatchAsync(new DataExtractedEvent(extractedEvent));
+        await _eventDispatcher.DispatchAsync(extractedEvent);
+
     }
 
 }
