@@ -1,5 +1,9 @@
-﻿using ETL.Domain.Sources;
+﻿using ETL.Domain.Config;
+using ETL.Domain.Model;
+using ETL.Domain.Rules;
+using ETL.Domain.Sources;
 using ETL.Domain.Targets;
+using ETL.Domain.Targets.DbTargets;
 using ETLConfig.API.Models.DTOs;
 using ETLConfig.API.Services.Interfaces;
 using ETLConfig.API.Utils;
@@ -137,45 +141,46 @@ public class PipelineController : ControllerBase
     [HttpGet("example")]
     public IActionResult GetExamplePipeline()
     {
-        var sourceInfo = new Dictionary<string, object>
-        {
-            ["$type"] = "mssql",
-            ["ConnectionString"] = "Server=localhost;Database=mydb;Trusted_Connection=True;",
-            ["TargetTable"] = "Users",
-            ["UseTrustedConnection"] = false
-        };
-
-        var targetInfo = new Dictionary<string, object>
-        {
-            ["$type"] = "mssql",
-            ["ConnectionString"] = "Server=localhost;Database=targetdb;Trusted_Connection=True;",
-            ["TargetTable"] = "ActiveUsers",
-            ["UseBulkInsert"] = false
-        };
-
-        var example = new
+        var example = new ConfigFile
         {
             Id = "example-pipeline",
-            ExtractConfig = new
+
+            ExtractConfig = new ExtractConfig
             {
-                SourceInfo = sourceInfo,
-                Fields = new[] { "Id", "Name", "Email" }
-            },
-            TransformConfig = new
+                SourceInfo = new MsSqlSourceInfo
+                {
+                    ConnectionString = "Server=localhost;Database=mydb;Trusted_Connection=True;",
+                    TargetTable = "Users",
+                    UseTrustedConnection = true
+                },
+                Fields = new List<string> { "Id", "Name", "Email" },
+                Filters = new List<FilterRule>
             {
-                Filters = new[]
-                {
-                new { Field = "IsActive", Operator = "equals", Value = "true" }
-            },
-                Mappings = new[]
-                {
-                new { From = "Email", To = "UserEmail" },
-                new { From = "Name", To = "FullName" }
+                new() { Field = "IsActive", Operator = "equals", Value = "true" }
             }
             },
-            LoadTargetConfig = new
+
+            TransformConfig = new TransformConfig
             {
-                TargetInfos = new[] { targetInfo }
+                Filters = new List<FilterRule>
+            {
+                new() { Field = "Country", Operator = "equals", Value = "Denmark" }
+            },
+                Mappings = new List<FieldMapRule>
+            {
+                new() { SourceField = "Email", TargetField = "UserEmail" },
+                new() { SourceField = "Name", TargetField = "FullName" }
+            }
+            },
+
+            LoadTargetConfig = new LoadTargetConfig
+            {
+                TargetInfo = new MsSqlTargetInfo
+                {
+                    ConnectionString = "Server=localhost;Database=targetdb;Trusted_Connection=True;",
+                    TargetTable = "ActiveUsers",
+                    UseBulkInsert = true
+                }
             }
         };
 
