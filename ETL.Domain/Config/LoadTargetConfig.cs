@@ -7,6 +7,9 @@ public class LoadTargetConfig
 {
     [JsonPropertyName("TargetInfo")]
     public TargetInfoBase TargetInfo { get; set; }
+
+
+
 }
 
 

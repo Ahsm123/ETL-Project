@@ -182,13 +182,20 @@ public class PipelineController : ControllerBase
                 {
                     ConnectionString = "Server=localhost;Database=targetdb;Trusted_Connection=True;",
                     TargetTable = "ActiveUsers",
-                    UseBulkInsert = true
+                    UseBulkInsert = true,
+                    TargetMappings = new List<LoadFieldMapRule>
+                {
+                    new() { SourceField = "UserEmail", TargetColumn = "Email" },
+                    new() { SourceField = "FullName", TargetColumn = "Name" },
+                    new() { SourceField = "Spendings", TargetColumn = "Spendings" }
+                }
                 }
             }
         };
 
         return Ok(example);
     }
+
 
 
 
