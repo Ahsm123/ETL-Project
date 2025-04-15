@@ -137,17 +137,28 @@ public class PipelineController : ControllerBase
     [HttpGet("example")]
     public IActionResult GetExamplePipeline()
     {
+        var sourceInfo = new Dictionary<string, object>
+        {
+            ["$type"] = "mssql",
+            ["ConnectionString"] = "Server=localhost;Database=mydb;Trusted_Connection=True;",
+            ["TargetTable"] = "Users",
+            ["UseTrustedConnection"] = true
+        };
+
+        var targetInfo = new Dictionary<string, object>
+        {
+            ["$type"] = "mssql",
+            ["ConnectionString"] = "Server=localhost;Database=targetdb;Trusted_Connection=True;",
+            ["TargetTable"] = "ActiveUsers",
+            ["UseTrustedConnection"] = true
+        };
+
         var example = new
         {
             Id = "example-pipeline",
             ExtractConfig = new
             {
-                SourceInfo = new
-                {
-                    Type = "MsSqlSourceInfo",
-                    ConnectionString = "Server=localhost;Database=mydb;Trusted_Connection=True;",
-                    Query = "SELECT * FROM Users"
-                },
+                SourceInfo = sourceInfo,
                 Fields = new[] { "Id", "Name", "Email" }
             },
             TransformConfig = new
@@ -164,20 +175,14 @@ public class PipelineController : ControllerBase
             },
             LoadTargetConfig = new
             {
-                TargetInfos = new[]
-                {
-                new
-                {
-                    Type = "MsSqlTargetInfo",
-                    ConnectionString = "Server=localhost;Database=targetdb;Trusted_Connection=True;",
-                    Table = "ActiveUsers"
-                }
-            }
+                TargetInfos = new[] { targetInfo }
             }
         };
 
         return Ok(example);
     }
+
+
 
 
     //Helpers
