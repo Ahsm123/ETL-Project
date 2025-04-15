@@ -153,7 +153,7 @@ public class PipelineController : ControllerBase
                     TargetTable = "Users",
                     UseTrustedConnection = true
                 },
-                Fields = new List<string> { "Id", "Name", "Email" },
+                Fields = new List<string> { "Id", "Name", "Email", "Spendings", "IsActive"},
                 Filters = new List<FilterRule>
             {
                 new() { Field = "IsActive", Operator = "equals", Value = "true" }
@@ -164,7 +164,7 @@ public class PipelineController : ControllerBase
             {
                 Filters = new List<FilterRule>
             {
-                new() { Field = "Country", Operator = "equals", Value = "Denmark" }
+                new() { Field = "Spendings", Operator = "greather_than", Value = "1000" }
             },
                 Mappings = new List<FieldMapRule>
             {
