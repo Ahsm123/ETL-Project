@@ -32,12 +32,21 @@ public class MsSqlConnectionValidator : IConnectionValidator
 
         foreach (var table in tableNames)
         {
+            var columns = (await connection.QueryAsync<ColumnMetadata>(
+                SqlQueryConstants.MSSQL_GetColumns, new { table })).ToList();
+
+            var primaryKeys = (await connection.QueryAsync<string>(
+                SqlQueryConstants.MSSQL_GetPrimaryKeys, new { table })).ToList();
+
+            var foreignKeys = (await connection.QueryAsync<ForeignKeyInfo>(
+                SqlQueryConstants.MSSQL_GetForeignKeys, new { table })).ToList();
+
             var tableMetadata = new TableMetadata
             {
                 TableName = table,
-                Columns = (await connection.QueryAsync<string>(SqlQueryConstants.MSSQL_GetColumns, new { table })).ToList(),
-                PrimaryKeys = (await connection.QueryAsync<string>(SqlQueryConstants.MSSQL_GetPrimaryKeys, new { table })).ToList(),
-                ForeignKeys = (await connection.QueryAsync<ForeignKeyInfo>(SqlQueryConstants.MSSQL_GetForeignKeys, new { table })).ToList()
+                Columns = columns,
+                PrimaryKeys = primaryKeys,
+                ForeignKeys = foreignKeys
             };
 
             metadata.Tables.Add(tableMetadata);

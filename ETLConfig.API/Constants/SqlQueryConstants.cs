@@ -9,9 +9,13 @@ public static class SqlQueryConstants
         WHERE TABLE_TYPE = 'BASE TABLE'";
 
     public const string MSSQL_GetColumns = @"
-        SELECT COLUMN_NAME 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_NAME = @table";
+    SELECT 
+        COLUMN_NAME AS ColumnName, 
+        DATA_TYPE AS DataType, 
+        CASE WHEN IS_NULLABLE = 'YES' THEN CAST(1 AS bit) ELSE CAST(0 AS bit) END AS IsNullable,
+        CHARACTER_MAXIMUM_LENGTH AS MaxLength
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = @table";
 
     public const string MSSQL_GetPrimaryKeys = @"
         SELECT COLUMN_NAME 
