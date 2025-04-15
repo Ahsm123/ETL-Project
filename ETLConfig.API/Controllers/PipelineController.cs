@@ -134,6 +134,52 @@ public class PipelineController : ControllerBase
         return Ok(new { sources, targets });
     }
 
+    [HttpGet("example")]
+    public IActionResult GetExamplePipeline()
+    {
+        var example = new
+        {
+            Id = "example-pipeline",
+            ExtractConfig = new
+            {
+                SourceInfo = new
+                {
+                    Type = "MsSqlSourceInfo",
+                    ConnectionString = "Server=localhost;Database=mydb;Trusted_Connection=True;",
+                    Query = "SELECT * FROM Users"
+                },
+                Fields = new[] { "Id", "Name", "Email" }
+            },
+            TransformConfig = new
+            {
+                Filters = new[]
+                {
+                new { Field = "IsActive", Operator = "equals", Value = "true" }
+            },
+                Mappings = new[]
+                {
+                new { From = "Email", To = "UserEmail" },
+                new { From = "Name", To = "FullName" }
+            }
+            },
+            LoadTargetConfig = new
+            {
+                TargetInfos = new[]
+                {
+                new
+                {
+                    Type = "MsSqlTargetInfo",
+                    ConnectionString = "Server=localhost;Database=targetdb;Trusted_Connection=True;",
+                    Table = "ActiveUsers"
+                }
+            }
+            }
+        };
+
+        return Ok(example);
+    }
+
+
     //Helpers
 
     private IConnectionValidator? GetValidatorOrBadRequest(string type, out IActionResult? badRequest)

@@ -15,6 +15,9 @@ var baseUrl = builder.Configuration["ConfigService:BaseUrl"];
 // Kafka & Event system
 builder.Services.AddSingleton<IMessagePublisher, KafkaMessagePublisher>();
 builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
+builder.Services.Configure<EventRoutingOptions>(
+    builder.Configuration.GetSection("EventRouting"));
+
 
 // Pipeline
 builder.Services.AddScoped<IExtractPipeline, ExtractPipeline>();

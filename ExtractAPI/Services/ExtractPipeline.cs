@@ -2,6 +2,7 @@
 using ETL.Domain.Events;
 using ExtractAPI.Interfaces;
 using ExtractAPI.Models;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace ExtractAPI.Services;
@@ -30,61 +31,18 @@ public class ExtractPipeline : IExtractPipeline
 
     public async Task<ExtractResultEvent> RunPipelineAsync(string configId)
     {
-        var config = await FetchPipelineConfig(configId);
-        var data = await FetchSourceDataAsync(config);
-        var messagesSent = await SelectFieldsAndPublishEventAsync(config, data);
+        var config = await LoadPipelineConfigurationAsync(configId);
+        var rawData = await ExtractRawDataAsync(config);
+        var recordCount = await ProcessAndDispatchAsync(config, rawData);
 
         return new ExtractResultEvent
         {
             PipelineId = config.Id,
-            MessagesSent = messagesSent
+            MessagesSent = recordCount
         };
     }
 
-    private async Task<int> SelectFieldsAndPublishEventAsync(ConfigFile config, JsonElement data)
-    {
-        var tasks = new List<Task>();
-
-        var records = config.ExtractConfig?.Fields?.Any() == true
-            ? _selectorService.FilterFields(data, config.ExtractConfig.Fields)
-            : data.EnumerateArray().Select(item => JsonSerializer.Deserialize<Dictionary<string, object>>(item.GetRawText()));
-
-        foreach (var item in records!)
-        {
-            tasks.Add(PublishExtractedEvent(config, item!));
-        }
-
-        await Task.WhenAll(tasks);
-        _logger.LogInformation("Pipeline {PipelineId} sent {Count} messages", config.Id, tasks.Count);
-        return tasks.Count;
-    }
-
-    private async Task PublishExtractedEvent(ConfigFile config, Dictionary<string, object> data)
-    {
-        var payload = new ExtractedEvent
-        {
-            Id = config.Id,
-            TransformConfig = config.TransformConfig,
-            LoadTargetConfig = config.LoadTargetConfig,
-            Data = data
-        };
-
-        await _eventDispatcher.DispatchAsync(new DataExtractedEvent(payload));
-    }
-
-    private async Task<JsonElement> FetchSourceDataAsync(ConfigFile config)
-    {
-        var sourceInfo = config.ExtractConfig.SourceInfo;
-
-        var provider = _resolver.Resolve(sourceInfo.GetType())
-               ?? throw new InvalidOperationException($"No provider found for type {sourceInfo.GetType()}");
-
-        return await provider.GetDataAsync(config.ExtractConfig);
-    }
-
-
-
-    private async Task<ConfigFile> FetchPipelineConfig(string configId)
+    private async Task<ConfigFile> LoadPipelineConfigurationAsync(string configId)
     {
         var config = await _configService.GetByIdAsync(configId);
         if (config == null)
@@ -94,4 +52,49 @@ public class ExtractPipeline : IExtractPipeline
         }
         return config;
     }
+
+    private async Task<JsonElement> ExtractRawDataAsync(ConfigFile config)
+    {
+        var sourceInfo = config.ExtractConfig.SourceInfo;
+
+        var provider = _resolver.Resolve(sourceInfo.GetType())
+               ?? throw new InvalidOperationException($"No provider found for type {sourceInfo.GetType()}");
+
+        return await provider.GetDataAsync(config.ExtractConfig);
+    }
+
+    private async Task<int> ProcessAndDispatchAsync(ConfigFile config, JsonElement rawData)
+    {
+        var records = SelectRecords(rawData, config);
+        var tasks = records.Select(record => DispatchExtractedEventAsync(config, record)).ToList();
+
+        await Task.WhenAll(tasks);
+        _logger.LogInformation("Pipeline {PipelineId} sent {Count} messages", config.Id, tasks.Count);
+
+        return tasks.Count;
+    }
+
+    private IEnumerable<Dictionary<string, object>> SelectRecords(JsonElement rawData, ConfigFile config)
+    {
+        var hasFieldSelection = config.ExtractConfig?.Fields?.Any() == true;
+
+        return hasFieldSelection
+            ? _selectorService.FilterFields(rawData, config.ExtractConfig.Fields)
+            : rawData.EnumerateArray()
+                .Select(item => JsonSerializer.Deserialize<Dictionary<string, object>>(item.GetRawText())!);
+    }
+
+    private async Task DispatchExtractedEventAsync(ConfigFile config, Dictionary<string, object> record)
+    {
+        var extractedEvent = new ExtractedEvent
+        {
+            Id = config.Id,
+            TransformConfig = config.TransformConfig,
+            LoadTargetConfig = config.LoadTargetConfig,
+            Data = record
+        };
+
+        await _eventDispatcher.DispatchAsync(new DataExtractedEvent(extractedEvent));
+    }
+
 }

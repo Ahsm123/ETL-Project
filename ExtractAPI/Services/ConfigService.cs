@@ -9,6 +9,8 @@ public class ConfigService : IConfigService
     private readonly HttpClient _httpClient;
     private readonly ILogger<ConfigService> _logger;
 
+    private const string ConfigEndpoint = "/api/Pipeline/{0}";
+
     public ConfigService(HttpClient httpClient, ILogger<ConfigService> logger)
     {
         _httpClient = httpClient;
@@ -25,7 +27,8 @@ public class ConfigService : IConfigService
 
         try
         {
-            var response = await _httpClient.GetAsync($"/api/Pipeline/{id}");
+            var endpoint = string.Format(ConfigEndpoint, id);
+            var response = await _httpClient.GetAsync(endpoint);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -33,8 +36,15 @@ public class ConfigService : IConfigService
                 return null;
             }
 
-            var stream = await response.Content.ReadAsStreamAsync();
-            return await JsonSerializer.DeserializeAsync<ConfigFile>(stream, JsonOptionsFactory.Default);
+            await using var stream = await response.Content.ReadAsStreamAsync();
+            var config = await JsonSerializer.DeserializeAsync<ConfigFile>(stream, JsonOptionsFactory.Default);
+
+            if (config == null)
+            {
+                _logger.LogWarning("Deserialized config for ID {ConfigId} was null.", id);
+            }
+
+            return config;
         }
         catch (Exception ex)
         {
