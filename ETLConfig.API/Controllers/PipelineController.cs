@@ -144,6 +144,9 @@ public class PipelineController : ControllerBase
         var example = new ConfigFile
         {
             Id = "example-pipeline",
+            Name = "ETL: Active Users Sync",
+            Description = "Syncs active users from source database to target warehouse.",
+            Version = "1.0",
 
             ExtractConfig = new ExtractConfig
             {
@@ -153,7 +156,7 @@ public class PipelineController : ControllerBase
                     TargetTable = "Users",
                     UseTrustedConnection = true
                 },
-                Fields = new List<string> { "Id", "Name", "Email", "Spendings", "IsActive"},
+                Fields = new List<string> { "Id", "Name", "Email", "Spendings", "IsActive" },
                 Filters = new List<FilterRule>
             {
                 new() { Field = "IsActive", Operator = "equals", Value = "true" }
@@ -164,7 +167,7 @@ public class PipelineController : ControllerBase
             {
                 Filters = new List<FilterRule>
             {
-                new() { Field = "Spendings", Operator = "greather_than", Value = "1000" }
+                new() { Field = "Spendings", Operator = "greaterthan", Value = "1000" }
             },
                 Mappings = new List<FieldMapRule>
             {
@@ -186,6 +189,7 @@ public class PipelineController : ControllerBase
 
         return Ok(example);
     }
+
 
 
 

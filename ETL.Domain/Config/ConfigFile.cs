@@ -10,6 +10,17 @@ public class ConfigFile
     [JsonPropertyName("Id")]
     public string Id { get; set; }
     [Required]
+    [JsonPropertyName("Name")]
+    public string Name { get; set; }
+
+    [Required]
+    [JsonPropertyName("Description")]
+    public string Description { get; set; }
+    [Required]
+    [JsonPropertyName("Version")]
+    public string Version { get; set; }
+
+    [Required]
     [JsonPropertyName("ExtractConfig")]
     public ExtractConfig ExtractConfig { get; set; }
     [Required]
