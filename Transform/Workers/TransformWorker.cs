@@ -1,9 +1,7 @@
-﻿
-using ETL.Domain.Events;
-using ETL.Domain.Json;
+﻿using ETL.Domain.Events;
+using ETL.Domain.JsonHelpers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Transform.Interfaces;
 
 namespace Transform.Workers;
@@ -13,17 +11,20 @@ public class TransformWorker : BackgroundService
     private readonly IMessageListener _listener;
     private readonly IMessagePublisher _publisher;
     private readonly ITransformService<string> _transformService;
+    private readonly IJsonService _jsonService;
     private readonly ILogger<TransformWorker> _logger;
 
     public TransformWorker(
         IMessageListener listener,
         IMessagePublisher publisher,
         ITransformService<string> transformService,
+        IJsonService jsonService,
         ILogger<TransformWorker> logger)
     {
         _listener = listener;
         _publisher = publisher;
         _transformService = transformService;
+        _jsonService = jsonService;
         _logger = logger;
     }
 
@@ -40,11 +41,11 @@ public class TransformWorker : BackgroundService
                 ExtractedEvent? payload;
                 try
                 {
-                    payload = JsonSerializer.Deserialize<ExtractedEvent>(message, JsonOptionsFactory.Default);
+                    payload = _jsonService.Deserialize<ExtractedEvent>(message);
                 }
-                catch (JsonException jsonEx)
+                catch (Exception ex)
                 {
-                    _logger.LogError(jsonEx, "Failed to deserialize message: {Message}", message);
+                    _logger.LogError(ex, "Failed to deserialize ExtractedEvent: {Message}", message);
                     return;
                 }
 
@@ -58,12 +59,12 @@ public class TransformWorker : BackgroundService
 
                 if (string.IsNullOrWhiteSpace(transformed) || transformed == "{}")
                 {
-                    _logger.LogInformation("Skipping filtered or empty payload with ID {Id}", payload.Id);
+                    _logger.LogInformation("Skipping filtered or empty payload with ID {Id}", payload.PipelineId);
                     return;
                 }
 
                 await _publisher.PublishAsync("processedData", Guid.NewGuid().ToString(), transformed);
-                _logger.LogInformation("Published transformed payload with ID {Id}", payload.Id);
+                _logger.LogInformation("Published transformed payload with ID {Id}", payload.PipelineId);
             }
             catch (Exception ex)
             {
@@ -71,10 +72,4 @@ public class TransformWorker : BackgroundService
             }
         }, stoppingToken);
     }
-
 }
-
-
-
-
-

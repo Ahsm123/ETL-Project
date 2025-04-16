@@ -1,24 +1,24 @@
 ﻿using ETL.Domain.Config;
-using ETL.Domain.Json;
+using ETL.Domain.JsonHelpers;
 using ETLConfig.API.Models.Domain;
 using ETLConfig.API.Services.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
-namespace ETLConfig.API.Services;
-
 public class ConfigProcessingService : IConfigProcessingService
 {
     private readonly IConfigRepository _fileService;
+    private readonly IJsonService _jsonService;
 
-    public ConfigProcessingService(IConfigRepository fileService)
+    public ConfigProcessingService(IConfigRepository fileService, IJsonService jsonService)
     {
         _fileService = fileService;
+        _jsonService = jsonService;
     }
 
     public async Task<ConfigFile> ProcessSingleConfigAsync(JsonElement json)
     {
-        var config = JsonSerializer.Deserialize<ConfigFile>(json, JsonOptionsFactory.Default)
+        var config = _jsonService.Deserialize<ConfigFile>(json.GetRawText())
                      ?? throw new JsonException("Invalid structure.");
 
         ValidateConfig(config);
@@ -80,10 +80,17 @@ public class ConfigProcessingService : IConfigProcessingService
     {
         ValidateObject(config);
         ValidateObject(config.ExtractConfig);
-        ValidateObject(config.ExtractConfig?.SourceInfo!);
         ValidateObject(config.TransformConfig);
         ValidateObject(config.LoadTargetConfig);
-        ValidateObject(config.LoadTargetConfig?.TargetInfo!);
+
+        if (config.ExtractConfig?.SourceInfo is null)
+            throw new ValidationException("Missing SourceInfo");
+
+        if (config.LoadTargetConfig?.TargetInfo is null)
+            throw new ValidationException("Missing TargetInfo");
+
+        ValidateObject(config.ExtractConfig.SourceInfo);
+        ValidateObject(config.LoadTargetConfig.TargetInfo);
     }
 
     private static void ValidateObject(object? obj)
@@ -94,5 +101,4 @@ public class ConfigProcessingService : IConfigProcessingService
         var context = new ValidationContext(obj);
         Validator.ValidateObject(obj, context, validateAllProperties: true);
     }
-
 }

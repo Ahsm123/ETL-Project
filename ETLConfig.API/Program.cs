@@ -1,3 +1,4 @@
+using ETL.Domain.JsonHelpers;
 using ETLConfig.API.Infrastructure.Persistence;
 using ETLConfig.API.Models.Domain;
 using ETLConfig.API.Services;
@@ -19,6 +20,7 @@ builder.Services.AddSingleton<IConfigRepository, MongoConfigRepository>();
 
 // Services
 builder.Services.AddSingleton<IConfigProcessingService, ConfigProcessingService>();
+builder.Services.AddSingleton<IJsonService, JsonService>();
 
 // Validators
 builder.Services.AddSingleton<IConnectionValidator, MySqlServerConnectionValidator>();

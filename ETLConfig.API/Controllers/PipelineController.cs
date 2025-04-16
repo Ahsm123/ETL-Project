@@ -158,23 +158,24 @@ public class PipelineController : ControllerBase
                 },
                 Fields = new List<string> { "Id", "Name", "Email", "Spendings", "IsActive" },
                 Filters = new List<FilterRule>
-            {
-                new() { Field = "IsActive", Operator = "equals", Value = "true" }
-            }
+    {
+        new FilterRule("IsActive", "equals", "true")
+    }
             },
 
             TransformConfig = new TransformConfig
             {
-                Filters = new List<FilterRule>
-            {
-                new() { Field = "Spendings", Operator = "greaterthan", Value = "1000" }
-            },
                 Mappings = new List<FieldMapRule>
-            {
-                new() { SourceField = "Email", TargetField = "UserEmail" },
-                new() { SourceField = "Name", TargetField = "FullName" }
+    {
+        new FieldMapRule("Email", "UserEmail"),
+        new FieldMapRule("Name", "FullName")
+    },
+                Filters = new List<FilterRule>
+    {
+        new FilterRule("Spendings", "greaterthan", "1000")
+    }
             }
-            },
+,
 
             LoadTargetConfig = new LoadTargetConfig
             {

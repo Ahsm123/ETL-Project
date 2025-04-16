@@ -6,15 +6,15 @@ namespace ETL.Domain.Events;
 
 public class ExtractedEvent
 {
-    [JsonPropertyName("Id")]
-    public string Id { get; set; }
+    [JsonPropertyName("PipelineId")]
+    public required string PipelineId { get; set; }
 
     [JsonPropertyName("TransformConfig")]
-    public TransformConfig TransformConfig { get; set; }
+    public required TransformConfig TransformConfig { get; set; }
 
     [JsonPropertyName("LoadTargetConfig")]
-    public LoadTargetConfig LoadTargetConfig { get; set; }
+    public required LoadTargetConfig LoadTargetConfig { get; set; }
 
-    [JsonPropertyName("Data")]
-    public Dictionary<string, object> Data { get; set; }
+    [JsonPropertyName("Record")]
+    public RawRecord Record { get; set; }
 }

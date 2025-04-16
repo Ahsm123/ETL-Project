@@ -1,10 +1,13 @@
 ﻿using ClosedXML.Excel;
-using ETL.Domain.Targets.FileTargets;
 using ETL.Domain.Targets;
+using ETL.Domain.Targets.FileTargets;
 using Load.Interfaces;
 
 public class ExcelTargetWriter : ITargetWriter
 {
+    public bool CanHandle(Type targetInfoType)
+        => targetInfoType == typeof(ExcelTargetInfo);
+
     public async Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data, string? pipelineId = null)
     {
         if (targetInfo is not ExcelTargetInfo excelInfo)
@@ -31,8 +34,6 @@ public class ExcelTargetWriter : ITargetWriter
 
         await Task.CompletedTask;
     }
-
-    public bool CanHandle(Type targetInfoType) => targetInfoType == typeof(ExcelTargetInfo);
 
     private static string GenerateFilePath(ExcelTargetInfo info, string? pipelineId)
     {

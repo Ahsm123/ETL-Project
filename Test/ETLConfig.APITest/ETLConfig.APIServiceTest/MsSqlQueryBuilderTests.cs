@@ -16,7 +16,7 @@ public class MsSqlQueryBuilderTests
     }
 
     [Fact]
-    public void GenerateSelectQuery_WithFieldsAndFilters_BuildsCorrectSql()
+    public void GenerateSelectQuery_WithValidFieldsAndFilters_ReturnsCorrectSql()
     {
         // Arrange
         var source = new MsSqlSourceInfo
@@ -26,9 +26,9 @@ public class MsSqlQueryBuilderTests
 
         var fields = new List<string> { "Id", "Name" };
         var filters = new List<FilterRule>
-    {
-        new() { Field = "Role", Operator = "equals", Value = "Admin" }
-    };
+        {
+            new("Role", "equals", "Admin")
+        };
 
         // Act
         var (query, parameters) = _queryBuilder.GenerateSelectQuery(source, fields, filters);
@@ -36,44 +36,57 @@ public class MsSqlQueryBuilderTests
         // Assert
         Assert.Equal("SELECT [Id], [Name] FROM [Users] WHERE [Role] = @param0", query);
         Assert.IsType<DynamicParameters>(parameters);
-
-        var paramValue = parameters.Get<object>("@param0");
-        Assert.Equal("Admin", paramValue);
+        Assert.Equal("Admin", parameters.Get<string>("@param0"));
     }
 
-
     [Fact]
-    public void GenerateSelectQuery_WithoutFields_ReturnsSelectAll()
+    public void GenerateSelectQuery_WithNoFields_ReturnsSelectAll()
     {
-        var source = new MsSqlSourceInfo { TargetTable = "Users" };
+        // Arrange
+        var source = new MsSqlSourceInfo
+        {
+            TargetTable = "Users"
+        };
 
+        // Act
         var (query, _) = _queryBuilder.GenerateSelectQuery(source, null, null);
 
+        // Assert
         Assert.Equal("SELECT * FROM [Users]", query);
     }
 
     [Fact]
-    public void GenerateSelectQuery_WithInvalidField_ThrowsException()
+    public void GenerateSelectQuery_WithInvalidFieldName_ThrowsException()
     {
-        var source = new MsSqlSourceInfo { TargetTable = "Users" };
+        // Arrange
+        var source = new MsSqlSourceInfo
+        {
+            TargetTable = "Users"
+        };
 
-        var fields = new List<string> { "Id", "Name;", "DROP TABLE" };
+        var invalidFields = new List<string> { "Id", "DROP TABLE Users" };
 
+        // Act & Assert
         Assert.Throws<ArgumentException>(() =>
-            _queryBuilder.GenerateSelectQuery(source, fields, new()));
+            _queryBuilder.GenerateSelectQuery(source, invalidFields, null));
     }
 
     [Fact]
-    public void GenerateSelectQuery_WithUnsupportedOperator_ThrowsException()
+    public void GenerateSelectQuery_WithUnsupportedFilterOperator_ThrowsException()
     {
-        var source = new MsSqlSourceInfo { TargetTable = "Products" };
-        var filters = new List<FilterRule>
+        // Arrange
+        var source = new MsSqlSourceInfo
         {
-            new() { Field = "Price", Operator = "between", Value = "10 AND 20" }
+            TargetTable = "Orders"
         };
 
+        var filters = new List<FilterRule>
+        {
+            new("Price", "unsupported_op", "100")
+        };
+
+        // Act & Assert
         Assert.Throws<NotSupportedException>(() =>
-            _queryBuilder.GenerateSelectQuery(source, new List<string>(), filters));
+            _queryBuilder.GenerateSelectQuery(source, new List<string> { "Id" }, filters));
     }
- 
 }

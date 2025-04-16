@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using ETL.Domain.JsonHelpers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Transform.Interfaces;
@@ -23,6 +24,7 @@ var builder = Host.CreateDefaultBuilder(args)
         services.AddSingleton<MappingService>();
         services.AddSingleton<ITransformPipeline, TransformPipeline>();
         services.AddSingleton<ITransformService<string>, TransformService>();
+        services.AddSingleton<IJsonService, JsonService>();
 
         // Worker
         services.AddHostedService<TransformWorker>();

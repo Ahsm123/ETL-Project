@@ -3,7 +3,6 @@ using ETL.Domain.Rules;
 using ETL.Domain.Sources;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
 using ETL.Domain.Targets.DbTargets;
-using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using System.Text.RegularExpressions;
 
 namespace ETL.Domain.SQLQueryBuilder;
@@ -22,7 +21,7 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
         ["less_or_equal"] = "<=",
     };
 
-    public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string> fields, List<FilterRule>? filters)
+    public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string>? fields, List<FilterRule>? filters)
     {
         if (string.IsNullOrWhiteSpace(info.TargetTable))
             throw new ArgumentException("Target table is required");
@@ -76,7 +75,7 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
         if (!Regex.IsMatch(identifier, "^[a-zA-Z_][a-zA-Z0-9_]*$"))
             throw new ArgumentException($"Invalid characters in identifier: {identifier}");
 
-        return $"[{identifier}]"; 
+        return $"[{identifier}]";
     }
 
     public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)

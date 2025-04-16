@@ -1,7 +1,6 @@
 ﻿using ETL.Domain.Events;
-using ETL.Domain.Json;
+using ETL.Domain.JsonHelpers;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Transform.Interfaces;
 
 namespace Transform.Services;
@@ -10,14 +9,19 @@ public class TransformService : ITransformService<string>
 {
     private readonly ITransformPipeline _pipeline;
     private readonly ILogger<TransformService> _logger;
+    private readonly IJsonService _jsonService;
 
-    public TransformService(ITransformPipeline pipeline, ILogger<TransformService> logger)
+    public TransformService(
+     ITransformPipeline pipeline,
+     IJsonService jsonService,
+     ILogger<TransformService> logger)
     {
         _pipeline = pipeline;
+        _jsonService = jsonService;
         _logger = logger;
     }
 
-    public async Task<string> TransformDataAsync(ExtractedEvent input)
+    public Task<string> TransformDataAsync(ExtractedEvent input)
     {
         try
         {
@@ -25,28 +29,18 @@ public class TransformService : ITransformService<string>
 
             if (processed is null)
             {
-                _logger.LogWarning("Payload {Id} was filtered out by the pipeline", input.Id);
-                return "{}";
+                _logger.LogWarning("Payload {Id} was filtered out by the pipeline", input.PipelineId);
+                return Task.FromResult("{}");
             }
 
-            var result = new TransformedEvent
-            {
-                PipelineId = processed.PipelineId,
-                LoadTargetConfig = processed.LoadTargetConfig,
-                Data = processed.Data
-            };
-
-            return JsonSerializer.Serialize(result, JsonOptionsFactory.Default);
-        }
-        catch (JsonException jsonEx)
-        {
-            _logger.LogError(jsonEx, "JSON serialization failed for event with ID: {Id}", input.Id);
-            return "{}";
+            var json = _jsonService.Serialize(processed);
+            return Task.FromResult(json);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while transforming data for event with ID: {Id}", input.Id);
-            return "{}";
+            _logger.LogError(ex, "An error occurred while transforming data for event with ID: {Id}", input.PipelineId);
+            return Task.FromResult("{}");
         }
     }
+
 }

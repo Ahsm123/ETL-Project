@@ -1,8 +1,6 @@
 ﻿using ETL.Domain.Config;
 using ETL.Domain.Events;
 using ExtractAPI.Interfaces;
-using ExtractAPI.Models;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace ExtractAPI.Services;
@@ -74,49 +72,40 @@ public class ExtractPipeline : IExtractPipeline
         return tasks.Count;
     }
 
-    private IEnumerable<Dictionary<string, object>> SelectRecords(JsonElement rawData, ConfigFile config)
+    private IEnumerable<RawRecord> SelectRecords(JsonElement rawData, ConfigFile config)
     {
-        var hasFieldSelection = config.ExtractConfig?.Fields?.Any() == true;
+        if (config.ExtractConfig?.Fields?.Any() == true)
+            return _selectorService.FilterFields(rawData, config.ExtractConfig.Fields);
 
-        return hasFieldSelection
-            ? _selectorService.FilterFields(rawData, config.ExtractConfig.Fields)
-            : SafeDeserializeRecords(rawData);
+        return SafeDeserializeRecords(rawData);
     }
 
-    private IEnumerable<Dictionary<string, object>> SafeDeserializeRecords(JsonElement array)
+    private IEnumerable<RawRecord> SafeDeserializeRecords(JsonElement array)
     {
         foreach (var element in array.EnumerateArray())
         {
-            Dictionary<string, object>? parsed = null;
-            try
-            {
-                parsed = JsonSerializer.Deserialize<Dictionary<string, object>>(element.GetRawText());
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogWarning(ex, "Failed to deserialize element: {Element}", element.GetRawText());
-            }
 
-            if (parsed != null)
-                yield return parsed;
-            else
-                _logger.LogWarning("Skipping null or invalid record in raw data array");
+            var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(element.GetRawText());
+            if (dict != null)
+                yield return new RawRecord(dict);
         }
     }
 
 
-    private async Task DispatchExtractedEventAsync(ConfigFile config, Dictionary<string, object> record)
+
+    private async Task DispatchExtractedEventAsync(ConfigFile config, RawRecord record)
     {
         var extractedEvent = new ExtractedEvent
         {
-            Id = config.Id,
+            PipelineId = config.Id,
             TransformConfig = config.TransformConfig,
             LoadTargetConfig = config.LoadTargetConfig,
-            Data = record
+            Record = record
         };
 
         await _eventDispatcher.DispatchAsync(extractedEvent);
-
     }
+
+
 
 }

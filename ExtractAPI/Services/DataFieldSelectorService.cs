@@ -1,49 +1,43 @@
-﻿using System.Text.Json;
+﻿using ETL.Domain.Events;
+using System.Text.Json;
 
 namespace ExtractAPI.Services;
 
 public class DataFieldSelectorService
 {
-    public IEnumerable<Dictionary<string, object>> FilterFields(JsonElement data, List<string> fields)
+    public IEnumerable<RawRecord> FilterFields(JsonElement data, List<string> fields)
     {
         if (fields == null || fields.Count == 0)
-        {
-            return Enumerable.Empty<Dictionary<string, object>>();
-        }
+            return Enumerable.Empty<RawRecord>();
 
         return ExtractFields(data, fields);
     }
 
-    private IEnumerable<Dictionary<string, object>> ExtractFields(JsonElement data, List<string> fields)
+    private IEnumerable<RawRecord> ExtractFields(JsonElement data, List<string> fields)
     {
-        var result = new List<Dictionary<string, object>>();
-
         foreach (var item in data.EnumerateArray())
         {
-            var filtered = new Dictionary<string, object>();
+            var dict = new Dictionary<string, object>();
 
             foreach (var field in fields)
             {
                 if (item.TryGetProperty(field, out var value))
                 {
-                    filtered[field] = ConvertValue(value);
+                    dict[field] = ConvertValue(value);
                 }
             }
 
-            result.Add(filtered);
+            yield return new RawRecord(dict);
         }
-        return result;
     }
 
-    private static object ConvertValue(JsonElement value)
+    private static object ConvertValue(JsonElement value) => value.ValueKind switch
     {
-        return value.ValueKind switch
-        {
-            JsonValueKind.Number => value.GetDouble(),
-            JsonValueKind.String => value.GetString() ?? string.Empty,
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            _ => value.ToString() ?? string.Empty
-        };
-    }
+        JsonValueKind.Number => value.TryGetInt64(out var i) ? i : value.GetDouble(),
+        JsonValueKind.String => value.GetString() ?? "",
+        JsonValueKind.True => true,
+        JsonValueKind.False => false,
+        _ => value.ToString() ?? ""
+    };
 }
+

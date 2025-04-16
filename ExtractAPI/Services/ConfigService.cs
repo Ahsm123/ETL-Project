@@ -1,20 +1,23 @@
 ﻿using ETL.Domain.Config;
-using ETL.Domain.Json;
+using ETL.Domain.JsonHelpers;
 using ExtractAPI.Interfaces;
-using System.Net.Http.Json;
-using System.Text.Json;
 
 public class ConfigService : IConfigService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<ConfigService> _logger;
+    private readonly IJsonService _jsonService;
 
     private const string ConfigEndpoint = "/api/Pipeline/{0}";
 
-    public ConfigService(HttpClient httpClient, ILogger<ConfigService> logger)
+    public ConfigService(
+        HttpClient httpClient,
+        ILogger<ConfigService> logger,
+        IJsonService jsonService)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _jsonService = jsonService;
     }
 
     public async Task<ConfigFile?> GetByIdAsync(string id)
@@ -37,7 +40,7 @@ public class ConfigService : IConfigService
             }
 
             await using var stream = await response.Content.ReadAsStreamAsync();
-            var config = await JsonSerializer.DeserializeAsync<ConfigFile>(stream, JsonOptionsFactory.Default);
+            var config = _jsonService.Deserialize<ConfigFile>(stream);
 
             if (config == null)
             {

@@ -1,4 +1,4 @@
-﻿using ETL.Domain.Model;
+﻿using ETL.Domain.Events;
 using ETL.Domain.Rules;
 using System.Text.Json;
 
@@ -6,12 +6,13 @@ namespace Transform.Services;
 
 public class FilterService
 {
-    public bool ShouldInclude(Dictionary<string, object> item, IEnumerable<FilterRule> filters)
-
+    public bool ShouldInclude(RawRecord record, IEnumerable<FilterRule> filters)
     {
+        var fields = record.Fields;
+
         foreach (var filter in filters)
         {
-            if (!item.TryGetValue(filter.Field, out var rawValue))
+            if (!fields.TryGetValue(filter.Field, out var rawValue))
                 return false;
 
             if (!Evaluate(rawValue, filter))
@@ -50,19 +51,15 @@ public class FilterService
         };
     }
 
-
     private bool TryGetDouble(object value, out double result)
     {
         if (value is JsonElement json)
         {
             if (json.ValueKind == JsonValueKind.Number)
-            {
                 return json.TryGetDouble(out result);
-            }
+
             if (json.ValueKind == JsonValueKind.String)
-            {
                 return double.TryParse(json.GetString(), out result);
-            }
         }
         else if (value is double d) { result = d; return true; }
         else if (value is int i) { result = i; return true; }
@@ -75,4 +72,3 @@ public class FilterService
         return false;
     }
 }
-

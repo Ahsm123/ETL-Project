@@ -1,7 +1,7 @@
-﻿using ETL.Domain.SQLQueryBuilder.Interfaces;
+﻿using ETL.Domain.JsonHelpers;
 using ETL.Domain.SQLQueryBuilder;
+using ETL.Domain.SQLQueryBuilder.Interfaces;
 using ExtractAPI.DataSources.DatabaseQueryBuilder;
-using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using Load.Interfaces;
 using Load.Messaging;
 using Load.Services;
@@ -38,6 +38,7 @@ builder.ConfigureServices(services =>
     services.AddSingleton<IMessageListener, KafkaMessageListener>();
     services.AddSingleton<ILoadHandler, LoadHandler>();
     services.AddHostedService<LoadWorker>();
+    services.AddSingleton<IJsonService, JsonService>();
 });
 
 

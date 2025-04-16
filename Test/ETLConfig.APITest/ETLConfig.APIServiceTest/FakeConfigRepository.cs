@@ -5,11 +5,11 @@ namespace Test.ETLConfig.API;
 
 public class FakeConfigRepository : IConfigRepository
 {
-    public List<RawConfigFile> Saved = new();
+    public List<RawConfigFile> SavedConfigs = new();
 
     public Task CreateAsync(RawConfigFile config)
     {
-        Saved.Add(config);
+        SavedConfigs.Add(config);
         return Task.CompletedTask;
     }
 

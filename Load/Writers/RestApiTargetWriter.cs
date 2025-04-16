@@ -1,5 +1,5 @@
-﻿using ETL.Domain.Targets.ApiTargets;
-using ETL.Domain.Targets;
+﻿using ETL.Domain.Targets;
+using ETL.Domain.Targets.ApiTargets;
 using Load.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -24,9 +24,9 @@ public class RestApiTargetWriter : ITargetWriter
             if (targetInfo is not RestApiTargetInfo apiInfo)
                 throw new ArgumentException("Invalid target info type");
 
-            _logger.LogInformation("[API] Sending {Method} to {Url}", apiInfo.Method, apiInfo.Url);
+            _logger.LogInformation("[API] Would send {Method} to {Url} with data: {Data}",
+                apiInfo.Method, apiInfo.Url, data);
 
-            // Her ville der være et HTTP-kald
             await Task.CompletedTask;
         }
         catch (Exception ex)

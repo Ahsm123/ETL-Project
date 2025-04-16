@@ -29,7 +29,6 @@ public class MsSqlTargetWriter : ITargetWriter
             throw new NotImplementedException("Bulk insert is not implemented yet.");
 
         var mappedData = ApplyTargetMappings(data, info.TargetMappings);
-
         var (sql, parameters) = _queryBuilder.GenerateInsertQuery(info, mappedData);
 
         try
@@ -42,15 +41,11 @@ public class MsSqlTargetWriter : ITargetWriter
         }
     }
 
-    private Dictionary<string, object> ApplyTargetMappings(
-        Dictionary<string, object> data,
-        List<LoadFieldMapRule> mappings)
+    private Dictionary<string, object> ApplyTargetMappings(Dictionary<string, object> data, List<LoadFieldMapRule> mappings)
     {
-        if (mappings == null || mappings.Count == 0)
-            return data;
+        if (mappings == null || mappings.Count == 0) return data;
 
         var mapped = new Dictionary<string, object>();
-
         foreach (var map in mappings)
         {
             if (data.TryGetValue(map.SourceField, out var value))
@@ -58,8 +53,6 @@ public class MsSqlTargetWriter : ITargetWriter
                 mapped[map.TargetColumn] = value;
             }
         }
-
         return mapped;
     }
-
 }

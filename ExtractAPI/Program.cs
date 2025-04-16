@@ -1,7 +1,7 @@
+using ETL.Domain.JsonHelpers;
 using ETL.Domain.SQLQueryBuilder;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
 using ExtractAPI.DataSources.DatabaseQueryBuilder;
-using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using ExtractAPI.Interfaces;
 using ExtractAPI.Kafka.Interfaces;
 using ExtractAPI.Messaging;
@@ -22,6 +22,8 @@ builder.Services.Configure<EventRoutingOptions>(
 // Pipeline
 builder.Services.AddScoped<IExtractPipeline, ExtractPipeline>();
 builder.Services.AddScoped<DataFieldSelectorService>();
+builder.Services.AddSingleton<IJsonService, JsonService>();
+
 
 // SqlExecutors
 builder.Services.AddSingleton<IMySqlExecutor, MySqlExecutor>();
