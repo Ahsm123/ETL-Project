@@ -8,7 +8,7 @@ public class ConfigProcessingServiceTests
 {
     private readonly ConfigProcessingService _service;
     private readonly FakeConfigRepository _repo = new();
-    private readonly IJsonService _jsonService = new JsonService(); // or your implementation
+    private readonly IJsonService _jsonService = new JsonService();
 
     public ConfigProcessingServiceTests()
     {
