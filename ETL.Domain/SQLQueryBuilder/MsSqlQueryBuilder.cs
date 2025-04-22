@@ -9,7 +9,7 @@ namespace ETL.Domain.SQLQueryBuilder;
 
 public class MsSqlQueryBuilder : IMsSqlQueryBuilder
 {
-    private const string BaseSelectQuery = "SELECT {0} FROM {1}";
+    private const string BaseSelectTemplate = "SELECT {0} FROM {1}";
 
     private static readonly Dictionary<string, string> OperatorMap = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -18,56 +18,88 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
         ["greater_than"] = ">",
         ["less_than"] = "<",
         ["greater_or_equal"] = ">=",
-        ["less_or_equal"] = "<=",
+        ["less_or_equal"] = "<="
     };
 
-    public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string>? fields, List<FilterRule>? filters)
+    public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo sourceInfo, List<string>? fields, List<FilterRule>? filters)
     {
-        if (string.IsNullOrWhiteSpace(info.TargetTable))
-            throw new ArgumentException("Target table is required");
+        ValidateTableName(sourceInfo.TargetTable);
 
-        var sanitizedTableName = ProtectFromSqlInjection(info.TargetTable);
-
-        var columnSelection = (fields != null && fields.Any())
-            ? string.Join(", ", fields.Select(ProtectFromSqlInjection))
+        string table = FormatIdentifier(sourceInfo.TargetTable);
+        string columns = fields?.Any() == true
+            ? string.Join(", ", fields.Select(FormatIdentifier))
             : "*";
 
-        var selectStatement = string.Format(BaseSelectQuery, columnSelection, sanitizedTableName);
+        string baseQuery = string.Format(BaseSelectTemplate, columns, table);
+        var (whereClause, parameters) = BuildWhereClause(filters);
 
-        var (whereClause, whereParameters) = GenerateWhereCondition(filters);
+        string completeQuery = string.IsNullOrWhiteSpace(whereClause)
+            ? baseQuery
+            : $"{baseQuery} WHERE {whereClause}";
 
-        var completeQuery = string.IsNullOrWhiteSpace(whereClause)
-            ? selectStatement
-            : $"{selectStatement} WHERE {whereClause}";
-
-        return (completeQuery, whereParameters);
+        return (completeQuery, parameters);
     }
 
-    private static (string clause, DynamicParameters parameters) GenerateWhereCondition(List<FilterRule>? filters)
+    public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase targetInfo, Dictionary<string, object> data)
     {
-        var whereConditions = new List<string>();
-        var dynamicParams = new DynamicParameters();
+        if (targetInfo is not MsSqlTargetInfo sqlTarget)
+            throw new ArgumentException("Invalid target info type");
 
-        if (filters == null || filters.Count == 0)
-            return (string.Empty, dynamicParams);
+        ValidateTableName(sqlTarget.TargetTable);
+        if (data == null || !data.Any())
+            throw new ArgumentException("No data provided for insert");
 
-        for (int index = 0; index < filters.Count; index++)
+        string table = FormatIdentifier(sqlTarget.TargetTable);
+        var (columns, paramNames, parameters) = BuildInsertComponents(data);
+
+        string insertQuery = $"INSERT INTO {table} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", paramNames)})";
+        return (insertQuery, parameters);
+    }
+
+    private static (List<string> columns, List<string> paramNames, DynamicParameters parameters) BuildInsertComponents(Dictionary<string, object> data)
+    {
+        var columns = new List<string>();
+        var paramNames = new List<string>();
+        var parameters = new DynamicParameters();
+
+        foreach (var (key, value) in data)
         {
-            var filter = filters[index];
-            var parameterName = $"@param{index}";
+            string column = FormatIdentifier(key);
+            string paramName = $"@{key}";
 
-            if (!OperatorMap.TryGetValue(filter.Operator.ToLower(), out var sqlOperator))
-                throw new NotSupportedException($"Unsupported operator: {filter.Operator}");
-
-            var escapedFieldName = ProtectFromSqlInjection(filter.Field);
-            whereConditions.Add($"{escapedFieldName} {sqlOperator} {parameterName}");
-            dynamicParams.Add(parameterName, filter.Value);
+            columns.Add(column);
+            paramNames.Add(paramName);
+            parameters.Add(paramName, value);
         }
 
-        return (string.Join(" AND ", whereConditions), dynamicParams);
+        return (columns, paramNames, parameters);
     }
 
-    private static string ProtectFromSqlInjection(string identifier)
+    private static (string clause, DynamicParameters parameters) BuildWhereClause(List<FilterRule>? filters)
+    {
+        var conditions = new List<string>();
+        var parameters = new DynamicParameters();
+
+        if (filters == null || filters.Count == 0)
+            return (string.Empty, parameters);
+
+        for (int i = 0; i < filters.Count; i++)
+        {
+            var rule = filters[i];
+            string paramName = $"@param{i}";
+
+            if (!OperatorMap.TryGetValue(rule.Operator.ToLower(), out var sqlOperator))
+                throw new NotSupportedException($"Unsupported operator: {rule.Operator}");
+
+            string column = FormatIdentifier(rule.Field);
+            conditions.Add($"{column} {sqlOperator} {paramName}");
+            parameters.Add(paramName, rule.Value);
+        }
+
+        return (string.Join(" AND ", conditions), parameters);
+    }
+
+    private static string FormatIdentifier(string identifier)
     {
         if (string.IsNullOrWhiteSpace(identifier))
             throw new ArgumentException("Field/table name cannot be empty.");
@@ -78,36 +110,9 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
         return $"[{identifier}]";
     }
 
-    public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)
+    private static void ValidateTableName(string? tableName)
     {
-        if (info is not MsSqlTargetInfo sqlInfo)
-            throw new ArgumentException("Invalid target info type");
-
-        if (string.IsNullOrWhiteSpace(sqlInfo.TargetTable))
-            throw new ArgumentException("Target table is required");
-
-        if (data == null || !data.Any())
-            throw new ArgumentException("No data provided for insert");
-
-        var sanitizedTable = ProtectFromSqlInjection(sqlInfo.TargetTable);
-
-        var columns = new List<string>();
-        var parameterNames = new List<string>();
-        var parameters = new DynamicParameters();
-
-        foreach (var (key, value) in data)
-        {
-            var column = ProtectFromSqlInjection(key);
-            var parameterName = $"@{key}";
-            columns.Add(column);
-            parameterNames.Add(parameterName);
-            parameters.Add(parameterName, value);
-        }
-
-        var sql = $"INSERT INTO {sanitizedTable} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", parameterNames)})";
-
-        return (sql, parameters);
+        if (string.IsNullOrWhiteSpace(tableName))
+            throw new ArgumentException("Target table is required.");
     }
-
 }
-
