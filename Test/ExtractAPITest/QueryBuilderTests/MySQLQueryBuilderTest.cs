@@ -62,7 +62,7 @@ public class MySQLQueryBuilderTest
         var ex = Assert.Throws<ArgumentException>(() =>
             queryBuilder.GenerateSelectQuery(sourceInfo, fields, null));
 
-        Assert.Equal("Target table is required", ex.Message);
+        Assert.Equal("Target table is required.", ex.Message);
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public class MySQLQueryBuilderTest
         var ex = Assert.Throws<ArgumentException>(() =>
             queryBuilder.GenerateInsertQuery(targetInfo, data));
 
-        Assert.Equal("Target table is required", ex.Message);
+        Assert.Equal("Target table is required.", ex.Message);
     }
 
     [Fact]
