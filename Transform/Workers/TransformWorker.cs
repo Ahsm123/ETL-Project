@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using Transform.Interfaces;
 
 namespace Transform.Workers;
-
 public class TransformWorker : BackgroundService
 {
     private readonly IMessageListener _listener;
@@ -30,7 +29,6 @@ public class TransformWorker : BackgroundService
         _transformService = transformService;
         _jsonService = jsonService;
         _logger = logger;
-
         _enableDeadLetter = config.GetValue<bool>("Transform:EnableDeadLetter");
         _deadLetterTopic = config.GetValue<string>("Transform:DeadLetterTopic") ?? "dead-letter";
     }
@@ -38,55 +36,76 @@ public class TransformWorker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("TransformWorker started");
-        _logger.LogInformation("EnableDeadLetter config: {EnableDeadLetter}, Topic: {DeadLetterTopic}", _enableDeadLetter, _deadLetterTopic);
+        _logger.LogInformation("EnableDeadLetter: {EnableDeadLetter}, Topic: {Topic}", _enableDeadLetter, _deadLetterTopic);
 
+        await _listener.ListenAsync(HandleMessageAsync, stoppingToken);
+    }
 
-        await _listener.ListenAsync(async (message) =>
+    private async Task HandleMessageAsync(string message)
+    {
+        _logger.LogDebug("Received message: {Message}", message);
+
+        var payload = TryDeserialize(message);
+        if (payload == null)
         {
-            try
-            {
-                _logger.LogDebug("Received message: {Message}", message);
+            await SendToDeadLetter(message, ErrorType.DeserializationError);
+            return;
+        }
 
-                ExtractedEvent? payload;
-                try
-                {
-                    payload = _jsonService.Deserialize<ExtractedEvent>(message);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to deserialize ExtractedEvent: {Message}", message);
-                    await SendToDeadLetter(message);
-                    return;
-                }
+        var transformed = await TryTransform(payload, message);
+        if (string.IsNullOrWhiteSpace(transformed) || transformed == "{}")
+        {
+            _logger.LogInformation("Filtered/empty payload. Skipping. PipelineId: {PipelineId}", payload.PipelineId);
+            return;
+        }
 
-                if (payload == null)
-                {
-                    _logger.LogWarning("Deserialized payload is null");
-                    await SendToDeadLetter(message);
-                    return;
-                }
-
-                var transformed = await _transformService.TransformDataAsync(payload);
-
-                if (string.IsNullOrWhiteSpace(transformed) || transformed == "{}")
-                {
-                    _logger.LogInformation("Skipping filtered or empty payload with ID {Id}", payload.PipelineId);
-                    return;
-                }
-
-                await _publisher.PublishAsync("processedData", Guid.NewGuid().ToString(), transformed);
-                _logger.LogInformation("Published transformed payload with ID {Id}", payload.PipelineId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error while processing message");
-                await SendToDeadLetter(message);
-            }
-        }, stoppingToken);
+        await TryPublish(transformed, payload.PipelineId, message);
 
     }
 
-    private async Task SendToDeadLetter(string originalMessage, string error = "UnknownError")
+    private ExtractedEvent? TryDeserialize(string message)
+    {
+        try
+        {
+            return _jsonService.Deserialize<ExtractedEvent>(message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Deserialization failed");
+            return null;
+        }
+    }
+
+    private async Task<string> TryTransform(ExtractedEvent payload, string originalMessage)
+    {
+        try
+        {
+            return await _transformService.TransformDataAsync(payload);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Transformation failed. PipelineId: {PipelineId}", payload.PipelineId);
+            await SendToDeadLetter(originalMessage, ErrorType.TransformationError);
+            return string.Empty;
+        }
+    }
+
+    private async Task TryPublish(string transformed, string pipelineId, string originalMessage)
+    {
+        try
+        {
+            await _publisher.PublishAsync("processedData", Guid.NewGuid().ToString(), transformed);
+            _logger.LogInformation("Published transformed message. PipelineId: {PipelineId}", pipelineId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Publishing failed. PipelineId: {PipelineId}", pipelineId);
+            await SendToDeadLetter(originalMessage, ErrorType.PublishError);
+        }
+    }
+
+
+    private async Task SendToDeadLetter(string originalMessage, ErrorType errorType)
     {
         if (!_enableDeadLetter)
             return;
@@ -94,7 +113,7 @@ public class TransformWorker : BackgroundService
         var envelope = new DeadLetterEnvelope
         {
             OriginalPayload = originalMessage,
-            Error = error,
+            Error = errorType.ToString(),
             Timestamp = DateTime.UtcNow
         };
 
@@ -102,21 +121,20 @@ public class TransformWorker : BackgroundService
         {
             var wrapped = _jsonService.Serialize(envelope);
             await _publisher.PublishAsync(_deadLetterTopic, Guid.NewGuid().ToString(), wrapped);
-            _logger.LogWarning("Message sent to dead-letter topic: {Topic}", _deadLetterTopic);
+            _logger.LogWarning("Dead-lettered message. Error: {Error}", errorType);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send message to dead-letter topic");
+            _logger.LogError(ex, "Failed to send to dead-letter topic");
         }
     }
 
-    public class DeadLetterEnvelope
+    private enum ErrorType
     {
-        public string OriginalPayload { get; set; } = string.Empty;
-        public string Error { get; set; } = string.Empty;
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        DeserializationError,
+        NullPayload,
+        TransformationError,
+        PublishError,
+        UnknownError
     }
-
-
-
 }
