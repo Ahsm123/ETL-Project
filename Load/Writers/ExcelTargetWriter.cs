@@ -2,6 +2,7 @@
 using ETL.Domain.Targets;
 using ETL.Domain.Targets.FileTargets;
 using Load.Interfaces;
+using System.Diagnostics;
 
 public class ExcelTargetWriter : ITargetWriter
 {
@@ -13,26 +14,61 @@ public class ExcelTargetWriter : ITargetWriter
         if (targetInfo is not ExcelTargetInfo excelInfo)
             throw new ArgumentException("Invalid targetInfo for Excel target");
 
-        string fullPath = GenerateFilePath(excelInfo, pipelineId);
-        EnsureDirectoryExists(fullPath);
-
-        using var workbook = File.Exists(fullPath)
-            ? new XLWorkbook(fullPath)
-            : new XLWorkbook();
-
-        var sheetName = excelInfo.SheetName ?? "Sheet1";
-        var worksheet = workbook.Worksheets.FirstOrDefault(ws => ws.Name == sheetName)
-                     ?? workbook.Worksheets.Add(sheetName);
-
-        if (IsNewSheet(worksheet) && excelInfo.IncludeHeaders)
+        try
         {
-            WriteHeaders(worksheet, data.Keys);
+            string fullPath = GenerateFilePath(excelInfo, pipelineId);
+            EnsureDirectoryExists(fullPath);
+
+            using var workbook = LoadOrCreateWorkbook(fullPath);
+            var worksheet = GetOrCreateWorksheet(workbook, excelInfo);
+
+            if (IsNewSheet(worksheet) && excelInfo.IncludeHeaders)
+            {
+                WriteHeaders(worksheet, data.Keys);
+            }
+
+            WriteRow(worksheet, data, excelInfo.IncludeHeaders);
+            workbook.SaveAs(fullPath);
+        }
+        catch (IOException ex)
+        {
+            Debug.WriteLine($"[IO ERROR] Failed to write Excel file: {ex.Message}");
+            throw new ApplicationException("An error occurred while writing the Excel file.", ex);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[GENERAL ERROR] {ex.Message}");
+            throw; 
         }
 
-        WriteRow(worksheet, data, excelInfo.IncludeHeaders);
-        workbook.SaveAs(fullPath);
-
         await Task.CompletedTask;
+    }
+
+    private static XLWorkbook LoadOrCreateWorkbook(string fullPath)
+    {
+        try
+        {
+            return File.Exists(fullPath) ? new XLWorkbook(fullPath) : new XLWorkbook();
+        }
+        catch (Exception ex)
+        {
+            throw new IOException($"Unable to load or create Excel workbook at path: {fullPath}", ex);
+        }
+    }
+
+    private static IXLWorksheet GetOrCreateWorksheet(XLWorkbook workbook, ExcelTargetInfo info)
+    {
+        var sheetName = info.SheetName ?? "Sheet1";
+
+        try
+        {
+            return workbook.Worksheets.FirstOrDefault(ws => ws.Name == sheetName)
+                ?? workbook.Worksheets.Add(sheetName);
+        }
+        catch (Exception ex)
+        {
+            throw new ApplicationException($"Unable to access or create worksheet: {sheetName}", ex);
+        }
     }
 
     private static string GenerateFilePath(ExcelTargetInfo info, string? pipelineId)
@@ -48,7 +84,16 @@ public class ExcelTargetWriter : ITargetWriter
     {
         var directory = Path.GetDirectoryName(fullPath);
         if (!string.IsNullOrWhiteSpace(directory))
-            Directory.CreateDirectory(directory);
+        {
+            try
+            {
+                Directory.CreateDirectory(directory);
+            }
+            catch (Exception ex)
+            {
+                throw new IOException($"Could not create directory: {directory}", ex);
+            }
+        }
     }
 
     private static bool IsNewSheet(IXLWorksheet worksheet)
