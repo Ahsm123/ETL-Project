@@ -26,14 +26,8 @@ namespace ExtractAPI.DataSources
 
             var rows = ExtractRows(worksheet, headers);
 
-            if (rows.Count == 0)
-            {
-                return ConvertToJson(new List<Dictionary<string, object>>()); 
-            }
-
             return ConvertToJson(rows);
         }
-
 
         private ExcelSourceInfo ValidateSourceInfo(ExtractConfig config)
         {
@@ -45,30 +39,42 @@ namespace ExtractAPI.DataSources
             if (!File.Exists(fullFilePath))
                 throw new FileNotFoundException("Excel file not found", fullFilePath);
 
-            return excelInfo;
+            return new ExcelSourceInfo
+            {
+                FilePath = fullFilePath,
+                SheetName = excelInfo.SheetName
+            };
         }
 
         private IXLWorksheet LoadWorksheet(string filePath, string? sheetName)
         {
-            var workbook = new XLWorkbook(filePath);
-            return workbook.Worksheet(sheetName ?? "Sheet1");
+            try
+            {
+                var workbook = new XLWorkbook(filePath);
+                return workbook.Worksheet(sheetName ?? "Sheet1");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to load worksheet '{sheetName}' from file '{filePath}'.", ex);
+            }
         }
 
         private List<string> ExtractHeaders(IXLWorksheet worksheet)
-            => worksheet.Row(1).Cells().Select(c => c.GetString()?.Trim()).ToList();
+        {
+            return worksheet.Row(1).Cells().Select(c => c.GetString()?.Trim()).ToList();
+        }
 
         private List<Dictionary<string, object>> ExtractRows(IXLWorksheet worksheet, List<string> headers)
         {
             var rows = worksheet.RowsUsed()
-                .Skip(1) 
+                .Skip(1)
                 .Select(row => headers
                     .Select((header, i) => new { header, value = row.Cell(i + 1).GetValue<string>() })
                     .ToDictionary(x => x.header, x => (object)x.value))
                 .ToList();
 
-            return rows.Count == 0 ? new List<Dictionary<string, object>>() : rows;
+            return rows;
         }
-
 
         private JsonElement ConvertToJson(List<Dictionary<string, object>> rows)
         {
