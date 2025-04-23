@@ -13,7 +13,8 @@ public static class SqlQueryConstants
         COLUMN_NAME AS ColumnName, 
         DATA_TYPE AS DataType, 
         CASE WHEN IS_NULLABLE = 'YES' THEN CAST(1 AS bit) ELSE CAST(0 AS bit) END AS IsNullable,
-        CHARACTER_MAXIMUM_LENGTH AS MaxLength
+        CHARACTER_MAXIMUM_LENGTH AS MaxLength,
+        COLUMNPROPERTY(OBJECT_ID(TABLE_NAME), COLUMN_NAME, 'IsIdentity') AS IsAutoIncrement
     FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_NAME = @table";
 
