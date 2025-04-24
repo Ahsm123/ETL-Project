@@ -18,20 +18,18 @@ public class ExcelTargetWriter : ITargetWriter
         var pipelineId = context.PipelineId;
         var data = context.Data;
 
-        string fullPath = GenerateFilePath(excelInfo, pipelineId);
-        EnsureDirectoryExists(fullPath);
+        try
+        {
+            string fullPath = GenerateFilePath(excelInfo, pipelineId);
+            EnsureDirectoryExists(fullPath);
 
             using var workbook = LoadOrCreateWorkbook(fullPath);
             var worksheet = GetOrCreateWorksheet(workbook, excelInfo);
 
-        var sheetName = excelInfo.SheetName ?? "Sheet1";
-        var worksheet = workbook.Worksheets.FirstOrDefault(ws => ws.Name == sheetName)
-                         ?? workbook.Worksheets.Add(sheetName);
-
-        if (IsNewSheet(worksheet) && excelInfo.IncludeHeaders)
-        {
-            WriteHeaders(worksheet, data.Keys);
-        }
+            if (IsNewSheet(worksheet) && excelInfo.IncludeHeaders)
+            {
+                WriteHeaders(worksheet, data.Keys);
+            }
 
             WriteRow(worksheet, data, excelInfo.IncludeHeaders);
             workbook.SaveAs(fullPath);
@@ -44,12 +42,11 @@ public class ExcelTargetWriter : ITargetWriter
         catch (Exception ex)
         {
             Debug.WriteLine($"[GENERAL ERROR] {ex.Message}");
-            throw; 
+            throw;
         }
 
         await Task.CompletedTask;
     }
-
     private static XLWorkbook LoadOrCreateWorkbook(string fullPath)
     {
         try
