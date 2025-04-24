@@ -19,11 +19,14 @@ public class KafkaMessagePublisher : IMessagePublisher
     {
         _logger = logger;
 
+        var enableIdempotence = config.GetValue("Kafka:Producer:EnableIdempotence", true);
+        var acks = config["Kafka:Producer:Acks"] ?? "all";
+
         var producerConfig = new ProducerConfig
         {
-            BootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092",
-            EnableIdempotence = true,
-            Acks = Acks.All
+            BootstrapServers = config["Kafka:BootstrapServers"]!,
+            EnableIdempotence = enableIdempotence,
+            Acks = Enum.TryParse<Acks>(acks, true, out var ackParsed) ? ackParsed : Acks.All
         };
 
         _producer = new ProducerBuilder<string, string>(producerConfig).Build();

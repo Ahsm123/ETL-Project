@@ -7,3 +7,4 @@ public class TableMetadata
     public List<string> PrimaryKeys { get; set; } = new();
     public List<ForeignKeyInfo> ForeignKeys { get; set; } = new();
 }
+

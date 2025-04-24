@@ -1,4 +1,4 @@
-$topics = @("rawData", "processedData")
+$topics = @("rawData", "processedData", "dead-letter")
 
 foreach ($topic in $topics) {
     Write-Host "Creating topic: $topic"
