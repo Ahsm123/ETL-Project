@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using ETL.Domain.NewFolder;
 using ETL.Domain.Targets;
 using ETL.Domain.Targets.FileTargets;
 using Load.Interfaces;
@@ -8,10 +9,13 @@ public class ExcelTargetWriter : ITargetWriter
     public bool CanHandle(Type targetInfoType)
         => targetInfoType == typeof(ExcelTargetInfo);
 
-    public async Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data, string? pipelineId = null)
+    public async Task WriteAsync(LoadContext context)
     {
-        if (targetInfo is not ExcelTargetInfo excelInfo)
+        if (context.TargetInfo is not ExcelTargetInfo excelInfo)
             throw new ArgumentException("Invalid targetInfo for Excel target");
+
+        var pipelineId = context.PipelineId;
+        var data = context.Data;
 
         string fullPath = GenerateFilePath(excelInfo, pipelineId);
         EnsureDirectoryExists(fullPath);
@@ -22,7 +26,7 @@ public class ExcelTargetWriter : ITargetWriter
 
         var sheetName = excelInfo.SheetName ?? "Sheet1";
         var worksheet = workbook.Worksheets.FirstOrDefault(ws => ws.Name == sheetName)
-                     ?? workbook.Worksheets.Add(sheetName);
+                         ?? workbook.Worksheets.Add(sheetName);
 
         if (IsNewSheet(worksheet) && excelInfo.IncludeHeaders)
         {

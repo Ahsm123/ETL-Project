@@ -1,9 +1,12 @@
-﻿using ETL.Domain.Targets;
+﻿using ETL.Domain.NewFolder;
+using ETL.Domain.Targets;
+using ETL.Domain.Targets.DbTargets;
+using System.Runtime.Loader;
 
 namespace Load.Interfaces;
 
 public interface ITargetWriter
 {
     bool CanHandle(Type targetInfoType);
-    Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data, string? pipelineId = null);
+    Task WriteAsync(LoadContext context);
 }

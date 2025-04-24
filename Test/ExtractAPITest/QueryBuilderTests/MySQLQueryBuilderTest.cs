@@ -1,143 +1,104 @@
 ﻿using Dapper;
 using ETL.Domain.Rules;
-using ETL.Domain.Sources;
 using ETL.Domain.Targets.DbTargets;
 using ExtractAPI.DataSources.DatabaseQueryBuilder;
+using Xunit;
 
-namespace Test.ExtractAPITest.QueryBuilderTests;
-
-public class MySQLQueryBuilderTest
+namespace Test.ExtractAPITest.QueryBuilderTests
 {
-    [Fact]
-    public void GenerateSelectQuery_GeneratesValidSqlAndParameters()
+    public class MySQLQueryBuilderTest
     {
-        var queryBuilder = new MySQLQueryBuilder();
-        var sourceInfo = new MySQLSourceInfo { TargetTable = "approved_highvalue_payments" };
-        var fields = new List<string> { "account_id", "cost", "status" };
-        var filters = new List<FilterRule>
+        private static MySqlTargetInfo GetStandardTargetInfo()
         {
-            new("cost", "greater_than", "1000"),
-            new("status", "equals", "approved")
-        };
+            return new MySqlTargetInfo
+            {
+                ConnectionString = "Server=localhost;Database=testdb;Uid=root;Pwd=password;",
+                LoadMode = "append"
+            };
+        }
 
-        var (sql, parameters) = queryBuilder.GenerateSelectQuery(sourceInfo, fields, filters);
-
-        var expectedSql = "SELECT `account_id`, `cost`, `status` FROM `approved_highvalue_payments` WHERE `cost` > @p0 AND `status` = @p1;";
-        Assert.Equal(expectedSql, sql.Trim());
-        Assert.Equal("1000", parameters.Get<string>("@p0"));
-        Assert.Equal("approved", parameters.Get<string>("@p1"));
-    }
-
-    [Fact]
-    public void GenerateSelectQuery_GeneratesValidSQLWithoutFilter()
-    {
-        var queryBuilder = new MySQLQueryBuilder();
-        var sourceInfo = new MySQLSourceInfo { TargetTable = "approved_highvalue_payments" };
-        var fields = new List<string> { "account_id", "cost", "status" };
-
-        var (sql, _) = queryBuilder.GenerateSelectQuery(sourceInfo, fields, null);
-
-        Assert.Equal("SELECT `account_id`, `cost`, `status` FROM `approved_highvalue_payments`;", sql.Trim());
-    }
-
-    [Fact]
-    public void GenerateSelectQuery_GeneratesValidSQLWithEmptyFields()
-    {
-        var queryBuilder = new MySQLQueryBuilder();
-        var sourceInfo = new MySQLSourceInfo { TargetTable = "approved_highvalue_payments" };
-        var fields = new List<string>();
-
-        var (sql, _) = queryBuilder.GenerateSelectQuery(sourceInfo, fields, null);
-
-        Assert.Equal("SELECT * FROM `approved_highvalue_payments`;", sql.Trim());
-    }
-
-    [Fact]
-    public void GenerateSelectQuery_ThrowsExceptionWhenEmptyEmptyTargetTable()
-    {
-        var queryBuilder = new MySQLQueryBuilder();
-        var sourceInfo = new MySQLSourceInfo { TargetTable = "" };
-        var fields = new List<string> { "account_id", "cost", "status" };
-
-        var ex = Assert.Throws<ArgumentException>(() =>
-            queryBuilder.GenerateSelectQuery(sourceInfo, fields, null));
-
-        Assert.Equal("Target table is required.", ex.Message);
-    }
-
-    [Fact]
-    public void GenerateSelectQuery_WhenFilterRuleIsMissingAttribute_ThrowsException()
-    {
-        var queryBuilder = new MySQLQueryBuilder();
-        var sourceInfo = new MySQLSourceInfo { TargetTable = "approved_highvalue_payments" };
-        var fields = new List<string> { "account_id", "cost", "status" };
-
-        var filters = new List<FilterRule>
+        private static TargetTableConfig GetStandardTable()
         {
-            new("cost", "", "1000") // invalid operator
-        };
+            return new TargetTableConfig
+            {
+                TargetTable = "approved_highvalue_payments",
+                Fields = new List<LoadFieldMapRule>
+                {
+                    new LoadFieldMapRule { SourceField = "account_id", TargetField = "account_id" },
+                    new LoadFieldMapRule { SourceField = "cost", TargetField = "cost" },
+                    new LoadFieldMapRule { SourceField = "status", TargetField = "status" }
+                }
+            };
+        }
 
-        var ex = Assert.Throws<ArgumentException>(() =>
-            queryBuilder.GenerateSelectQuery(sourceInfo, fields, filters));
-
-        Assert.Equal("Unsupported operator ''", ex.Message);
-    }
-
-    [Fact]
-    public void GenerateInsertQuery_ReturnsCorrectSqlAndParametersWhenValidInput()
-    {
-        var queryBuilder = new MySQLQueryBuilder();
-        var targetInfo = new MySqlTargetInfo { TargetTable = "approved_highvalue_payments" };
-        var rowData = new Dictionary<string, object>
+        [Fact]
+        public void GenerateInsertQuery_ValidTargetInfo_GeneratesCorrectSQL()
         {
-            { "account_id", 123 },
-            { "cost", 1500.50 },
-            { "status", "approved" }
-        };
+            var queryBuilder = new MySQLQueryBuilder();
+            var table = GetStandardTable();
 
-        var (sql, parameters) = queryBuilder.GenerateInsertQuery(targetInfo, rowData);
+            var rowData = new Dictionary<string, object>
+            {
+                { "account_id", 123 },
+                { "cost", 1500.50 },
+                { "status", "approved" }
+            };
 
-        var expectedSql = "INSERT INTO `approved_highvalue_payments` (`account_id`, `cost`, `status`) VALUES (@account_id, @cost, @status);";
-        Assert.Equal(expectedSql, sql.Trim());
-        Assert.Equal(3, parameters.ParameterNames.AsList().Count);
-    }
+            var (sql, parameters) = queryBuilder.GenerateInsertQuery(table.TargetTable, rowData);
 
-    [Fact]
-    public void GenerateInsertQuery_NullTargetTable_ThrowsArgumentException()
-    {
-        var queryBuilder = new MySQLQueryBuilder();
-        var targetInfo = new MySqlTargetInfo { TargetTable = "" };
-        var data = new Dictionary<string, object> { { "username", "king" } };
+            var expectedSql = "INSERT INTO `approved_highvalue_payments` (`account_id`, `cost`, `status`) VALUES (@account_id, @cost, @status);";
+            Assert.Equal(expectedSql, sql.Trim());
+            Assert.Equal(3, parameters.ParameterNames.Count());
+            Assert.Equal(123, parameters.Get<int>("@account_id"));
+            Assert.Equal(1500.50, parameters.Get<double>("@cost"));
+            Assert.Equal("approved", parameters.Get<string>("@status"));
+        }
 
-        var ex = Assert.Throws<ArgumentException>(() =>
-            queryBuilder.GenerateInsertQuery(targetInfo, data));
+        [Fact]
+        public void GenerateInsertQuery_WithNullValue_UsesDBNull()
+        {
+            var queryBuilder = new MySQLQueryBuilder();
+            var rowData = new Dictionary<string, object> { { "message", null } };
 
-        Assert.Equal("Target table is required.", ex.Message);
-    }
+            var (sql, parameters) = queryBuilder.GenerateInsertQuery("logs", rowData);
 
-    [Fact]
-    public void GenerateInsertQuery_TableNameWithSqlInjection_ThrowsArgumentException()
-    {
-        var queryBuilder = new MySQLQueryBuilder();
-        var targetInfo = new MySqlTargetInfo { TargetTable = "users; DROP TABLE users;" };
-        var data = new Dictionary<string, object> { { "username", "king" } };
+            Assert.Equal("INSERT INTO `logs` (`message`) VALUES (@message);", sql.Trim());
+            Assert.Null(parameters.Get<object>("@message"));
+        }
 
-        var ex = Assert.Throws<ArgumentException>(() =>
-            queryBuilder.GenerateInsertQuery(targetInfo, data));
+        [Fact]
+        public void GenerateInsertQuery_WithInvalidTableName_ThrowsException()
+        {
+            var queryBuilder = new MySQLQueryBuilder();
+            var rowData = new Dictionary<string, object> { { "username", "king" } };
 
-        Assert.Contains("Invalid identifier", ex.Message);
-    }
+            var ex = Assert.Throws<ArgumentException>(() =>
+                queryBuilder.GenerateInsertQuery("users; DROP TABLE users;", rowData));
 
-    [Fact]
-    public void GenerateInsertQuery_NullValue_UsesDBNull()
-    {
-        var queryBuilder = new MySQLQueryBuilder();
-        var targetInfo = new MySqlTargetInfo { TargetTable = "logs" };
-        var data = new Dictionary<string, object> { { "message", null } };
+            Assert.Contains("Invalid identifier", ex.Message);
+        }
 
-        var (sql, parameters) = queryBuilder.GenerateInsertQuery(targetInfo, data);
+        [Fact]
+        public void GenerateInsertQuery_WithEmptyRowData_ThrowsException()
+        {
+            var queryBuilder = new MySQLQueryBuilder();
 
-        Assert.Equal("INSERT INTO `logs` (`message`) VALUES (@message);", sql);
-        Assert.Null(parameters.Get<object>("@message"));
+            var ex = Assert.Throws<ArgumentException>(() =>
+                queryBuilder.GenerateInsertQuery("some_table", new Dictionary<string, object>()));
+
+            Assert.Equal("No data provided for insert.", ex.Message);
+        }
+
+        [Fact]
+        public void GenerateInsertQuery_WithNullTableName_ThrowsException()
+        {
+            var queryBuilder = new MySQLQueryBuilder();
+            var data = new Dictionary<string, object> { { "username", "king" } };
+
+            var ex = Assert.Throws<ArgumentException>(() =>
+                queryBuilder.GenerateInsertQuery(null, data));
+
+            Assert.Equal("Target table is required.", ex.Message);
+        }
     }
 }

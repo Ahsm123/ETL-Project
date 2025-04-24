@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using ETL.Domain.Rules;
+using System.Text.Json.Serialization;
 
 namespace ETL.Domain.Sources;
 
@@ -9,5 +10,6 @@ public abstract class DbSourceBaseInfo : SourceInfoBase
 
     [JsonPropertyName("TargetTable")]
     public string TargetTable { get; set; }
+    
     
 }
