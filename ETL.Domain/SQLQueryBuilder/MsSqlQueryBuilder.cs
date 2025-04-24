@@ -23,39 +23,35 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
 
     public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string>? fields, List<FilterRule>? filters)
     {
-        throw new NotImplementedException();
-        //ValidateTableName(sourceInfo.TargetTable);
+        ValidateTableName(info.TargetTable);
 
-        //string table = FormatIdentifier(sourceInfo.TargetTable);
-        //string columns = fields?.Any() == true
-        //    ? string.Join(", ", fields.Select(FormatIdentifier))
-        //    : "*";
+        string table = FormatIdentifier(info.TargetTable);
+        string columns = fields?.Any() == true
+            ? string.Join(", ", fields.Select(FormatIdentifier))
+            : "*";
 
-        //string baseQuery = string.Format(BaseSelectTemplate, columns, table);
-        //var (whereClause, parameters) = BuildWhereClause(filters);
+        string baseQuery = string.Format(BaseSelectTemplate, columns, table);
+        var (whereClause, parameters) = BuildWhereClause(filters);
 
-        //string completeQuery = string.IsNullOrWhiteSpace(whereClause)
-        //    ? baseQuery
-        //    : $"{baseQuery} WHERE {whereClause}";
+        string completeQuery = string.IsNullOrWhiteSpace(whereClause)
+            ? baseQuery
+            : $"{baseQuery} WHERE {whereClause}";
 
-        //return (completeQuery, parameters);
+        return (completeQuery, parameters);
     }
 
     public (string sql, DynamicParameters parameters) GenerateInsertQuery(string tableName, Dictionary<string, object> data)
     {
-        throw new NotImplementedException();
-        //if (targetInfo is not MsSqlTargetInfo sqlTarget)
-        //    throw new ArgumentException("Invalid target info type");
+        ValidateTableName(tableName);
 
-        //ValidateTableName(sqlTarget.TargetTable);
-        //if (data == null || !data.Any())
-        //    throw new ArgumentException("No data provided for insert");
+        if (data == null || !data.Any())
+            throw new ArgumentException("No data provided for insert");
 
-        //string table = FormatIdentifier(sqlTarget.TargetTable);
-        //var (columns, paramNames, parameters) = BuildInsertComponents(data);
+        string table = FormatIdentifier(tableName);
+        var (columns, paramNames, parameters) = BuildInsertComponents(data);
 
-        //string insertQuery = $"INSERT INTO {table} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", paramNames)})";
-        //return (insertQuery, parameters);
+        string insertQuery = $"INSERT INTO {table} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", paramNames)})";
+        return (insertQuery, parameters);
     }
 
     private static (List<string> columns, List<string> paramNames, DynamicParameters parameters) BuildInsertComponents(Dictionary<string, object> data)
