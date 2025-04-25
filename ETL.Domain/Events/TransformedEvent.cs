@@ -8,7 +8,7 @@ public class TransformedEvent
     [JsonPropertyName("PipelineId")]
     public string PipelineId { get; set; }
 
-    [JsonPropertyName("LoadTargetConfig")]
+    [JsonPropertyName("LoadConfig")]
     public LoadTargetConfig LoadTargetConfig { get; set; }
 
     [JsonPropertyName("Record")]
