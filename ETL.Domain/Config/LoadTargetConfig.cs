@@ -11,7 +11,6 @@ public class LoadTargetConfig
     public List<TargetTableConfig> Tables { get; set; } = new();
 
 
-
 }
 
 

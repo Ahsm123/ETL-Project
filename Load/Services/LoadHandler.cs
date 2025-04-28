@@ -45,6 +45,10 @@ public class LoadHandler : ILoadHandler
         var writer = _targetWriterResolver.Resolve(payload.LoadTargetConfig.TargetInfo.GetType(), _serviceProvider)
             ?? throw new InvalidOperationException($"No writer found for type '{payload.LoadTargetConfig.TargetInfo.GetType()}'");
 
+        //try catch block -
+        //Valider op mod metadata api
+        //Mangler http client
+
 
         var context = new LoadContext
         {
