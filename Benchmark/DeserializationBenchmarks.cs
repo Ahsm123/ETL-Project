@@ -2,6 +2,7 @@
 using ETL.Domain.Config;
 using ETL.Domain.Events;
 using ETL.Domain.JsonHelpers;
+using ETL.Domain.Rules;
 using ETL.Domain.Targets.DbTargets;
 
 namespace Benchmark;
@@ -21,17 +22,27 @@ public class DeserializationBenchmarks
         {
             PipelineId = "abc123",
             Record = new RawRecord(new Dictionary<string, object>
-            {
-                { "Name", "Test" }
-            }),
+        {
+            { "Name", "Test" }
+        }),
             LoadTargetConfig = new LoadTargetConfig
             {
                 TargetInfo = new MsSqlTargetInfo
                 {
                     ConnectionString = "test",
-                    TargetTable = "TestTable",
                     UseBulkInsert = true
+                },
+                Tables = new List<TargetTableConfig>
+            {
+                new TargetTableConfig
+                {
+                    TargetTable = "TestTable",
+                    Fields = new List<LoadFieldMapRule>
+                    {
+                        new LoadFieldMapRule { SourceField = "Name", TargetField = "Name" }
+                    }
                 }
+            }
             }
         };
 

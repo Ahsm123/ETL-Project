@@ -21,16 +21,16 @@ public class MySQLQueryBuilder : IMySqlQueryBuilder
         ["less_or_equal"] = "<="
     };
 
-    public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase targetInfo, Dictionary<string, object> rowData)
+    public (string sql, DynamicParameters parameters) GenerateInsertQuery(string tableName, Dictionary<string, object> rowData)
     {
-        ValidateTableName(targetInfo.TargetTable);
+        ValidateTableName(tableName);
         ValidateRowData(rowData);
 
-        var tableName = EscapeIdentifier(targetInfo.TargetTable);
-        var (columnNames, paramPlaceholders, parameters) = BuildInsertComponents(rowData);
+        var escapedTable = EscapeIdentifier(tableName);
+        var (columns, placeholders, parameters) = BuildInsertComponents(rowData);
 
-        var insertSql = $"INSERT INTO {tableName} ({string.Join(", ", columnNames)}) VALUES ({string.Join(", ", paramPlaceholders)});";
-        return (insertSql, parameters);
+        var sql = $"INSERT INTO {escapedTable} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", placeholders)});";
+        return (sql, parameters);
     }
 
     public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo sourceInfo, List<string> selectedFields, List<FilterRule>? filterRules)

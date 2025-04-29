@@ -158,47 +158,58 @@ public class PipelineController : ControllerBase
                 },
                 Fields = new List<string> { "Id", "Name", "Email", "Spendings", "IsActive" },
                 Filters = new List<FilterRule>
-    {
-        new FilterRule("IsActive", "equals", "true")
-    }
+            {
+                new FilterRule("IsActive", "equals", "true")
+            }
             },
 
             TransformConfig = new TransformConfig
             {
                 Mappings = new List<FieldMapRule>
-    {
-        new FieldMapRule("Email", "UserEmail"),
-        new FieldMapRule("Name", "FullName")
-    },
+            {
+                new FieldMapRule("Email", "UserEmail"),
+                new FieldMapRule("Name", "FullName")
+            },
                 Filters = new List<FilterRule>
-    {
-        new FilterRule("Spendings", "greaterthan", "1000")
-    }
+            {
+                new FilterRule("Spendings", "greaterthan", "1000")
             }
-,
+            },
 
             LoadTargetConfig = new LoadTargetConfig
             {
-                TargetInfo = new MsSqlTargetInfo
+                TargetInfo = new MySqlTargetInfo
                 {
                     ConnectionString = "Server=localhost;Database=targetdb;Trusted_Connection=True;",
-                    TargetTable = "ActiveUsers",
-                    UseBulkInsert = true,
-                    TargetMappings = new List<LoadFieldMapRule>
+                    LoadMode = "append"
+                },
+                Tables = new List<TargetTableConfig>
+            {
+                new TargetTableConfig
                 {
-                    new() { SourceField = "UserEmail", TargetColumn = "Email" },
-                    new() { SourceField = "FullName", TargetColumn = "Name" },
-                    new() { SourceField = "Spendings", TargetColumn = "Spendings" }
+                    TargetTable = "ActiveUsers",
+                    Fields = new List<LoadFieldMapRule>
+                    {
+                        new LoadFieldMapRule { SourceField = "UserEmail", TargetField = "Email" },
+                        new LoadFieldMapRule { SourceField = "FullName", TargetField = "Name" },
+                        new LoadFieldMapRule { SourceField = "Spendings", TargetField = "Spendings" }
+                    }
+                },
+                new TargetTableConfig
+                {
+                    TargetTable = "UserLogs",
+                    Fields = new List<LoadFieldMapRule>
+                    {
+                        new LoadFieldMapRule { SourceField = "UserEmail", TargetField = "UserEmail" },
+                        new LoadFieldMapRule { SourceField = "Spendings", TargetField = "AmountSpent" }
+                    }
                 }
-                }
+            }
             }
         };
 
         return Ok(example);
     }
-
-
-
 
 
 

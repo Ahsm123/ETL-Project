@@ -1,9 +1,11 @@
-﻿using ETL.Domain.Rules;
+﻿using ETL.Domain.NewFolder;
+using ETL.Domain.Rules;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
 using ETL.Domain.Targets;
 using ETL.Domain.Targets.DbTargets;
 using Load.Interfaces;
 using MySqlConnector;
+using MySqlX.XDevAPI.Relational;
 using System.Text.Json;
 
 namespace Load.Writers;
@@ -22,21 +24,18 @@ public class MySqlTargetWriter : ITargetWriter
     public bool CanHandle(Type targetInfoType) =>
         typeof(MySqlTargetInfo).IsAssignableFrom(targetInfoType);
 
-    public async Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data, string? pipelineId = null)
+    public async Task WriteAsync(LoadContext context)
     {
-        if (targetInfo is not MySqlTargetInfo info)
+        if (context.TargetInfo is not MySqlTargetInfo info)
             throw new ArgumentException("Invalid target info type");
 
-        var mappedData = ApplyTargetMappings(data, info.TargetMappings);
-        var (sql, parameters) = _queryBuilder.GenerateInsertQuery(info, mappedData);
 
-        try
+        foreach (var table in context.Tables)
         {
+            var mappedData = ApplyTargetMappings(context.Data, table.Fields);
+            var (sql, parameters) = _queryBuilder.GenerateInsertQuery(table.TargetTable, mappedData);
+
             await _executor.ExecuteQueryAsync(BuildConnectionString(info), sql, parameters);
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Failed to write to MySQL target: {ex.Message}", ex);
         }
     }
 
@@ -53,7 +52,7 @@ public class MySqlTargetWriter : ITargetWriter
         {
             if (data.TryGetValue(map.SourceField, out var value))
             {
-                mapped[map.TargetColumn] = NormalizeValue(value);
+                mapped[map.TargetField] = NormalizeValue(value);
             }
         }
 
@@ -81,7 +80,6 @@ public class MySqlTargetWriter : ITargetWriter
     {
         var builder = new MySqlConnectionStringBuilder(info.ConnectionString)
         {
-            SslMode = info.UseSsl ? MySqlSslMode.Required : MySqlSslMode.None,
             AllowPublicKeyRetrieval = true // fix for caching_sha2_password
         };
 

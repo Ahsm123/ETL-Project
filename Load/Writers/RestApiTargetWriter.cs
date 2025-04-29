@@ -1,4 +1,5 @@
-﻿using ETL.Domain.Targets;
+﻿using ETL.Domain.NewFolder;
+using ETL.Domain.Targets;
 using ETL.Domain.Targets.ApiTargets;
 using Load.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -17,15 +18,15 @@ public class RestApiTargetWriter : ITargetWriter
     public bool CanHandle(Type targetInfoType)
         => typeof(RestApiTargetInfo).IsAssignableFrom(targetInfoType);
 
-    public async Task WriteAsync(TargetInfoBase targetInfo, Dictionary<string, object> data, string? pipelineId = null)
+    public async Task WriteAsync(LoadContext context)
     {
         try
         {
-            if (targetInfo is not RestApiTargetInfo apiInfo)
+            if (context.TargetInfo is not RestApiTargetInfo apiInfo)
                 throw new ArgumentException("Invalid target info type");
 
             _logger.LogInformation("[API] Would send {Method} to {Url} with data: {Data}",
-                apiInfo.Method, apiInfo.Url, data);
+                apiInfo.Method, apiInfo.Url, context.Data);
 
             await Task.CompletedTask;
         }

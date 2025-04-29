@@ -21,11 +21,11 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
         ["less_or_equal"] = "<="
     };
 
-    public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo sourceInfo, List<string>? fields, List<FilterRule>? filters)
+    public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string>? fields, List<FilterRule>? filters)
     {
-        ValidateTableName(sourceInfo.TargetTable);
+        ValidateTableName(info.TargetTable);
 
-        string table = FormatIdentifier(sourceInfo.TargetTable);
+        string table = FormatIdentifier(info.TargetTable);
         string columns = fields?.Any() == true
             ? string.Join(", ", fields.Select(FormatIdentifier))
             : "*";
@@ -40,16 +40,14 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
         return (completeQuery, parameters);
     }
 
-    public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase targetInfo, Dictionary<string, object> data)
+    public (string sql, DynamicParameters parameters) GenerateInsertQuery(string tableName, Dictionary<string, object> data)
     {
-        if (targetInfo is not MsSqlTargetInfo sqlTarget)
-            throw new ArgumentException("Invalid target info type");
+        ValidateTableName(tableName);
 
-        ValidateTableName(sqlTarget.TargetTable);
         if (data == null || !data.Any())
             throw new ArgumentException("No data provided for insert");
 
-        string table = FormatIdentifier(sqlTarget.TargetTable);
+        string table = FormatIdentifier(tableName);
         var (columns, paramNames, parameters) = BuildInsertComponents(data);
 
         string insertQuery = $"INSERT INTO {table} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", paramNames)})";

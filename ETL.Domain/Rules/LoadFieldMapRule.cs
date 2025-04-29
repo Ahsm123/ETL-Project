@@ -12,6 +12,6 @@ public class LoadFieldMapRule
     [JsonPropertyName("SourceField")]
     public string SourceField { get; set; }
 
-    [JsonPropertyName("TargetColumn")]
-    public string TargetColumn { get; set; }
+    [JsonPropertyName("TargetField")]
+    public string TargetField { get; set; }
 }
