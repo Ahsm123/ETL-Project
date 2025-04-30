@@ -1,11 +1,13 @@
 ﻿using ETL.Domain.Rules;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace ETL.Domain.Targets.DbTargets;
 
 public abstract class DbTargetInfoBase : TargetInfoBase
 {
+    [Required]
     [JsonPropertyName("ConnectionString")]
     public required string ConnectionString { get; set; }
     //[JsonPropertyName("TargetTable")]

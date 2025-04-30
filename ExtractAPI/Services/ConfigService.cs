@@ -14,6 +14,7 @@ public class ConfigService : IConfigService
     private readonly IJsonService _jsonService;
 
     private const string ConfigEndpointTemplate = "/api/Pipeline/{0}";
+    //TODO: Skal på et tidspunkt flyttes til enviromentfil eller appsettings, såfremt kunden har sin egen database. 
 
     public ConfigService(
         HttpClient httpClient,

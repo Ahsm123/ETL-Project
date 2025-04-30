@@ -1,5 +1,4 @@
-﻿using ETL.Domain.Rules;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace ETL.Domain.Sources;
 
