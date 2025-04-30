@@ -31,7 +31,8 @@ public class ExtractPipeline : IExtractPipeline
     {
         var config = await GetConfigurationAsync(configId);
         var rawData = await GetDataFromSourceAsync(config);
-        var recordCount = await ProcessAndDispatchAsync(config, rawData);
+
+        var recordCount = await FilterAndDispatchAsync(config, rawData);
 
         return new ExtractResultEvent
         {
@@ -61,7 +62,7 @@ public class ExtractPipeline : IExtractPipeline
         return await provider.GetDataAsync(config.ExtractConfig);
     }
 
-    private async Task<int> ProcessAndDispatchAsync(ConfigFile config, JsonElement rawData)
+    private async Task<int> FilterAndDispatchAsync(ConfigFile config, JsonElement rawData)
     {
         var records = SelectRecords(rawData, config);
         var tasks = new List<Task>();
@@ -97,7 +98,5 @@ public class ExtractPipeline : IExtractPipeline
 
         await _eventDispatcher.DispatchAsync(extractedEvent);
     }
-
-
 
 }
