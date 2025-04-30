@@ -29,8 +29,8 @@ public class ExtractPipeline : IExtractPipeline
 
     public async Task<ExtractResultEvent> RunPipelineAsync(string configId)
     {
-        var config = await LoadPipelineConfigurationAsync(configId);
-        var rawData = await ExtractRawDataAsync(config);
+        var config = await GetConfigurationAsync(configId);
+        var rawData = await GetDataFromSourceAsync(config);
         var recordCount = await ProcessAndDispatchAsync(config, rawData);
 
         return new ExtractResultEvent
@@ -40,7 +40,7 @@ public class ExtractPipeline : IExtractPipeline
         };
     }
 
-    private async Task<ConfigFile> LoadPipelineConfigurationAsync(string configId)
+    private async Task<ConfigFile> GetConfigurationAsync(string configId)
     {
         var config = await _configService.GetByIdAsync(configId);
         if (config == null)
@@ -51,7 +51,7 @@ public class ExtractPipeline : IExtractPipeline
         return config;
     }
 
-    private async Task<JsonElement> ExtractRawDataAsync(ConfigFile config)
+    private async Task<JsonElement> GetDataFromSourceAsync(ConfigFile config)
     {
         var sourceInfo = config.ExtractConfig.SourceInfo;
 
@@ -64,7 +64,13 @@ public class ExtractPipeline : IExtractPipeline
     private async Task<int> ProcessAndDispatchAsync(ConfigFile config, JsonElement rawData)
     {
         var records = SelectRecords(rawData, config);
-        var tasks = records.Select(record => DispatchExtractedEventAsync(config, record)).ToList();
+        var tasks = new List<Task>();
+
+        foreach (var record in records)
+        {
+            var task = DispatchExtractedEventAsync(config, record);
+            tasks.Add(task);
+        }
 
         await Task.WhenAll(tasks);
         _logger.LogInformation("Pipeline {PipelineId} sent {Count} messages", config.Id, tasks.Count);
@@ -72,11 +78,11 @@ public class ExtractPipeline : IExtractPipeline
         return tasks.Count;
     }
 
+
     private IEnumerable<RawRecord> SelectRecords(JsonElement rawData, ConfigFile config)
     {
         return _selectorService.SelectRecords(rawData, config.ExtractConfig?.Fields);
     }
-
 
 
     private async Task DispatchExtractedEventAsync(ConfigFile config, RawRecord record)

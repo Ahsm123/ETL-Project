@@ -1,6 +1,11 @@
 ﻿using ETL.Domain.Config;
 using ETL.Domain.JsonHelpers;
 using ExtractAPI.Interfaces;
+using System.Net.Http;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
+
+namespace ExtractAPI.Services;
 
 public class ConfigService : IConfigService
 {
@@ -22,51 +27,33 @@ public class ConfigService : IConfigService
 
     public async Task<ConfigFile?> GetByIdAsync(string id)
     {
-        if (IsInvalidId(id))
+        if (string.IsNullOrWhiteSpace(id))
             return null;
 
-        var endpoint = FormatEndpoint(id);
+        var endpoint = string.Format(ConfigEndpointTemplate, id);
 
         try
         {
             var response = await _httpClient.GetAsync(endpoint);
 
             if (!response.IsSuccessStatusCode)
-                return await HandleFailedResponseAsync(id, response);
+            {
+                _logger.LogWarning("Failed to fetch config {ConfigId}. Status code: {StatusCode}", id, response.StatusCode);
+                return null;
+            }
 
-            return await DeserializeConfigAsync(response, id);
+            await using var stream = await response.Content.ReadAsStreamAsync();
+            var config = _jsonService.Deserialize<ConfigFile>(stream);
+
+            if (config == null)
+                _logger.LogWarning("Deserialized config for ID {ConfigId} was null.", id);
+
+            return config;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching config {ConfigId}", id);
             return null;
         }
-    }
-
-    private static bool IsInvalidId(string id)
-    {
-        return string.IsNullOrWhiteSpace(id);
-    }
-
-    private string FormatEndpoint(string id)
-    {
-        return string.Format(ConfigEndpointTemplate, id);
-    }
-
-    private async Task<ConfigFile?> HandleFailedResponseAsync(string id, HttpResponseMessage response)
-    {
-        _logger.LogWarning("Failed to fetch config {ConfigId}. Status code: {StatusCode}", id, response.StatusCode);
-        return null;
-    }
-
-    private async Task<ConfigFile?> DeserializeConfigAsync(HttpResponseMessage response, string id)
-    {
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        var config = _jsonService.Deserialize<ConfigFile>(stream);
-
-        if (config == null)
-            _logger.LogWarning("Deserialized config for ID {ConfigId} was null.", id);
-
-        return config;
     }
 }

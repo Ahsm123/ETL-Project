@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.IO;
 using ETL.Tests.Helpers;
+using ExtractAPI.Services;
 
 
 namespace Test.ExtractAPITest.ServiceTest;
