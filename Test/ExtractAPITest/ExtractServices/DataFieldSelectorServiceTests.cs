@@ -24,7 +24,7 @@ public class DataFieldSelectorServiceTests
         var fields = new List<string> { "account_id", "cost" };
 
         // Act
-        var result = _service.FilterFields(data, fields).ToList();
+        var result = _service.SelectRecords(data, fields).ToList();
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -43,11 +43,12 @@ public class DataFieldSelectorServiceTests
         var data = doc.RootElement;
 
         // Act
-        var result = _service.FilterFields(data, new List<string>()).ToList();
+        var result = _service.SelectRecords(data, new List<string>()).ToList();
 
         // Assert
-        Assert.Empty(result);
+        Assert.Empty(result); 
     }
+
 
 
     [Fact]
@@ -60,7 +61,7 @@ public class DataFieldSelectorServiceTests
         var fields = new List<string> { "missing_field" };
 
         // Act
-        var result = _service.FilterFields(data, fields).ToList();
+        var result = _service.SelectRecords(data, fields).ToList();
 
         // Assert
         Assert.Single(result);

@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using ETL.Domain.JsonHelpers;
 using ETL.Domain.SQLQueryBuilder;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
@@ -21,7 +22,7 @@ builder.Services.Configure<EventRoutingOptions>(
 
 // Pipeline
 builder.Services.AddScoped<IExtractPipeline, ExtractPipeline>();
-builder.Services.AddScoped<DataFieldSelectorService>();
+builder.Services.AddScoped<IDataFieldSelectorService, DataFieldSelectorService>();
 builder.Services.AddSingleton<IJsonService, JsonService>();
 
 

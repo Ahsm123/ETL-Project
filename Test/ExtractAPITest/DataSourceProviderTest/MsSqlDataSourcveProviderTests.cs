@@ -3,6 +3,7 @@ using ETL.Domain.Model;
 using ETL.Domain.Rules;
 using ETL.Domain.Sources;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
+using ExtractAPI.DataSources;
 using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using Moq;
 using System.Text.Json;

@@ -5,6 +5,7 @@ using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using ExtractAPI.Interfaces;
 using System.Text.Json;
 
+namespace ExtractAPI.DataSources;
 public class MsSqlDataSourceProvider : IDataSourceProvider
 {
     private readonly IMsSqlExecutor _executor;

@@ -10,14 +10,14 @@ public class ExtractPipeline : IExtractPipeline
     private readonly IConfigService _configService;
     private readonly ISourceProviderResolver _resolver;
     private readonly IEventDispatcher _eventDispatcher;
-    private readonly DataFieldSelectorService _selectorService;
+    private readonly IDataFieldSelectorService _selectorService;
     private readonly ILogger<ExtractPipeline> _logger;
 
     public ExtractPipeline(
         IConfigService configService,
         ISourceProviderResolver resolver,
         IEventDispatcher eventDispatcher,
-        DataFieldSelectorService selectorService,
+        IDataFieldSelectorService selectorService,
         ILogger<ExtractPipeline> logger)
     {
         _configService = configService;
@@ -74,21 +74,7 @@ public class ExtractPipeline : IExtractPipeline
 
     private IEnumerable<RawRecord> SelectRecords(JsonElement rawData, ConfigFile config)
     {
-        if (config.ExtractConfig?.Fields?.Any() == true)
-            return _selectorService.FilterFields(rawData, config.ExtractConfig.Fields);
-
-        return SafeDeserializeRecords(rawData);
-    }
-
-    private IEnumerable<RawRecord> SafeDeserializeRecords(JsonElement array)
-    {
-        foreach (var element in array.EnumerateArray())
-        {
-
-            var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(element.GetRawText());
-            if (dict != null)
-                yield return new RawRecord(dict);
-        }
+        return _selectorService.SelectRecords(rawData, config.ExtractConfig?.Fields);
     }
 
 

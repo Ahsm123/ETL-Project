@@ -7,7 +7,7 @@ namespace ETL.Domain.Targets.DbTargets;
 public abstract class DbTargetInfoBase : TargetInfoBase
 {
     [JsonPropertyName("ConnectionString")]
-    public string ConnectionString { get; set; }
+    public required string ConnectionString { get; set; }
     //[JsonPropertyName("TargetTable")]
     //public string TargetTable { get; set; }
     [JsonPropertyName("LoadMode")]
