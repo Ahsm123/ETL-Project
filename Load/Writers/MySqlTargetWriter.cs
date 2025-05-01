@@ -1,24 +1,35 @@
-﻿using ETL.Domain.NewFolder;
+﻿using Confluent.Kafka;
+using ETL.Domain.MetaDataModels;
+using ETL.Domain.NewFolder;
 using ETL.Domain.Rules;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
 using ETL.Domain.Targets;
 using ETL.Domain.Targets.DbTargets;
 using Load.Interfaces;
+using Microsoft.Extensions.Logging;
 using MySqlConnector;
 using MySqlX.XDevAPI.Relational;
 using System.Text.Json;
+
 
 namespace Load.Writers;
 
 public class MySqlTargetWriter : ITargetWriter
 {
     private readonly IMySqlQueryBuilder _queryBuilder;
-    private readonly IMySqlExecutor _executor;
+    private readonly IMySqlExecutor _executor; 
+    private readonly IDataBaseMetadataService _metadataService;
+    private readonly ITableDependencySorter _tableDependencySorter;
 
-    public MySqlTargetWriter(IMySqlQueryBuilder queryBuilder, IMySqlExecutor executor)
+    public MySqlTargetWriter(IMySqlQueryBuilder queryBuilder,
+        IMySqlExecutor executor,
+        IDataBaseMetadataService metadataService,
+        ITableDependencySorter tableDependencySorter)
     {
         _queryBuilder = queryBuilder;
         _executor = executor;
+        _metadataService = metadataService;
+        _tableDependencySorter = tableDependencySorter;
     }
 
     public bool CanHandle(Type targetInfoType) =>
@@ -29,13 +40,30 @@ public class MySqlTargetWriter : ITargetWriter
         if (context.TargetInfo is not MySqlTargetInfo info)
             throw new ArgumentException("Invalid target info type");
 
-
-        foreach (var table in context.Tables)
+        if (context.DatabaseMetadata == null && context.TargetInfo is DbTargetInfoBase dbTarget)
         {
-            var mappedData = ApplyTargetMappings(context.Data, table.Fields);
-            var (sql, parameters) = _queryBuilder.GenerateInsertQuery(table.TargetTable, mappedData);
+            //TODO: Hvordan kommer vi uden om hardcoded databasetype?
+            context.DatabaseMetadata = await _metadataService.FetchAsync(dbTarget, "mysql");
+        }
 
-            await _executor.ExecuteQueryAsync(BuildConnectionString(info), sql, parameters);
+        var sortedTables = _tableDependencySorter.SortByDependency(context.Tables, context.DatabaseMetadata);
+
+        foreach (var table in sortedTables)
+        {
+            try
+            {
+                var mappedData = ApplyTargetMappings(context.Data, table.Fields);
+                ValidateRequiredFields(table.TargetTable, mappedData, context.DatabaseMetadata);
+                var (sql, parameters) = _queryBuilder.GenerateInsertQuery(table.TargetTable, mappedData);
+
+                await _executor.ExecuteQueryAsync(BuildConnectionString(info), sql, parameters);
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+
+            }
         }
     }
 
@@ -75,6 +103,38 @@ public class MySqlTargetWriter : ITargetWriter
 
         return value;
     }
+
+    private void ValidateRequiredFields(string tableName,Dictionary<string, object> mappedData,DatabaseMetaData metadata)
+    {
+        var tableMeta = metadata.Tables
+            .FirstOrDefault(t => t.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
+
+        if (tableMeta == null)
+            throw new InvalidOperationException($"No metadata found for table '{tableName}'.");
+
+        var missingFields = new List<string>();
+
+        foreach (var column in tableMeta.Columns)
+        {
+            if (!column.IsNullable && !column.IsAutoIncrement)
+            {
+                // Check if value is missing or null or empty string
+                if (!mappedData.TryGetValue(column.ColumnName, out var value) ||
+                    value == null ||
+                    (value is string str && string.IsNullOrWhiteSpace(str)))
+                {
+                    missingFields.Add(column.ColumnName);
+                }
+            }
+        }
+
+        if (missingFields.Count > 0)
+        {
+            var missing = string.Join(", ", missingFields);
+            throw new InvalidOperationException($"Missing required field(s) for table '{tableName}': {missing}");
+        }
+    }
+
 
     private string BuildConnectionString(MySqlTargetInfo info)
     {
