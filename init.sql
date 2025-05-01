@@ -26,6 +26,10 @@ CREATE TABLE IF NOT EXISTS TestDB.approved_highvalue_payments (
     account_id VARCHAR(50),
     cost DECIMAL(10,2),
     status VARCHAR(50)
+    CONSTRAINT fk_customer_account_id_testdb
+        FOREIGN KEY (account_id) REFERENCES TestDB.customers(account_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS TestDB.customers (
