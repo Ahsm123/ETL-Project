@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using ETL.Domain.JsonHelpers;
 using ETL.Domain.SQLQueryBuilder;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
@@ -13,15 +14,15 @@ var builder = WebApplication.CreateBuilder(args);
 var baseUrl = builder.Configuration["ConfigService:BaseUrl"];
 
 // Kafka & Event system
-builder.Services.AddSingleton<IMessagePublisher, KafkaMessagePublisher>();
-builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
+builder.Services.AddSingleton<IMessagePublisher, KafkaEventPublisher>();
+builder.Services.AddScoped<IEventRouter, EventRouter>();
 builder.Services.Configure<EventRoutingOptions>(
     builder.Configuration.GetSection("EventRouting"));
 
 
 // Pipeline
 builder.Services.AddScoped<IExtractPipeline, ExtractPipeline>();
-builder.Services.AddScoped<DataFieldSelectorService>();
+builder.Services.AddScoped<IDataFieldSelectorService, DataFieldSelectorService>();
 builder.Services.AddSingleton<IJsonService, JsonService>();
 
 

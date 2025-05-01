@@ -5,16 +5,16 @@ using System.Text.Json;
 
 namespace ExtractAPI.Messaging;
 
-public class EventDispatcher : IEventDispatcher
+public class EventRouter : IEventRouter
 {
     private readonly IMessagePublisher _publisher;
-    private readonly ILogger<EventDispatcher> _logger;
+    private readonly ILogger<EventRouter> _logger;
     private readonly Dictionary<string, string> _eventTopics;
 
-    public EventDispatcher(
+    public EventRouter(
         IMessagePublisher publisher,
         IOptions<EventRoutingOptions> routingOptions,
-        ILogger<EventDispatcher> logger)
+        ILogger<EventRouter> logger)
     {
         _publisher = publisher;
         _logger = logger;

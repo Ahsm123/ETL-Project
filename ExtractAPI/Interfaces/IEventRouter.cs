@@ -1,6 +1,6 @@
 ﻿namespace ExtractAPI.Interfaces;
 
-public interface IEventDispatcher
+public interface IEventRouter
 {
     Task DispatchAsync<TEvent>(TEvent @event);
 }

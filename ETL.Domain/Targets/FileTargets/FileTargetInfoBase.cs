@@ -8,5 +8,5 @@ namespace ETL.Domain.Targets.FileTargets;
 
 public abstract class FileTargetInfoBase : TargetInfoBase
 {
-    public string FilePath { get; set; } = string.Empty;
+    public required string FilePath { get; set; } = string.Empty;
 }
