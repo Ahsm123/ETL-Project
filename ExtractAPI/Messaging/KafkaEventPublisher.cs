@@ -4,13 +4,13 @@ using ExtractAPI.Kafka;
 using ExtractAPI.Kafka.Interfaces;
 using Microsoft.Extensions.Options;
 
-public class KafkaMessagePublisher : IMessagePublisher, IDisposable
+public class KafkaEventPublisher : IMessagePublisher, IDisposable
 {
     private readonly IProducer<string, string> _producer;
-    private readonly ILogger<KafkaMessagePublisher> _logger;
+    private readonly ILogger<KafkaEventPublisher> _logger;
     private readonly string _defaultTopic;
 
-    public KafkaMessagePublisher(IConfiguration config, ILogger<KafkaMessagePublisher> logger)
+    public KafkaEventPublisher(IConfiguration config, ILogger<KafkaEventPublisher> logger)
     {
         _logger = logger;
 

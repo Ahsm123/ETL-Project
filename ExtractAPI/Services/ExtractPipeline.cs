@@ -9,14 +9,14 @@ public class ExtractPipeline : IExtractPipeline
 {
     private readonly IConfigService _configService;
     private readonly ISourceProviderResolver _resolver;
-    private readonly IEventDispatcher _eventDispatcher;
+    private readonly IEventRouter _eventDispatcher;
     private readonly IDataFieldSelectorService _selectorService;
     private readonly ILogger<ExtractPipeline> _logger;
 
     public ExtractPipeline(
         IConfigService configService,
         ISourceProviderResolver resolver,
-        IEventDispatcher eventDispatcher,
+        IEventRouter eventDispatcher,
         IDataFieldSelectorService selectorService,
         ILogger<ExtractPipeline> logger)
     {
