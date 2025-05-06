@@ -11,9 +11,8 @@ public class ExtractConfig
     [JsonPropertyName("SourceInfo")]
     public SourceInfoBase SourceInfo { get; set; }
 
-    [Required]
     [JsonPropertyName("Fields")]
-    public List<string> Fields { get; set; }
+    public List<string>? Fields { get; set; }
 
     [JsonPropertyName("Filters")]
     public List<FilterRule>? Filters { get; set; }

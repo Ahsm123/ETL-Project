@@ -1,6 +1,5 @@
 ﻿using ClosedXML.Excel;
 using ETL.Domain.NewFolder;
-using ETL.Domain.Targets;
 using ETL.Domain.Targets.FileTargets;
 using Load.Interfaces;
 using System.Diagnostics;
@@ -23,16 +22,18 @@ public class ExcelTargetWriter : ITargetWriter
             string fullPath = GenerateFilePath(excelInfo, pipelineId);
             EnsureDirectoryExists(fullPath);
 
-            using var workbook = LoadOrCreateWorkbook(fullPath);
+            var workbook = LoadOrCreateWorkbook(fullPath);
             var worksheet = GetOrCreateWorksheet(workbook, excelInfo);
 
-            if (IsNewSheet(worksheet) && excelInfo.IncludeHeaders)
+            bool isNew = IsNewSheet(worksheet);
+
+            if (isNew && excelInfo.IncludeHeaders)
             {
                 WriteHeaders(worksheet, data.Keys);
             }
 
             WriteRow(worksheet, data, excelInfo.IncludeHeaders);
-            workbook.SaveAs(fullPath);
+            workbook.Save(); // <- Save changes without overwriting the file
         }
         catch (IOException ex)
         {
@@ -47,11 +48,14 @@ public class ExcelTargetWriter : ITargetWriter
 
         await Task.CompletedTask;
     }
+
     private static XLWorkbook LoadOrCreateWorkbook(string fullPath)
     {
         try
         {
-            return File.Exists(fullPath) ? new XLWorkbook(fullPath) : new XLWorkbook();
+            return File.Exists(fullPath)
+                ? new XLWorkbook(fullPath)
+                : new XLWorkbook();
         }
         catch (Exception ex)
         {
@@ -80,8 +84,12 @@ public class ExcelTargetWriter : ITargetWriter
         var basePath = Path.GetDirectoryName(info.FilePath) ?? "Exports";
         var fileBaseName = Path.GetFileNameWithoutExtension(info.FilePath);
         var finalName = $"{(pipelineId ?? fileBaseName)}_{currentDate}.xlsx";
-        return Path.Combine(basePath, finalName);
+
+        // Resolve to absolute path
+        var rootPath = Path.GetFullPath(basePath);
+        return Path.Combine(rootPath, finalName);
     }
+
 
     private static void EnsureDirectoryExists(string fullPath)
     {
@@ -100,7 +108,8 @@ public class ExcelTargetWriter : ITargetWriter
     }
 
     private static bool IsNewSheet(IXLWorksheet worksheet)
-        => worksheet.LastRowUsed() == null;
+    => worksheet.LastRowUsed() == null;
+
 
     private static void WriteHeaders(IXLWorksheet worksheet, IEnumerable<string> keys)
     {
@@ -113,8 +122,13 @@ public class ExcelTargetWriter : ITargetWriter
 
     private static void WriteRow(IXLWorksheet worksheet, Dictionary<string, object> data, bool headersIncluded)
     {
-        int row = worksheet.LastRowUsed()?.RowNumber() + 1 ?? 1;
-        if (row == 1 && headersIncluded)
+        int lastRow = worksheet.LastRowUsed()?.RowNumber() ?? 0;
+
+        // Start on next row
+        int row = lastRow + 1;
+
+        // If headers are included and we're writing to row 1, skip it
+        if (headersIncluded && row == 1)
             row = 2;
 
         int col = 1;
@@ -123,4 +137,6 @@ public class ExcelTargetWriter : ITargetWriter
             worksheet.Cell(row, col++).Value = data[key]?.ToString();
         }
     }
+
+
 }

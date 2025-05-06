@@ -1,9 +1,9 @@
 ﻿using Dapper;
 using ETL.Domain.Rules;
 using ETL.Domain.Sources;
+using ETL.Domain.Sources.Db;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
-using ETL.Domain.Targets.DbTargets;
-using System.Text.RegularExpressions;
+using System.Text;
 
 namespace ETL.Domain.SQLQueryBuilder;
 
@@ -38,6 +38,41 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
             : $"{baseQuery} WHERE {whereClause}";
 
         return (completeQuery, parameters);
+    }
+
+    public (string sql, DynamicParameters parameters) GenerateJoinedSelectQuery(JoinConfig config)
+    {
+        ValidateTableName(config.BaseTable);
+
+        string baseTable = FormatIdentifier(config.BaseTable);
+        string columns = config.Fields?.Any() == true
+            ? string.Join(", ", config.Fields.Select(FormatIdentifier))
+            : "*";
+
+        var sqlBuilder = new StringBuilder();
+        sqlBuilder.AppendLine($"SELECT {columns}");
+        sqlBuilder.AppendLine($"FROM {baseTable}");
+
+        foreach (var join in config.Joins)
+        {
+            ValidateTableName(join.Table);
+            string joinTable = FormatIdentifier(join.Table);
+            string joinType = join.JoinType.ToUpperInvariant();
+
+            if (joinType is not ("INNER" or "LEFT" or "RIGHT" or "FULL"))
+                throw new NotSupportedException($"Unsupported join type: {join.JoinType}");
+
+            var onConditions = join.On.Select(j =>
+                $"{FormatIdentifier(j.Left)} = {FormatIdentifier(j.Right)}");
+
+            sqlBuilder.AppendLine($"{joinType} JOIN {joinTable} ON {string.Join(" AND ", onConditions)}");
+        }
+
+        var (whereClause, parameters) = BuildWhereClause(config.Filters);
+        if (!string.IsNullOrWhiteSpace(whereClause))
+            sqlBuilder.AppendLine($"WHERE {whereClause}");
+
+        return (sqlBuilder.ToString(), parameters);
     }
 
     public (string sql, DynamicParameters parameters) GenerateInsertQuery(string tableName, Dictionary<string, object> data)
@@ -102,10 +137,8 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
         if (string.IsNullOrWhiteSpace(identifier))
             throw new ArgumentException("Field/table name cannot be empty.");
 
-        if (!Regex.IsMatch(identifier, "^[a-zA-Z_][a-zA-Z0-9_]*$"))
-            throw new ArgumentException($"Invalid characters in identifier: {identifier}");
-
-        return $"[{identifier}]";
+        // dbo.Users → [dbo].[Users]
+        return string.Join(".", identifier.Split('.').Select(part => $"[{part}]"));
     }
 
     private static void ValidateTableName(string? tableName)

@@ -8,11 +8,12 @@ public class DataFieldSelectorService : IDataFieldSelectorService
 {
     public IEnumerable<RawRecord> SelectRecords(JsonElement data, List<string>? fields)
     {
-        if (fields != null && fields.Any())
-            return ExtractFields(data, fields);
+        if (fields == null || fields.Count == 0)
+            return ExtractAllFields(data);
 
-        return Enumerable.Empty<RawRecord>(); 
+        return ExtractFields(data, fields);
     }
+
 
 
     private IEnumerable<RawRecord> ExtractFields(JsonElement data, List<string> fields)
@@ -31,6 +32,20 @@ public class DataFieldSelectorService : IDataFieldSelectorService
         }
     }
 
+    private IEnumerable<RawRecord> ExtractAllFields(JsonElement data)
+    {
+        foreach (var item in data.EnumerateArray())
+        {
+            var dict = new Dictionary<string, object>();
+
+            foreach (var prop in item.EnumerateObject())
+            {
+                dict[prop.Name] = ConvertValue(prop.Value);
+            }
+
+            yield return new RawRecord(dict);
+        }
+    }
 
     private static object ConvertValue(JsonElement value) => value.ValueKind switch
     {

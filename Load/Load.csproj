@@ -21,4 +21,8 @@
     <ProjectReference Include="..\ETL.Domain\ETL.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="local_excel\" />
+  </ItemGroup>
+
 </Project>

@@ -41,6 +41,8 @@ public class ExtractPipeline : IExtractPipeline
         };
     }
 
+
+
     private async Task<ConfigFile> GetConfigurationAsync(string configId)
     {
         var config = await _configService.GetByIdAsync(configId);

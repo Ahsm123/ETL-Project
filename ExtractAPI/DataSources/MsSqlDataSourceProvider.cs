@@ -1,7 +1,6 @@
 ﻿using ETL.Domain.Model;
 using ETL.Domain.Sources;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
-using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 using ExtractAPI.Interfaces;
 using System.Text.Json;
 
@@ -24,14 +23,32 @@ public class MsSqlDataSourceProvider : IDataSourceProvider
     {
         var dbInfo = ValidateSourceInfo(config);
 
-        var (query, parameters) = _queryBuilder.GenerateSelectQuery(dbInfo, config.Fields, config.Filters ?? new());
+        if (dbInfo.JoinConfig != null)
+        {
+            var (query, parameters) = _queryBuilder.GenerateJoinedSelectQuery(dbInfo.JoinConfig);
+            Console.WriteLine("Generated SQL:\n" + query);
 
-        var rows = await _executor.ExecuteQueryAsync(dbInfo.ConnectionString, query, parameters);
-        var json = JsonSerializer.Serialize(rows);
+            var rows = await _executor.ExecuteQueryAsync(dbInfo.ConnectionString, query, parameters);
 
-        using var doc = JsonDocument.Parse(json);
-        return doc.RootElement.Clone();
+            var json = JsonSerializer.Serialize(rows);
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.Clone();
+        }
+        else
+        {
+            var (query, parameters) = _queryBuilder.GenerateSelectQuery(
+                dbInfo,
+                config.Fields ?? new(),
+                config.Filters ?? new()
+            );
+            var rows = await _executor.ExecuteQueryAsync(dbInfo.ConnectionString, query, parameters);
+
+            var json = JsonSerializer.Serialize(rows);
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.Clone();
+        }
     }
+
 
     private static MsSqlSourceInfo ValidateSourceInfo(ExtractConfig config)
     {
