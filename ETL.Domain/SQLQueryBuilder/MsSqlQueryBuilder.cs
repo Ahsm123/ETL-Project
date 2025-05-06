@@ -9,8 +9,6 @@ namespace ETL.Domain.SQLQueryBuilder;
 
 public class MsSqlQueryBuilder : IMsSqlQueryBuilder
 {
-    private const string BaseSelectTemplate = "SELECT {0} FROM {1}";
-
     private static readonly Dictionary<string, string> OperatorMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["equals"] = "=",
@@ -23,89 +21,65 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
 
     public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string>? fields, List<FilterRule>? filters)
     {
-        ValidateTableName(info.TargetTable);
-
-        string table = FormatIdentifier(info.TargetTable);
-        string columns = fields?.Any() == true
-            ? string.Join(", ", fields.Select(FormatIdentifier))
+        string table = WrapIdentifier(info.TargetTable);
+        string columns = fields?.Count > 0
+            ? string.Join(", ", fields.Select(WrapIdentifier))
             : "*";
 
-        string baseQuery = string.Format(BaseSelectTemplate, columns, table);
-        var (whereClause, parameters) = BuildWhereClause(filters);
+        string sql = $"SELECT {columns} FROM {table}";
 
-        string completeQuery = string.IsNullOrWhiteSpace(whereClause)
-            ? baseQuery
-            : $"{baseQuery} WHERE {whereClause}";
+        var (where, parameters) = BuildWhereClause(filters);
+        if (!string.IsNullOrWhiteSpace(where))
+            sql += $" WHERE {where}";
 
-        return (completeQuery, parameters);
+        return (sql, parameters);
     }
 
     public (string sql, DynamicParameters parameters) GenerateJoinedSelectQuery(JoinConfig config)
     {
-        ValidateTableName(config.BaseTable);
-
-        string baseTable = FormatIdentifier(config.BaseTable);
-        string columns = config.Fields?.Any() == true
-            ? string.Join(", ", config.Fields.Select(FormatIdentifier))
+        string baseTable = WrapIdentifier(config.BaseTable);
+        string columns = config.Fields?.Count > 0
+            ? string.Join(", ", config.Fields.Select(WrapIdentifier))
             : "*";
 
-        var sqlBuilder = new StringBuilder();
-        sqlBuilder.AppendLine($"SELECT {columns}");
-        sqlBuilder.AppendLine($"FROM {baseTable}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"SELECT {columns}");
+        sb.AppendLine($"FROM {baseTable}");
 
         foreach (var join in config.Joins)
         {
-            ValidateTableName(join.Table);
-            string joinTable = FormatIdentifier(join.Table);
+            string joinTable = WrapIdentifier(join.Table);
             string joinType = join.JoinType.ToUpperInvariant();
 
             if (joinType is not ("INNER" or "LEFT" or "RIGHT" or "FULL"))
                 throw new NotSupportedException($"Unsupported join type: {join.JoinType}");
 
-            var onConditions = join.On.Select(j =>
-                $"{FormatIdentifier(j.Left)} = {FormatIdentifier(j.Right)}");
-
-            sqlBuilder.AppendLine($"{joinType} JOIN {joinTable} ON {string.Join(" AND ", onConditions)}");
+            var onConditions = join.On.Select(j => $"{WrapIdentifier(j.Left)} = {WrapIdentifier(j.Right)}");
+            sb.AppendLine($"{joinType} JOIN {joinTable} ON {string.Join(" AND ", onConditions)}");
         }
 
-        var (whereClause, parameters) = BuildWhereClause(config.Filters);
-        if (!string.IsNullOrWhiteSpace(whereClause))
-            sqlBuilder.AppendLine($"WHERE {whereClause}");
+        var (where, parameters) = BuildWhereClause(config.Filters);
+        if (!string.IsNullOrWhiteSpace(where))
+            sb.AppendLine($"WHERE {where}");
 
-        return (sqlBuilder.ToString(), parameters);
+        return (sb.ToString(), parameters);
     }
 
     public (string sql, DynamicParameters parameters) GenerateInsertQuery(string tableName, Dictionary<string, object> data)
     {
-        ValidateTableName(tableName);
-
-        if (data == null || !data.Any())
+        if (data.Count == 0)
             throw new ArgumentException("No data provided for insert");
 
-        string table = FormatIdentifier(tableName);
-        var (columns, paramNames, parameters) = BuildInsertComponents(data);
+        string table = WrapIdentifier(tableName);
+        var columns = data.Keys.Select(WrapIdentifier).ToList();
+        var paramNames = data.Keys.Select(k => $"@{k}").ToList();
 
-        string insertQuery = $"INSERT INTO {table} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", paramNames)})";
-        return (insertQuery, parameters);
-    }
-
-    private static (List<string> columns, List<string> paramNames, DynamicParameters parameters) BuildInsertComponents(Dictionary<string, object> data)
-    {
-        var columns = new List<string>();
-        var paramNames = new List<string>();
         var parameters = new DynamicParameters();
-
         foreach (var (key, value) in data)
-        {
-            string column = FormatIdentifier(key);
-            string paramName = $"@{key}";
+            parameters.Add($"@{key}", value);
 
-            columns.Add(column);
-            paramNames.Add(paramName);
-            parameters.Add(paramName, value);
-        }
-
-        return (columns, paramNames, parameters);
+        string sql = $"INSERT INTO {table} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", paramNames)})";
+        return (sql, parameters);
     }
 
     private static (string clause, DynamicParameters parameters) BuildWhereClause(List<FilterRule>? filters)
@@ -118,32 +92,20 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
 
         for (int i = 0; i < filters.Count; i++)
         {
-            var rule = filters[i];
-            string paramName = $"@param{i}";
+            var f = filters[i];
+            string op = OperatorMap.GetValueOrDefault(f.Operator.ToLower()) ?? throw new NotSupportedException($"Unsupported operator: {f.Operator}");
+            string param = $"@param{i}";
 
-            if (!OperatorMap.TryGetValue(rule.Operator.ToLower(), out var sqlOperator))
-                throw new NotSupportedException($"Unsupported operator: {rule.Operator}");
-
-            string column = FormatIdentifier(rule.Field);
-            conditions.Add($"{column} {sqlOperator} {paramName}");
-            parameters.Add(paramName, rule.Value);
+            conditions.Add($"{WrapIdentifier(f.Field)} {op} {param}");
+            parameters.Add(param, f.Value);
         }
 
         return (string.Join(" AND ", conditions), parameters);
     }
 
-    private static string FormatIdentifier(string identifier)
+    private static string WrapIdentifier(string identifier)
     {
-        if (string.IsNullOrWhiteSpace(identifier))
-            throw new ArgumentException("Field/table name cannot be empty.");
-
-        // dbo.Users → [dbo].[Users]
-        return string.Join(".", identifier.Split('.').Select(part => $"[{part}]"));
-    }
-
-    private static void ValidateTableName(string? tableName)
-    {
-        if (string.IsNullOrWhiteSpace(tableName))
-            throw new ArgumentException("Target table is required.");
+        // Supports dot notation like dbo.Table
+        return string.Join('.', identifier.Split('.').Select(p => $"[{p}]"));
     }
 }
