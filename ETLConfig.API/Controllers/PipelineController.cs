@@ -19,14 +19,11 @@ public class PipelineController : ControllerBase
     private readonly IConfigProcessingService _processingService;
     private readonly IConnectionValidatorResolver _validatorResolver;
 
-
     public PipelineController(IConfigProcessingService processingService, IConnectionValidatorResolver validatorResolver)
     {
         _processingService = processingService;
         _validatorResolver = validatorResolver;
     }
-
-    //CRUD
 
     [HttpGet]
     public async Task<ActionResult<List<JsonElement>>> GetAllPipelines()
@@ -39,26 +36,14 @@ public class PipelineController : ControllerBase
     public async Task<ActionResult<JsonElement>> GetPipelineById(string id)
     {
         var config = await _processingService.GetConfigByIdAsync(id);
-        if (config == null) return NotFound();
-        return Ok(config);
+        return config is null ? NotFound() : Ok(config);
     }
 
     [HttpPost]
     public async Task<IActionResult> CreatePipeline([FromBody] JsonElement rawJson)
     {
-        try
-        {
-            var config = await _processingService.ProcessSingleConfigAsync(rawJson);
-            return CreatedAtAction(nameof(GetPipelineById), new { id = config.Id }, null);
-        }
-        catch (JsonException ex)
-        {
-            return BadRequest($"Invalid JSON structure: {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Unexpected error: {ex.Message}");
-        }
+        var config = await _processingService.ProcessSingleConfigAsync(rawJson);
+        return CreatedAtAction(nameof(GetPipelineById), new { id = config.Id }, null);
     }
 
     [HttpPut("{id}")]
@@ -66,69 +51,54 @@ public class PipelineController : ControllerBase
     {
         var jsonId = rawJson.GetProperty("Id").GetString();
         if (!string.Equals(id, jsonId, StringComparison.OrdinalIgnoreCase))
-            return BadRequest("Id in URL does not match Id in body.");
+            return BadRequest("ID does not match ID in body.");
 
-        var existing = await _processingService.GetConfigByIdAsync(id);
-        if (existing == null) return NotFound();
+        if (await _processingService.GetConfigByIdAsync(id) is null)
+            return NotFound();
 
         await _processingService.UpdateConfigAsync(id, rawJson);
         return NoContent();
     }
 
-
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeletePipeline(string id)
     {
-        var config = await _processingService.GetConfigByIdAsync(id);
-        if (config == null) return NotFound();
+        if (await _processingService.GetConfigByIdAsync(id) is null)
+            return NotFound();
 
         await _processingService.DeleteConfigAsync(id);
         return NoContent();
     }
 
-    //MetaData and Validation
+    // Validation & Metadata
 
     [HttpPost("metadata")]
     public async Task<IActionResult> GetMetadata([FromBody] ConnectionValidationRequest request)
     {
-        var validator = GetValidatorOrBadRequest(request.Type, out var badRequest);
-        if (badRequest != null) return badRequest;
+        var validator = ResolveOrThrow(request.Type);
 
-        if (!await validator!.IsValidAsync(request.ConnectionString))
+        if (!await validator.IsValidAsync(request.ConnectionString))
             return BadRequest("Connection failed.");
 
-        try
-        {
-            var metadata = await validator.GetMetadataAsync(request.ConnectionString);
-            return Ok(metadata);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new
-            {
-                message = "An error occurred while retrieving metadata.",
-                error = ex.Message
-            });
-        }
+        var metadata = await validator.GetMetadataAsync(request.ConnectionString);
+        return Ok(metadata);
     }
 
     [HttpPost("validate")]
     public async Task<IActionResult> ValidateConnection([FromBody] ConnectionValidationRequest request)
     {
-        var validator = GetValidatorOrBadRequest(request.Type, out var badRequest);
-        if (badRequest != null) return badRequest;
-
-        var isValid = await validator!.IsValidAsync(request.ConnectionString);
+        var validator = ResolveOrThrow(request.Type);
+        var isValid = await validator.IsValidAsync(request.ConnectionString);
         return Ok(new { isValid });
     }
 
     // Available Types
+
     [HttpGet("types")]
     public IActionResult GetAvailableTypes()
     {
         var sources = TypeDiscoveryHelper.GetJsonDerivedTypes(typeof(SourceInfoBase));
         var targets = TypeDiscoveryHelper.GetJsonDerivedTypes(typeof(TargetInfoBase));
-
         return Ok(new { sources, targets });
     }
 
@@ -141,7 +111,6 @@ public class PipelineController : ControllerBase
             Name = "ETL: Active Users Sync",
             Description = "Syncs active users from source database to target warehouse.",
             Version = "1.0",
-
             ExtractConfig = new ExtractConfig
             {
                 SourceInfo = new MsSqlSourceInfo
@@ -150,26 +119,21 @@ public class PipelineController : ControllerBase
                     TargetTable = "Users",
                     UseTrustedConnection = true
                 },
-                Fields = new List<string> { "Id", "Name", "Email", "Spendings", "IsActive" },
-                Filters = new List<FilterRule>
-            {
-                new FilterRule("IsActive", "equals", "true")
-            }
+                Fields = new() { "Id", "Name", "Email", "Spendings", "IsActive" },
+                Filters = new() { new FilterRule("IsActive", "equals", "true") }
             },
-
             TransformConfig = new TransformConfig
             {
-                Mappings = new List<FieldMapRule>
-            {
-                new FieldMapRule{SourceField = "Email", TargetField = "UserEmail" },
-                new FieldMapRule{ SourceField = "Name", TargetField = "FullName" }
+                Mappings = new()
+                {
+                    new FieldMapRule { SourceField = "Email", TargetField = "UserEmail" },
+                    new FieldMapRule { SourceField = "Name", TargetField = "FullName" }
+                },
+                Filters = new()
+                {
+                    new FilterRule("Spendings", "greaterthan", "1000")
+                }
             },
-                Filters = new List<FilterRule>
-            {
-                new FilterRule("Spendings", "greaterthan", "1000")
-            }
-            },
-
             LoadTargetConfig = new LoadConfig
             {
                 TargetInfo = new MySqlTargetInfo
@@ -177,49 +141,39 @@ public class PipelineController : ControllerBase
                     ConnectionString = "Server=localhost;Database=targetdb;Trusted_Connection=True;",
                     LoadMode = "append"
                 },
-                Tables = new List<TargetTableConfig>
-            {
-                new TargetTableConfig
+                Tables = new()
                 {
-                    TargetTable = "ActiveUsers",
-                    Fields = new List<FieldMapRule>
+                    new TargetTableConfig
                     {
-                        new FieldMapRule { SourceField = "UserEmail", TargetField = "Email" },
-                        new FieldMapRule { SourceField = "FullName", TargetField = "Name" },
-                        new FieldMapRule { SourceField = "Spendings", TargetField = "Spendings" }
-                    }
-                },
-                new TargetTableConfig
-                {
-                    TargetTable = "UserLogs",
-                    Fields = new List<FieldMapRule>
+                        TargetTable = "ActiveUsers",
+                        Fields = new()
+                        {
+                            new FieldMapRule { SourceField = "UserEmail", TargetField = "Email" },
+                            new FieldMapRule { SourceField = "FullName", TargetField = "Name" },
+                            new FieldMapRule { SourceField = "Spendings", TargetField = "Spendings" }
+                        }
+                    },
+                    new TargetTableConfig
                     {
-                        new FieldMapRule { SourceField = "UserEmail", TargetField = "UserEmail" },
-                        new FieldMapRule { SourceField = "Spendings", TargetField = "AmountSpent" }
+                        TargetTable = "UserLogs",
+                        Fields = new()
+                        {
+                            new FieldMapRule { SourceField = "UserEmail", TargetField = "UserEmail" },
+                            new FieldMapRule { SourceField = "Spendings", TargetField = "AmountSpent" }
+                        }
                     }
                 }
-            }
             }
         };
 
         return Ok(example);
     }
 
+    // Helpers
 
-
-    //Helpers
-
-    private IConnectionValidator? GetValidatorOrBadRequest(string type, out IActionResult? badRequest)
+    private IConnectionValidator ResolveOrThrow(string type)
     {
-        var validator = _validatorResolver.Resolve(type);
-        if (validator == null)
-        {
-            badRequest = BadRequest($"Unsupported type '{type}'");
-            return null;
-        }
-
-        badRequest = null;
-        return validator;
+        return _validatorResolver.Resolve(type)
+            ?? throw new ArgumentException($"Unsupported type '{type}'");
     }
-
 }

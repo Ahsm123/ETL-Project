@@ -4,6 +4,7 @@ using ETLConfig.API.Models.Domain;
 using ETLConfig.API.Services;
 using ETLConfig.API.Services.Interfaces;
 using ETLConfig.API.Services.Validators;
+using ETLConfig.API.Utils;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +38,8 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader());
 });
 
+
+
 // Controllers & Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -52,9 +55,10 @@ if (app.Environment.IsDevelopment())
 }
 
 // Middleware
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthorization();
-
 app.MapControllers();
 app.Run();
+
