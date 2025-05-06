@@ -25,7 +25,7 @@ Targets:
 - MySQL
 - Excel
 
-# Use (Skal specificiceres yderligere)
+# Use (Skal specificeres yderligere)
 To install and use locally:
 1. Fork the frontend repo
 2. Setup a MongoDB
