@@ -167,8 +167,8 @@ public class PipelineController : ControllerBase
             {
                 Mappings = new List<FieldMapRule>
             {
-                new FieldMapRule("Email", "UserEmail"),
-                new FieldMapRule("Name", "FullName")
+                new FieldMapRule{SourceField = "Email", TargetField = "UserEmail" },
+                new FieldMapRule{ SourceField = "Name", TargetField = "FullName" }
             },
                 Filters = new List<FilterRule>
             {
@@ -188,20 +188,20 @@ public class PipelineController : ControllerBase
                 new TargetTableConfig
                 {
                     TargetTable = "ActiveUsers",
-                    Fields = new List<LoadFieldMapRule>
+                    Fields = new List<FieldMapRule>
                     {
-                        new LoadFieldMapRule { SourceField = "UserEmail", TargetField = "Email" },
-                        new LoadFieldMapRule { SourceField = "FullName", TargetField = "Name" },
-                        new LoadFieldMapRule { SourceField = "Spendings", TargetField = "Spendings" }
+                        new FieldMapRule { SourceField = "UserEmail", TargetField = "Email" },
+                        new FieldMapRule { SourceField = "FullName", TargetField = "Name" },
+                        new FieldMapRule { SourceField = "Spendings", TargetField = "Spendings" }
                     }
                 },
                 new TargetTableConfig
                 {
                     TargetTable = "UserLogs",
-                    Fields = new List<LoadFieldMapRule>
+                    Fields = new List<FieldMapRule>
                     {
-                        new LoadFieldMapRule { SourceField = "UserEmail", TargetField = "UserEmail" },
-                        new LoadFieldMapRule { SourceField = "Spendings", TargetField = "AmountSpent" }
+                        new FieldMapRule { SourceField = "UserEmail", TargetField = "UserEmail" },
+                        new FieldMapRule { SourceField = "Spendings", TargetField = "AmountSpent" }
                     }
                 }
             }

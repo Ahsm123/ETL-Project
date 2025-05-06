@@ -61,7 +61,7 @@ public class MsSqlTargetWriter : ITargetWriter
         }
     }
 
-    private Dictionary<string, object> ApplyTargetMappings(Dictionary<string, object> data, List<LoadFieldMapRule> mappings)
+    private Dictionary<string, object> ApplyTargetMappings(Dictionary<string, object> data, List<FieldMapRule> mappings)
     {
         if (mappings == null || mappings.Count == 0) return data;
 

@@ -99,7 +99,7 @@ public class MySqlTargetWriter : ITargetWriter
 
     private static Dictionary<string, object> ApplyTargetMappings(
         Dictionary<string, object> data,
-        List<LoadFieldMapRule> mappings)
+        List<FieldMapRule> mappings)
     {
         if (mappings == null || mappings.Count == 0)
             return data;

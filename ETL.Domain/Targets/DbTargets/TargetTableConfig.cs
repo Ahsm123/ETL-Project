@@ -13,6 +13,6 @@ namespace ETL.Domain.Targets.DbTargets
         [JsonPropertyName("TargetTable")]
         public string TargetTable { get; set; }
         [JsonPropertyName("Fields")]
-        public List<LoadFieldMapRule> Fields { get; set; } = new();
+        public List<FieldMapRule> Fields { get; set; } = new();
     }
 }
