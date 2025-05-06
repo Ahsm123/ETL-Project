@@ -18,5 +18,4 @@ public class ExtractConfig
     [JsonPropertyName("Filters")]
     public List<FilterRule>? Filters { get; set; }
 }
-//select all from "targettable" where "apply filter"
 
