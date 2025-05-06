@@ -1,5 +1,5 @@
 ﻿using ETL.Domain.Events;
-using ExtractAPI.Interfaces;
+using ExtractAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExtractAPI.Controllers;

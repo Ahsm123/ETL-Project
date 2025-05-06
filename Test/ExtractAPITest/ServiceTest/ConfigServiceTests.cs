@@ -1,16 +1,10 @@
-﻿using Xunit;
-using Moq;
-using System.Net;
-using System.Net.Http;
-using Microsoft.Extensions.Logging;
-using ETL.Domain.Config;
+﻿using ETL.Domain.Config;
 using ETL.Domain.JsonHelpers;
-using ExtractAPI.Interfaces;
-using System.Threading.Tasks;
-using System.Threading;
-using System.IO;
 using ETL.Tests.Helpers;
 using ExtractAPI.Services;
+using Microsoft.Extensions.Logging;
+using Moq;
+using System.Net;
 
 
 namespace Test.ExtractAPITest.ServiceTest;

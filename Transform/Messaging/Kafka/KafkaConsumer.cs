@@ -1,7 +1,7 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Transform.Interfaces;
+using Transform.Messaging.Interfaces;
 using Transform.Messaging.Kafka.KafkaConfig;
 
 public class KafkaConsumer : IMessageListener

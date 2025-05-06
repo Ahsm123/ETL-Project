@@ -1,7 +1,7 @@
 ﻿using ETL.Domain.Events;
 using ETL.Domain.Rules;
 using Microsoft.Extensions.Logging;
-using Transform.Interfaces;
+using Transform.Services.Interfaces;
 
 namespace Transform.Services;
 

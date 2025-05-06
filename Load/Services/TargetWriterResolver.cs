@@ -1,7 +1,8 @@
 ﻿using ETL.Domain.Targets;
 using ETL.Domain.Targets.DbTargets;
 using ETLDomain.Resolver;
-using Load.Interfaces;
+using Load.Services.Interfaces;
+using Load.TargetWriters.Interfaces;
 
 namespace Load.Services;
 

@@ -1,5 +1,6 @@
 ﻿using ETLDomain.Resolver;
-using ExtractAPI.Interfaces;
+using ExtractAPI.Services.Interfaces;
+using ExtractAPI.SourceProviders.Interfaces;
 
 public class SourceProviderResolver : ISourceProviderResolver
 {

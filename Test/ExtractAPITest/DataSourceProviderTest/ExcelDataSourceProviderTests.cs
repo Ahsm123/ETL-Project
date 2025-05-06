@@ -1,12 +1,7 @@
 ﻿using ETL.Domain.Model;
 using ETL.Domain.Sources;
 using ExtractAPI.DataSources;
-using ExtractAPI.Interfaces;
-using System;
-using System.IO;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace Test.ExtractAPITest.DataSourceProviderTest
 {

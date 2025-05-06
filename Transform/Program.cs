@@ -2,9 +2,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Transform.Interfaces;
+using Transform.Messaging.Interfaces;
 using Transform.Messaging.Kafka.KafkaConfig;
 using Transform.Services;
+using Transform.Services.Interfaces;
 
 var builder = Host.CreateDefaultBuilder(args)
     .ConfigureLogging(logging =>

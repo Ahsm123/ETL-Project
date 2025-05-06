@@ -1,6 +1,6 @@
 ﻿using ETL.Domain.MetaDataModels;
 using ETL.Domain.Targets.DbTargets;
-using Load.Interfaces;
+using Load.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;

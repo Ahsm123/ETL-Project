@@ -1,4 +1,5 @@
-﻿using Load.Interfaces;
+﻿using Load.Messaging.Interfaces;
+using Load.Services.Interfaces;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 

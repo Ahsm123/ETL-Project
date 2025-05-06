@@ -1,9 +1,9 @@
 ﻿using ETL.Domain.Config;
 using ETL.Domain.JsonHelpers;
-using ExtractAPI.Interfaces;
 using System.Net.Http;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using ExtractAPI.Services.Interfaces;
 
 namespace ExtractAPI.Services;
 

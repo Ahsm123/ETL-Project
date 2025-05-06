@@ -3,8 +3,9 @@ using ETL.Domain.JsonHelpers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Transform.Interfaces;
+using Transform.Messaging.Interfaces;
 using Transform.Messaging.Kafka.KafkaConfig;
+using Transform.Services.Interfaces;
 
 public class TransformWorker : BackgroundService
 {

@@ -4,7 +4,6 @@ using ETL.Domain.Model;
 using ETL.Domain.Rules;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Transform.Interfaces;
 using Transform.Services;
 
 namespace Test.TransformTest.TransformServices;

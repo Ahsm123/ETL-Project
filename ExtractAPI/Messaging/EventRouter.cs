@@ -1,5 +1,4 @@
-﻿using ExtractAPI.Interfaces;
-using ExtractAPI.Kafka.Interfaces;
+﻿using ExtractAPI.Messaging.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
