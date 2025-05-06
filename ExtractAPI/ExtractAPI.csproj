@@ -22,10 +22,4 @@
     <ProjectReference Include="..\ETL.Domain\ETL.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="TestExcelData\testdata.xlsx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
