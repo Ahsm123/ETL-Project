@@ -1,6 +1,11 @@
 ﻿using ETL.Domain.Config;
 using ETL.Domain.JsonHelpers;
 using ExtractAPI.Interfaces;
+using System.Net.Http;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
+
+namespace ExtractAPI.Services;
 
 public class ConfigService : IConfigService
 {
@@ -8,7 +13,8 @@ public class ConfigService : IConfigService
     private readonly ILogger<ConfigService> _logger;
     private readonly IJsonService _jsonService;
 
-    private const string ConfigEndpoint = "/api/Pipeline/{0}";
+    private const string ConfigEndpointTemplate = "/api/Pipeline/{0}";
+    //TODO: Skal på et tidspunkt flyttes til enviromentfil eller appsettings, såfremt kunden har sin egen database. 
 
     public ConfigService(
         HttpClient httpClient,
@@ -23,14 +29,12 @@ public class ConfigService : IConfigService
     public async Task<ConfigFile?> GetByIdAsync(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
-        {
-            _logger.LogWarning("Attempted to fetch config with empty ID.");
             return null;
-        }
+
+        var endpoint = string.Format(ConfigEndpointTemplate, id);
 
         try
         {
-            var endpoint = string.Format(ConfigEndpoint, id);
             var response = await _httpClient.GetAsync(endpoint);
 
             if (!response.IsSuccessStatusCode)
@@ -43,9 +47,7 @@ public class ConfigService : IConfigService
             var config = _jsonService.Deserialize<ConfigFile>(stream);
 
             if (config == null)
-            {
                 _logger.LogWarning("Deserialized config for ID {ConfigId} was null.", id);
-            }
 
             return config;
         }

@@ -1,16 +1,14 @@
 ﻿using Dapper;
 using ETL.Domain.Rules;
 using ETL.Domain.Sources;
+using ETL.Domain.Sources.Db;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
-using ETL.Domain.Targets.DbTargets;
-using System.Text.RegularExpressions;
+using System.Text;
 
 namespace ETL.Domain.SQLQueryBuilder;
 
 public class MsSqlQueryBuilder : IMsSqlQueryBuilder
 {
-    private const string BaseSelectQuery = "SELECT {0} FROM {1}";
-
     private static readonly Dictionary<string, string> OperatorMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["equals"] = "=",
@@ -18,96 +16,96 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
         ["greater_than"] = ">",
         ["less_than"] = "<",
         ["greater_or_equal"] = ">=",
-        ["less_or_equal"] = "<=",
+        ["less_or_equal"] = "<="
     };
 
     public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string>? fields, List<FilterRule>? filters)
     {
-        if (string.IsNullOrWhiteSpace(info.TargetTable))
-            throw new ArgumentException("Target table is required");
-
-        var sanitizedTableName = ProtectFromSqlInjection(info.TargetTable);
-
-        var columnSelection = (fields != null && fields.Any())
-            ? string.Join(", ", fields.Select(ProtectFromSqlInjection))
+        string table = WrapIdentifier(info.TargetTable);
+        string columns = fields?.Count > 0
+            ? string.Join(", ", fields.Select(WrapIdentifier))
             : "*";
 
-        var selectStatement = string.Format(BaseSelectQuery, columnSelection, sanitizedTableName);
+        string sql = $"SELECT {columns} FROM {table}";
 
-        var (whereClause, whereParameters) = GenerateWhereCondition(filters);
-
-        var completeQuery = string.IsNullOrWhiteSpace(whereClause)
-            ? selectStatement
-            : $"{selectStatement} WHERE {whereClause}";
-
-        return (completeQuery, whereParameters);
-    }
-
-    private static (string clause, DynamicParameters parameters) GenerateWhereCondition(List<FilterRule>? filters)
-    {
-        var whereConditions = new List<string>();
-        var dynamicParams = new DynamicParameters();
-
-        if (filters == null || filters.Count == 0)
-            return (string.Empty, dynamicParams);
-
-        for (int index = 0; index < filters.Count; index++)
-        {
-            var filter = filters[index];
-            var parameterName = $"@param{index}";
-
-            if (!OperatorMap.TryGetValue(filter.Operator.ToLower(), out var sqlOperator))
-                throw new NotSupportedException($"Unsupported operator: {filter.Operator}");
-
-            var escapedFieldName = ProtectFromSqlInjection(filter.Field);
-            whereConditions.Add($"{escapedFieldName} {sqlOperator} {parameterName}");
-            dynamicParams.Add(parameterName, filter.Value);
-        }
-
-        return (string.Join(" AND ", whereConditions), dynamicParams);
-    }
-
-    private static string ProtectFromSqlInjection(string identifier)
-    {
-        if (string.IsNullOrWhiteSpace(identifier))
-            throw new ArgumentException("Field/table name cannot be empty.");
-
-        if (!Regex.IsMatch(identifier, "^[a-zA-Z_][a-zA-Z0-9_]*$"))
-            throw new ArgumentException($"Invalid characters in identifier: {identifier}");
-
-        return $"[{identifier}]";
-    }
-
-    public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase info, Dictionary<string, object> data)
-    {
-        if (info is not MsSqlTargetInfo sqlInfo)
-            throw new ArgumentException("Invalid target info type");
-
-        if (string.IsNullOrWhiteSpace(sqlInfo.TargetTable))
-            throw new ArgumentException("Target table is required");
-
-        if (data == null || !data.Any())
-            throw new ArgumentException("No data provided for insert");
-
-        var sanitizedTable = ProtectFromSqlInjection(sqlInfo.TargetTable);
-
-        var columns = new List<string>();
-        var parameterNames = new List<string>();
-        var parameters = new DynamicParameters();
-
-        foreach (var (key, value) in data)
-        {
-            var column = ProtectFromSqlInjection(key);
-            var parameterName = $"@{key}";
-            columns.Add(column);
-            parameterNames.Add(parameterName);
-            parameters.Add(parameterName, value);
-        }
-
-        var sql = $"INSERT INTO {sanitizedTable} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", parameterNames)})";
+        var (where, parameters) = BuildWhereClause(filters);
+        if (!string.IsNullOrWhiteSpace(where))
+            sql += $" WHERE {where}";
 
         return (sql, parameters);
     }
 
-}
+    public (string sql, DynamicParameters parameters) GenerateJoinedSelectQuery(JoinConfig config)
+    {
+        string baseTable = WrapIdentifier(config.BaseTable);
+        string columns = config.Fields?.Count > 0
+            ? string.Join(", ", config.Fields.Select(WrapIdentifier))
+            : "*";
 
+        var sb = new StringBuilder();
+        sb.AppendLine($"SELECT {columns}");
+        sb.AppendLine($"FROM {baseTable}");
+
+        foreach (var join in config.Joins)
+        {
+            string joinTable = WrapIdentifier(join.Table);
+            string joinType = join.JoinType.ToUpperInvariant();
+
+            if (joinType is not ("INNER" or "LEFT" or "RIGHT" or "FULL"))
+                throw new NotSupportedException($"Unsupported join type: {join.JoinType}");
+
+            var onConditions = join.On.Select(j => $"{WrapIdentifier(j.Left)} = {WrapIdentifier(j.Right)}");
+            sb.AppendLine($"{joinType} JOIN {joinTable} ON {string.Join(" AND ", onConditions)}");
+        }
+
+        var (where, parameters) = BuildWhereClause(config.Filters);
+        if (!string.IsNullOrWhiteSpace(where))
+            sb.AppendLine($"WHERE {where}");
+
+        return (sb.ToString(), parameters);
+    }
+
+    public (string sql, DynamicParameters parameters) GenerateInsertQuery(string tableName, Dictionary<string, object> data)
+    {
+        if (data.Count == 0)
+            throw new ArgumentException("No data provided for insert");
+
+        string table = WrapIdentifier(tableName);
+        var columns = data.Keys.Select(WrapIdentifier).ToList();
+        var paramNames = data.Keys.Select(k => $"@{k}").ToList();
+
+        var parameters = new DynamicParameters();
+        foreach (var (key, value) in data)
+            parameters.Add($"@{key}", value);
+
+        string sql = $"INSERT INTO {table} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", paramNames)})";
+        return (sql, parameters);
+    }
+
+    private static (string clause, DynamicParameters parameters) BuildWhereClause(List<FilterRule>? filters)
+    {
+        var conditions = new List<string>();
+        var parameters = new DynamicParameters();
+
+        if (filters == null || filters.Count == 0)
+            return (string.Empty, parameters);
+
+        for (int i = 0; i < filters.Count; i++)
+        {
+            var f = filters[i];
+            string op = OperatorMap.GetValueOrDefault(f.Operator.ToLower()) ?? throw new NotSupportedException($"Unsupported operator: {f.Operator}");
+            string param = $"@param{i}";
+
+            conditions.Add($"{WrapIdentifier(f.Field)} {op} {param}");
+            parameters.Add(param, f.Value);
+        }
+
+        return (string.Join(" AND ", conditions), parameters);
+    }
+
+    private static string WrapIdentifier(string identifier)
+    {
+        // Supports dot notation like dbo.Table
+        return string.Join('.', identifier.Split('.').Select(p => $"[{p}]"));
+    }
+}

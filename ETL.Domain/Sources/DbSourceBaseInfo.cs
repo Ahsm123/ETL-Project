@@ -10,4 +10,5 @@ public abstract class DbSourceBaseInfo : SourceInfoBase
     [JsonPropertyName("TargetTable")]
     public string TargetTable { get; set; }
     
+    
 }

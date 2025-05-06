@@ -1,17 +1,20 @@
 ﻿using ETL.Domain.Events;
+using ExtractAPI.Interfaces;
 using System.Text.Json;
 
 namespace ExtractAPI.Services;
 
-public class DataFieldSelectorService
+public class DataFieldSelectorService : IDataFieldSelectorService
 {
-    public IEnumerable<RawRecord> FilterFields(JsonElement data, List<string> fields)
+    public IEnumerable<RawRecord> SelectRecords(JsonElement data, List<string>? fields)
     {
         if (fields == null || fields.Count == 0)
-            return Enumerable.Empty<RawRecord>();
+            return ExtractAllFields(data);
 
         return ExtractFields(data, fields);
     }
+
+
 
     private IEnumerable<RawRecord> ExtractFields(JsonElement data, List<string> fields)
     {
@@ -22,9 +25,22 @@ public class DataFieldSelectorService
             foreach (var field in fields)
             {
                 if (item.TryGetProperty(field, out var value))
-                {
                     dict[field] = ConvertValue(value);
-                }
+            }
+
+            yield return new RawRecord(dict);
+        }
+    }
+
+    private IEnumerable<RawRecord> ExtractAllFields(JsonElement data)
+    {
+        foreach (var item in data.EnumerateArray())
+        {
+            var dict = new Dictionary<string, object>();
+
+            foreach (var prop in item.EnumerateObject())
+            {
+                dict[prop.Name] = ConvertValue(prop.Value);
             }
 
             yield return new RawRecord(dict);
@@ -40,4 +56,5 @@ public class DataFieldSelectorService
         _ => value.ToString() ?? ""
     };
 }
+
 

@@ -9,4 +9,7 @@ namespace ETL.Domain.SQLQueryBuilder.Interfaces;
 public interface ISqlExecutor
 {
     Task<IEnumerable<IDictionary<string, object>>> ExecuteQueryAsync(string connectionString, string query, object parameters);
+
+    Task<object?> ExecuteInsertWithIdentityAsync(string connectionString, string query, object parameters);
+
 }

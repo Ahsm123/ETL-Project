@@ -18,79 +18,106 @@ public class MySQLQueryBuilder : IMySqlQueryBuilder
         ["greater_than"] = ">",
         ["less_than"] = "<",
         ["greater_or_equal"] = ">=",
-        ["less_or_equal"] = "<=",
+        ["less_or_equal"] = "<="
     };
 
-    public (string sql, DynamicParameters parameters) GenerateInsertQuery(DbTargetInfoBase targetInfo, Dictionary<string, object> rowData)
+    public (string sql, DynamicParameters parameters) GenerateInsertQuery(string tableName, Dictionary<string, object> rowData)
     {
-        if (string.IsNullOrWhiteSpace(targetInfo.TargetTable))
-            throw new ArgumentException("Target table is required");
+        ValidateTableName(tableName);
+        ValidateRowData(rowData);
 
-        var escapedTableName = ProtectFromSqlInjection(targetInfo.TargetTable);
+        var escapedTable = EscapeIdentifier(tableName);
+        var (columns, placeholders, parameters) = BuildInsertComponents(rowData);
 
-        var escapedColumnNames = rowData.Keys.Select(ProtectFromSqlInjection).ToList();
-        var parameterPlaceholders = rowData.Keys.Select(columnName => $"@{columnName}").ToList();
-
-        var insertQuery = $"INSERT INTO {escapedTableName} ({string.Join(", ", escapedColumnNames)}) VALUES ({string.Join(", ", parameterPlaceholders)});";
-
-        var sqlParameters = new DynamicParameters();
-        foreach (var (columnName, value) in rowData)
-        {
-            sqlParameters.Add($"@{columnName}", value ?? DBNull.Value);
-        }
-
-        return (insertQuery, sqlParameters);
+        var sql = $"INSERT INTO {escapedTable} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", placeholders)});";
+        return (sql, parameters);
     }
 
     public (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo sourceInfo, List<string> selectedFields, List<FilterRule>? filterRules)
     {
-        if (string.IsNullOrWhiteSpace(sourceInfo.TargetTable))
-            throw new ArgumentException("Target table is required");
+        ValidateTableName(sourceInfo.TargetTable);
 
-        var escapedTableName = ProtectFromSqlInjection(sourceInfo.TargetTable);
+        var tableName = EscapeIdentifier(sourceInfo.TargetTable);
+        var fields = BuildFieldList(selectedFields);
+        var baseQuery = new StringBuilder($"SELECT {fields} FROM {tableName}");
 
-        var selectClause = (selectedFields != null && selectedFields.Any())
-            ? string.Join(", ", selectedFields.Select(ProtectFromSqlInjection))
-            : "*";
+        var (whereClause, parameters) = BuildWhereClause(filterRules);
 
-        var queryBuilder = new StringBuilder();
-        var sqlParameters = new DynamicParameters();
+        if (!string.IsNullOrWhiteSpace(whereClause))
+            baseQuery.Append(" WHERE ").Append(whereClause);
 
-        queryBuilder.Append($"SELECT {selectClause} FROM {escapedTableName}");
-
-        if (filterRules != null && filterRules.Any())
-        {
-            var whereConditions = new List<string>();
-
-            for (int index = 0; index < filterRules.Count; index++)
-            {
-                var filter = filterRules[index];
-                var escapedColumn = ProtectFromSqlInjection(filter.Field);
-                var parameterName = $"@p{index}";
-
-                if (!AllowedOperators.TryGetValue(filter.Operator.ToLower(), out var sqlOperator))
-                    throw new ArgumentException($"Unsupported operator '{filter.Operator}'");
-
-                whereConditions.Add($"{escapedColumn} {sqlOperator} {parameterName}");
-                sqlParameters.Add(parameterName, filter.Value);
-            }
-
-            queryBuilder.Append(" WHERE " + string.Join(" AND ", whereConditions));
-        }
-
-        queryBuilder.Append(";");
-
-        return (queryBuilder.ToString(), sqlParameters);
+        baseQuery.Append(";");
+        return (baseQuery.ToString(), parameters);
     }
 
+    private static void ValidateTableName(string? tableName)
+    {
+        if (string.IsNullOrWhiteSpace(tableName))
+            throw new ArgumentException("Target table is required.");
+    }
 
+    private static void ValidateRowData(Dictionary<string, object> rowData)
+    {
+        if (rowData == null || rowData.Count == 0)
+            throw new ArgumentException("No data provided for insert.");
+    }
 
+    private static string BuildFieldList(List<string> fields)
+    {
+        if (fields == null || fields.Count == 0)
+            return "*";
 
-    private string ProtectFromSqlInjection(string identifier)
+        return string.Join(", ", fields.Select(EscapeIdentifier));
+    }
+
+    private static (List<string> columns, List<string> paramPlaceholders, DynamicParameters parameters) BuildInsertComponents(Dictionary<string, object> rowData)
+    {
+        var columns = new List<string>();
+        var placeholders = new List<string>();
+        var parameters = new DynamicParameters();
+
+        foreach (var (column, value) in rowData)
+        {
+            var escapedColumn = EscapeIdentifier(column);
+            var paramName = $"@{column}";
+
+            columns.Add(escapedColumn);
+            placeholders.Add(paramName);
+            parameters.Add(paramName, value ?? DBNull.Value);
+        }
+
+        return (columns, placeholders, parameters);
+    }
+
+    private static (string clause, DynamicParameters parameters) BuildWhereClause(List<FilterRule>? filterRules)
+    {
+        var conditions = new List<string>();
+        var parameters = new DynamicParameters();
+
+        if (filterRules == null || filterRules.Count == 0)
+            return (string.Empty, parameters);
+
+        for (int i = 0; i < filterRules.Count; i++)
+        {
+            var rule = filterRules[i];
+            var column = EscapeIdentifier(rule.Field);
+            var paramName = $"@p{i}";
+
+            if (!AllowedOperators.TryGetValue(rule.Operator.ToLower(), out var sqlOperator))
+                throw new ArgumentException($"Unsupported operator '{rule.Operator}'");
+
+            conditions.Add($"{column} {sqlOperator} {paramName}");
+            parameters.Add(paramName, rule.Value);
+        }
+
+        return (string.Join(" AND ", conditions), parameters);
+    }
+
+    private static string EscapeIdentifier(string identifier)
     {
         if (!Regex.IsMatch(identifier, @"^[a-zA-Z_][a-zA-Z0-9_]*$"))
             throw new ArgumentException($"Invalid identifier: {identifier}");
 
-        return $"`{identifier}`"; // MySQL safe
+        return $"`{identifier}`"; // MySQL-safe
     }
 }

@@ -13,7 +13,7 @@ public class ExtractedEvent
     public required TransformConfig TransformConfig { get; set; }
 
     [JsonPropertyName("LoadTargetConfig")]
-    public required LoadTargetConfig LoadTargetConfig { get; set; }
+    public required LoadConfig LoadTargetConfig { get; set; }
 
     [JsonPropertyName("Record")]
     public RawRecord Record { get; set; }

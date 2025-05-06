@@ -9,15 +9,15 @@ public class ExtractPipeline : IExtractPipeline
 {
     private readonly IConfigService _configService;
     private readonly ISourceProviderResolver _resolver;
-    private readonly IEventDispatcher _eventDispatcher;
-    private readonly DataFieldSelectorService _selectorService;
+    private readonly IEventRouter _eventDispatcher;
+    private readonly IDataFieldSelectorService _selectorService;
     private readonly ILogger<ExtractPipeline> _logger;
 
     public ExtractPipeline(
         IConfigService configService,
         ISourceProviderResolver resolver,
-        IEventDispatcher eventDispatcher,
-        DataFieldSelectorService selectorService,
+        IEventRouter eventDispatcher,
+        IDataFieldSelectorService selectorService,
         ILogger<ExtractPipeline> logger)
     {
         _configService = configService;
@@ -29,9 +29,10 @@ public class ExtractPipeline : IExtractPipeline
 
     public async Task<ExtractResultEvent> RunPipelineAsync(string configId)
     {
-        var config = await LoadPipelineConfigurationAsync(configId);
-        var rawData = await ExtractRawDataAsync(config);
-        var recordCount = await ProcessAndDispatchAsync(config, rawData);
+        var config = await GetConfigurationAsync(configId);
+        var rawData = await GetDataFromSourceAsync(config);
+
+        var recordCount = await FilterAndDispatchAsync(config, rawData);
 
         return new ExtractResultEvent
         {
@@ -40,7 +41,9 @@ public class ExtractPipeline : IExtractPipeline
         };
     }
 
-    private async Task<ConfigFile> LoadPipelineConfigurationAsync(string configId)
+
+
+    private async Task<ConfigFile> GetConfigurationAsync(string configId)
     {
         var config = await _configService.GetByIdAsync(configId);
         if (config == null)
@@ -51,7 +54,7 @@ public class ExtractPipeline : IExtractPipeline
         return config;
     }
 
-    private async Task<JsonElement> ExtractRawDataAsync(ConfigFile config)
+    private async Task<JsonElement> GetDataFromSourceAsync(ConfigFile config)
     {
         var sourceInfo = config.ExtractConfig.SourceInfo;
 
@@ -61,10 +64,16 @@ public class ExtractPipeline : IExtractPipeline
         return await provider.GetDataAsync(config.ExtractConfig);
     }
 
-    private async Task<int> ProcessAndDispatchAsync(ConfigFile config, JsonElement rawData)
+    private async Task<int> FilterAndDispatchAsync(ConfigFile config, JsonElement rawData)
     {
         var records = SelectRecords(rawData, config);
-        var tasks = records.Select(record => DispatchExtractedEventAsync(config, record)).ToList();
+        var tasks = new List<Task>();
+
+        foreach (var record in records)
+        {
+            var task = DispatchExtractedEventAsync(config, record);
+            tasks.Add(task);
+        }
 
         await Task.WhenAll(tasks);
         _logger.LogInformation("Pipeline {PipelineId} sent {Count} messages", config.Id, tasks.Count);
@@ -72,25 +81,11 @@ public class ExtractPipeline : IExtractPipeline
         return tasks.Count;
     }
 
+
     private IEnumerable<RawRecord> SelectRecords(JsonElement rawData, ConfigFile config)
     {
-        if (config.ExtractConfig?.Fields?.Any() == true)
-            return _selectorService.FilterFields(rawData, config.ExtractConfig.Fields);
-
-        return SafeDeserializeRecords(rawData);
+        return _selectorService.SelectRecords(rawData, config.ExtractConfig?.Fields);
     }
-
-    private IEnumerable<RawRecord> SafeDeserializeRecords(JsonElement array)
-    {
-        foreach (var element in array.EnumerateArray())
-        {
-
-            var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(element.GetRawText());
-            if (dict != null)
-                yield return new RawRecord(dict);
-        }
-    }
-
 
 
     private async Task DispatchExtractedEventAsync(ConfigFile config, RawRecord record)
@@ -105,7 +100,5 @@ public class ExtractPipeline : IExtractPipeline
 
         await _eventDispatcher.DispatchAsync(extractedEvent);
     }
-
-
 
 }

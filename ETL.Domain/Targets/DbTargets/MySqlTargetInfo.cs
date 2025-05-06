@@ -9,8 +9,10 @@ namespace ETL.Domain.Targets.DbTargets
 {
     public class MySqlTargetInfo : DbTargetInfoBase
     {
-        [JsonPropertyName("UseSsl")]
-        public bool UseSsl { get; set; }
+        //[JsonPropertyName("LoadMode")]
+        //public string LoadMode { get; set; }
+        //[JsonPropertyName("TargetTables")]
+        //public List<TargetTableConfig> TargetTables { get; set; } = new();
         public MySqlTargetInfo()
         {
         }

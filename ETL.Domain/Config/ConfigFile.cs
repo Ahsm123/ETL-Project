@@ -27,6 +27,6 @@ public class ConfigFile
     [JsonPropertyName("TransformConfig")]
     public TransformConfig TransformConfig { get; set; }
     [Required]
-    [JsonPropertyName("LoadTargetConfig")]
-    public LoadTargetConfig LoadTargetConfig { get; set; }
+    [JsonPropertyName("LoadConfig")]
+    public LoadConfig LoadTargetConfig { get; set; }
 }

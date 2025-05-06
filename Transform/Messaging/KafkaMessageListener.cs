@@ -13,60 +13,56 @@ namespace Transform.Messaging;
 public class KafkaMessageListener : IMessageListener
 {
     private readonly ILogger<KafkaMessageListener> _logger;
-    private readonly IConfiguration _configuration;
+    private readonly IConfiguration _config;
+    private readonly string _topic;
+    private readonly string _groupId;
+    private readonly AutoOffsetReset _offsetReset;
 
-    public KafkaMessageListener(ILogger<KafkaMessageListener> logger, IConfiguration configuration)
+    public KafkaMessageListener(ILogger<KafkaMessageListener> logger, IConfiguration config)
     {
         _logger = logger;
-        _configuration = configuration;
+        _config = config;
+        _topic = _config["Kafka:Consumer:Topic"] ?? "rawData";
+        _groupId = _config["Kafka:Consumer:GroupId"] ?? "transform-consumer-group";
+
+        var offset = _config["Kafka:Consumer:AutoOffsetReset"] ?? "Earliest";
+        _offsetReset = Enum.TryParse(offset, out AutoOffsetReset parsed) ? parsed : AutoOffsetReset.Earliest;
     }
 
     public async Task ListenAsync(Func<string, Task> handleMessage, CancellationToken cancellationToken)
     {
-        var config = new ConsumerConfig
+        var consumerConfig = new ConsumerConfig
         {
-            BootstrapServers = _configuration["Kafka:BootstrapServers"] ?? "localhost:9092",
-            GroupId = "transform-consumer-group",
-            AutoOffsetReset = AutoOffsetReset.Earliest
+            BootstrapServers = _config["Kafka:BootstrapServers"]!,
+            GroupId = _groupId,
+            AutoOffsetReset = _offsetReset
         };
 
-        using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
-        consumer.Subscribe("rawData");
+        using var consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build();
+        consumer.Subscribe(_topic);
 
-        _logger.LogInformation("Kafka listener subscribed to topic: rawData");
+        _logger.LogInformation("Kafka listener subscribed to topic: {Topic}", _topic);
 
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
+                var result = consumer.Consume(cancellationToken);
+                if (result?.Message == null)
+                {
+                    _logger.LogWarning("Received null message from Kafka");
+                    continue;
+                }
+
+                _logger.LogDebug("Consumed message with key: {Key}", result.Message.Key);
+
                 try
                 {
-                    var result = consumer.Consume(cancellationToken);
-
-                    if (result?.Message == null)
-                    {
-                        _logger.LogWarning("Received null message from Kafka");
-                        continue;
-                    }
-
-                    _logger.LogDebug("Consumed message with key: {Key}", result.Message.Key);
-
-                    try
-                    {
-                        await handleMessage(result.Message.Value);
-                    }
-                    catch (Exception handleEx)
-                    {
-                        _logger.LogError(handleEx, "Error while handling Kafka message: {Value}", result.Message.Value);
-                    }
+                    await handleMessage(result.Message.Value);
                 }
-                catch (ConsumeException consumeEx)
+                catch (Exception handleEx)
                 {
-                    _logger.LogError(consumeEx, "Kafka consumption error: {Reason}", consumeEx.Error.Reason);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Unexpected error during Kafka consumption");
+                    _logger.LogError(handleEx, "Error while handling Kafka message: {Value}", result.Message.Value);
                 }
             }
         }
@@ -80,5 +76,4 @@ public class KafkaMessageListener : IMessageListener
             _logger.LogInformation("Kafka consumer closed.");
         }
     }
-
 }

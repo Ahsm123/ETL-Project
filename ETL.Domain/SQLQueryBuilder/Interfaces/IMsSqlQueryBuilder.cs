@@ -1,12 +1,10 @@
-﻿using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Dapper;
+using ETL.Domain.Sources.Db;
+using ExtractAPI.DataSources.DatabaseQueryBuilder.Interfaces;
 
 namespace ETL.Domain.SQLQueryBuilder.Interfaces;
 
 public interface IMsSqlQueryBuilder : ISqlQueryBuilder
 {
+    (string sql, DynamicParameters parameters) GenerateJoinedSelectQuery(JoinConfig config);
 }

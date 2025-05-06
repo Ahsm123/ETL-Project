@@ -1,9 +1,9 @@
 ﻿using BenchmarkDotNet.Attributes;
 using ETL.Domain.Config;
 using ETL.Domain.Events;
-using ETL.Domain.Json;
+using ETL.Domain.JsonHelpers;
+using ETL.Domain.Rules;
 using ETL.Domain.Targets.DbTargets;
-using System.Text.Json;
 
 namespace Benchmark;
 
@@ -11,44 +11,55 @@ namespace Benchmark;
 public class DeserializationBenchmarks
 {
     private string _jsonWithType;
-    private JsonSerializerOptions _options;
+    private IJsonService _jsonService;
 
     [GlobalSetup]
     public void Setup()
     {
+        _jsonService = new JsonService();
+
         var payload = new TransformedEvent
         {
             PipelineId = "abc123",
-            Data = new Dictionary<string, object>
+            Record = new RawRecord(new Dictionary<string, object>
         {
             { "Name", "Test" }
-        },
-            LoadTargetConfig = new LoadTargetConfig
+        }),
+            LoadTargetConfig = new LoadConfig
             {
                 TargetInfo = new MsSqlTargetInfo
                 {
                     ConnectionString = "test",
-                    TargetTable = "TestTable",
                     UseBulkInsert = true
+                },
+                Tables = new List<TargetTableConfig>
+            {
+                new TargetTableConfig
+                {
+                    TargetTable = "TestTable",
+                    Fields = new List<FieldMapRule>
+                    {
+                        new FieldMapRule { SourceField = "Name", TargetField = "Name" }
+                    }
                 }
+            }
             }
         };
 
-        _options = JsonOptionsFactory.Default;
-        _jsonWithType = JsonSerializer.Serialize(payload, _options);
+        _jsonWithType = _jsonService.Serialize(payload);
     }
 
     [Benchmark]
     public TransformedEvent DeserializeWithPolymorphism()
     {
-        return JsonSerializer.Deserialize<TransformedEvent>(_jsonWithType, _options);
+        return _jsonService.Deserialize<TransformedEvent>(_jsonWithType)!;
     }
 
     [Benchmark]
     public MsSqlTargetInfo ManualDeserializationSwitch()
     {
-        var wrapper = JsonSerializer.Deserialize<TransformedEvent>(_jsonWithType, _options);
-        var raw = JsonSerializer.Serialize(wrapper.LoadTargetConfig.TargetInfo);
-        return JsonSerializer.Deserialize<MsSqlTargetInfo>(raw);
+        var wrapper = _jsonService.Deserialize<TransformedEvent>(_jsonWithType)!;
+        var raw = _jsonService.Serialize(wrapper.LoadTargetConfig.TargetInfo);
+        return _jsonService.Deserialize<MsSqlTargetInfo>(raw)!;
     }
 }

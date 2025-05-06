@@ -5,4 +5,5 @@ public class ColumnMetadata
     public string DataType { get; set; }
     public bool IsNullable { get; set; }
     public int? MaxLength { get; set; }
+    public bool IsAutoIncrement { get; set; }
 }

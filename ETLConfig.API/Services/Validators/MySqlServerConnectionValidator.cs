@@ -33,16 +33,10 @@ public class MySqlServerConnectionValidator : IConnectionValidator
         foreach (var table in tableNames)
         {
             // Fetch column info
-            var columnsRaw = await connection.QueryAsync<dynamic>(
-                string.Format(SqlQueryConstants.MYSQL_ShowColumns, table));
+            var columns = (await connection.QueryAsync<ColumnMetadata>(
+    SqlQueryConstants.MYSQL_ShowColumns,
+    new { table })).ToList();
 
-            var columns = columnsRaw.Select(row => new ColumnMetadata
-            {
-                ColumnName = (string)row.Field,
-                DataType = (string)row.Type,
-                IsNullable = ((string)row.Null).Equals("YES", StringComparison.OrdinalIgnoreCase),
-                MaxLength = ParseMaxLengthFromType((string)row.Type)
-            }).ToList();
 
             // Fetch primary keys
             var pkRaw = await connection.QueryAsync<dynamic>(
