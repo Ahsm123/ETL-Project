@@ -20,7 +20,7 @@ public class MappingServiceTests
 
         var mappings = new List<FieldMapRule>
         {
-            new("account_id", "id")
+            new FieldMapRule{ SourceField = "account_id", TargetField = "id"}
         };
 
         // Act 
@@ -45,8 +45,8 @@ public class MappingServiceTests
 
         var mappings = new List<FieldMapRule>
     {
-        new("account_id", "id"),
-        new("customer_status", "status")
+             new FieldMapRule{SourceField = "account_id", TargetField = "id"},
+              new FieldMapRule{SourceField = "customer_status", TargetField = "status"}
     };
 
         var service = new MappingService();
@@ -69,7 +69,8 @@ public class MappingServiceTests
 
         var mappings = new List<FieldMapRule>
     {
-        new("account_id", "id")
+        new FieldMapRule{SourceField = "account_id", TargetField = "id"}
+
     };
 
         var service = new MappingService();
@@ -91,7 +92,7 @@ public class MappingServiceTests
 
         var mappings = new List<FieldMapRule>
     {
-        new("account_id", "id") // should overwrite
+         new FieldMapRule{SourceField = "account_id", TargetField = "id"}
     };
 
         var service = new MappingService();

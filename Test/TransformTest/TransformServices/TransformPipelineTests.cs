@@ -70,7 +70,7 @@ public class TransformPipelineTests
                 },
                 Mappings = new List<FieldMapRule>
                 {
-                    new("account_id", "id")
+                    new FieldMapRule{SourceField = "account_id", TargetField = "id"}
                 }
             },
             LoadTargetConfig = new LoadConfig()

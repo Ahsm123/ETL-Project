@@ -22,11 +22,11 @@ namespace Test.ExtractAPITest.QueryBuilderTests
             return new TargetTableConfig
             {
                 TargetTable = "approved_highvalue_payments",
-                Fields = new List<LoadFieldMapRule>
+                Fields = new List<FieldMapRule>
                 {
-                    new LoadFieldMapRule { SourceField = "account_id", TargetField = "account_id" },
-                    new LoadFieldMapRule { SourceField = "cost", TargetField = "cost" },
-                    new LoadFieldMapRule { SourceField = "status", TargetField = "status" }
+                    new FieldMapRule { SourceField = "account_id", TargetField = "account_id" },
+                    new FieldMapRule { SourceField = "cost", TargetField = "cost" },
+                    new FieldMapRule { SourceField = "status", TargetField = "status" }
                 }
             };
         }

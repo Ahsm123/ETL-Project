@@ -37,9 +37,9 @@ public class DeserializationBenchmarks
                 new TargetTableConfig
                 {
                     TargetTable = "TestTable",
-                    Fields = new List<LoadFieldMapRule>
+                    Fields = new List<FieldMapRule>
                     {
-                        new LoadFieldMapRule { SourceField = "Name", TargetField = "Name" }
+                        new FieldMapRule { SourceField = "Name", TargetField = "Name" }
                     }
                 }
             }
