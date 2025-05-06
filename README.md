@@ -27,8 +27,7 @@ Targets:
 
 # Use 
 
-Skal indeholde commands til der kan køres direkte i terminal,
-og screenshots.
+Skal indeholde commands der kan køres direkte i terminal + screenshots.
 
 To install and use locally:
 1. Fork the frontend repo
