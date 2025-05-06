@@ -36,18 +36,6 @@ public class ConfigProcessingService : IConfigProcessingService
         return config;
     }
 
-    public async Task<List<string>> ProcessMultipleConfigsAsync(JsonElement jsonArray)
-    {
-        var results = new List<string>();
-
-        foreach (var item in jsonArray.EnumerateArray())
-        {
-            var config = await ProcessSingleConfigAsync(item);
-            results.Add(config.Id);
-        }
-
-        return results;
-    }
 
     public async Task<List<JsonElement>> GetAllConfigsAsync()
     {

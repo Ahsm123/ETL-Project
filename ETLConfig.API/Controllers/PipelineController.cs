@@ -48,12 +48,6 @@ public class PipelineController : ControllerBase
     {
         try
         {
-            if (rawJson.ValueKind == JsonValueKind.Array)
-            {
-                var result = await _processingService.ProcessMultipleConfigsAsync(rawJson);
-                return Ok(result);
-            }
-
             var config = await _processingService.ProcessSingleConfigAsync(rawJson);
             return CreatedAtAction(nameof(GetPipelineById), new { id = config.Id }, null);
         }
