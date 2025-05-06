@@ -26,6 +26,7 @@ builder.Services.AddSingleton<IJsonService, JsonService>();
 builder.Services.AddSingleton<IConnectionValidator, MySqlServerConnectionValidator>();
 builder.Services.AddSingleton<IConnectionValidator, MsSqlConnectionValidator>();
 builder.Services.AddSingleton<IConnectionValidatorResolver, ConnectionValidatorResolver>();
+builder.Services.AddSingleton<IConfigValidator, ConfigValidator>();
 
 // CORS policy
 builder.Services.AddCors(options =>

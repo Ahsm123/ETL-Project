@@ -2,18 +2,22 @@
 using ETL.Domain.JsonHelpers;
 using ETLConfig.API.Models.Domain;
 using ETLConfig.API.Services.Interfaces;
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 public class ConfigProcessingService : IConfigProcessingService
 {
     private readonly IConfigRepository _fileService;
     private readonly IJsonService _jsonService;
+    private readonly IConfigValidator _configValidator;
 
-    public ConfigProcessingService(IConfigRepository fileService, IJsonService jsonService)
+    public ConfigProcessingService(
+        IConfigRepository fileService,
+        IJsonService jsonService,
+        IConfigValidator configValidator)
     {
         _fileService = fileService;
         _jsonService = jsonService;
+        _configValidator = configValidator;
     }
 
     public async Task<ConfigFile> ProcessSingleConfigAsync(JsonElement json)
@@ -21,7 +25,7 @@ public class ConfigProcessingService : IConfigProcessingService
         var config = _jsonService.Deserialize<ConfigFile>(json.GetRawText())
                      ?? throw new JsonException("Invalid structure.");
 
-        ValidateConfig(config);
+        _configValidator.Validate(config); // <-- central validation call
 
         await _fileService.CreateAsync(new RawConfigFile
         {
@@ -76,29 +80,4 @@ public class ConfigProcessingService : IConfigProcessingService
         await _fileService.DeleteAsync(id);
     }
 
-    private void ValidateConfig(ConfigFile config)
-    {
-        ValidateObject(config);
-        ValidateObject(config.ExtractConfig);
-        ValidateObject(config.TransformConfig);
-        ValidateObject(config.LoadTargetConfig);
-
-        if (config.ExtractConfig?.SourceInfo is null)
-            throw new ValidationException("Missing SourceInfo");
-
-        if (config.LoadTargetConfig?.TargetInfo is null)
-            throw new ValidationException("Missing TargetInfo");
-
-        ValidateObject(config.ExtractConfig.SourceInfo);
-        ValidateObject(config.LoadTargetConfig.TargetInfo);
-    }
-
-    private static void ValidateObject(object? obj)
-    {
-        if (obj == null)
-            throw new ValidationException("Missing or null configuration section.");
-
-        var context = new ValidationContext(obj);
-        Validator.ValidateObject(obj, context, validateAllProperties: true);
-    }
 }
