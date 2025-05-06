@@ -4,64 +4,65 @@ using ETL.Domain.SQLQueryBuilder;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
 using ExtractAPI.DataSources.DatabaseQueryBuilder;
 using Load.Interfaces;
-using Load.Messaging;
+using Load.Messaging.Kafka.KafkaConfig;
 using Load.Services;
 using Load.Services.DatabaseValidation;
 using Load.Workers;
 using Load.Writers.DatabaseInsertingLogic;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 var builder = Host.CreateDefaultBuilder(args);
 
-builder.ConfigureServices(services =>
+builder.ConfigureServices((context, services) =>
 {
+    var config = context.Configuration;
 
-// Register dependencies for MsSqlTargetWriter
-services.AddSingleton<IMsSqlQueryBuilder, MsSqlQueryBuilder>();
-services.AddSingleton<IMsSqlExecutor, MsSqlExecutor>();
+    // Bind Kafka settings from appsettings
+    services.Configure<KafkaSettings>(config.GetSection("Kafka"));
 
-// Register dependencies for MySqlTargetWriter (if needed)
-services.AddSingleton<IMySqlQueryBuilder, MySQLQueryBuilder>();
-services.AddSingleton<IMySqlExecutor, MySqlExecutor>();
-
-// Dynamically register all ITargetWriter implementations
-var writerTypes = typeof(ITargetWriter).Assembly
-    .GetTypes()
-    .Where(t => typeof(ITargetWriter).IsAssignableFrom(t) &&
-                t is { IsClass: true, IsAbstract: false });
-
-foreach (var type in writerTypes)
-{
-    services.AddSingleton(typeof(ITargetWriter), serviceProvider =>
-        ActivatorUtilities.CreateInstance(serviceProvider, type));
-}
-    //register Kafka producer
+    // Register Kafka producer using injected settings
     services.AddSingleton<IProducer<string, string>>(sp =>
     {
-        var config = new ProducerConfig
+        var kafkaSettings = sp.GetRequiredService<IOptions<KafkaSettings>>().Value;
+
+        var producerConfig = new ProducerConfig
         {
-            BootstrapServers = sp.GetRequiredService<IConfiguration>()["Kafka:BootstrapServers"]!,
-            EnableIdempotence = true,
-            Acks = Acks.All
+            BootstrapServers = kafkaSettings.BootstrapServers,
+            EnableIdempotence = kafkaSettings.Producer.EnableIdempotence,
+            Acks = Enum.TryParse<Acks>(kafkaSettings.Producer.Acks, true, out var acks) ? acks : Acks.All
         };
 
-        return new ProducerBuilder<string, string>(config).Build();
+        return new ProducerBuilder<string, string>(producerConfig).Build();
     });
 
-    // Register other services
-services.AddSingleton<ITargetWriterResolver, TargetWriterResolver>();
-services.AddSingleton<IMessageListener, KafkaMessageListener>();
-services.AddSingleton<ILoadHandler, LoadHandler>();
-services.AddHostedService<LoadWorker>();
-services.AddSingleton<IJsonService, JsonService>();
-services.AddSingleton<IDataBaseMetadataService, HttpDatabaseMetadataService>();
-services.AddSingleton<ITableDependencySorter, TableDependencySorter>();
-services.AddSingleton<IMessagePublisher, KafkaMessagePublisher>();
-services.AddHttpClient();
-services.AddSingleton<IDataBaseMetadataService, HttpDatabaseMetadataService>();
-});
+    // Register SQL query builders
+    services.AddSingleton<IMsSqlQueryBuilder, MsSqlQueryBuilder>();
+    services.AddSingleton<IMsSqlExecutor, MsSqlExecutor>();
+    services.AddSingleton<IMySqlQueryBuilder, MySQLQueryBuilder>();
+    services.AddSingleton<IMySqlExecutor, MySqlExecutor>();
 
+    // Register all ITargetWriter implementations
+    var writerTypes = typeof(ITargetWriter).Assembly
+        .GetTypes()
+        .Where(t => typeof(ITargetWriter).IsAssignableFrom(t) && t is { IsClass: true, IsAbstract: false });
+
+    foreach (var type in writerTypes)
+    {
+        services.AddSingleton(typeof(ITargetWriter), sp => ActivatorUtilities.CreateInstance(sp, type));
+    }
+
+    // Register services
+    services.AddSingleton<ITargetWriterResolver, TargetWriterResolver>();
+    services.AddSingleton<IMessageListener, KafkaConsumer>();
+    services.AddSingleton<IMessagePublisher, KafkaProducer>();
+    services.AddSingleton<ILoadHandler, LoadHandler>();
+    services.AddHostedService<LoadWorker>();
+    services.AddSingleton<IJsonService, JsonService>();
+    services.AddSingleton<IDataBaseMetadataService, HttpDatabaseMetadataService>();
+    services.AddSingleton<ITableDependencySorter, TableDependencySorter>();
+    services.AddHttpClient();
+});
 
 await builder.Build().RunAsync();

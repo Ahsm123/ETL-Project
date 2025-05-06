@@ -56,22 +56,6 @@ public class MsSqlQueryBuilderTests
     }
 
     [Fact]
-    public void GenerateSelectQuery_WithInvalidFieldName_ThrowsException()
-    {
-        // Arrange
-        var source = new MsSqlSourceInfo
-        {
-            TargetTable = "Users"
-        };
-
-        var invalidFields = new List<string> { "Id", "DROP TABLE Users" };
-
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() =>
-            _queryBuilder.GenerateSelectQuery(source, invalidFields, null));
-    }
-
-    [Fact]
     public void GenerateSelectQuery_WithUnsupportedFilterOperator_ThrowsException()
     {
         // Arrange

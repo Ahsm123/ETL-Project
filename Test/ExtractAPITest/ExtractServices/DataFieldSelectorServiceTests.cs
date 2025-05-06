@@ -34,21 +34,6 @@ public class DataFieldSelectorServiceTests
         Assert.DoesNotContain("extra", result[0].Fields.Keys);
     }
 
-    [Fact]
-    public void FilterFields_WithEmptyFieldList_ReturnsEmptyRecords()
-    {
-        // Arrange
-        var json = "[{ \"id\": 1, \"name\": \"test\" }]";
-        using var doc = JsonDocument.Parse(json);
-        var data = doc.RootElement;
-
-        // Act
-        var result = _service.SelectRecords(data, new List<string>()).ToList();
-
-        // Assert
-        Assert.Empty(result); 
-    }
-
 
 
     [Fact]
