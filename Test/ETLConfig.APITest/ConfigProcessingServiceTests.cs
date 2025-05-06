@@ -1,4 +1,6 @@
 ﻿using ETL.Domain.JsonHelpers;
+using ETLConfig.API.Services.Interfaces;
+using ETLConfig.API.Services.Validators;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
@@ -8,10 +10,11 @@ public class ConfigProcessingServiceTests
     private readonly ConfigProcessingService _service;
     private readonly FakeConfigRepository _repo = new();
     private readonly IJsonService _jsonService = new JsonService();
+    private readonly IConfigValidator _configValidator = new ConfigValidator();
 
     public ConfigProcessingServiceTests()
     {
-        _service = new ConfigProcessingService(_repo, _jsonService);
+        _service = new ConfigProcessingService(_repo, _jsonService, _configValidator);
     }
 
 
