@@ -7,6 +7,7 @@ Frontend:
 - Vite
 - Vue.js
 - TypeScript
+
 Backend:
 - ASP.NET Core WebAPI
 - C#
