@@ -1,11 +1,11 @@
 ﻿using ETL.Domain.Events;
 using ETL.Domain.JsonHelpers;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Transform.Interfaces;
+using Transform.Messaging.Kafka.KafkaConfig;
 
-namespace Transform.Workers;
 public class TransformWorker : BackgroundService
 {
     private readonly IMessageListener _listener;
@@ -13,8 +13,7 @@ public class TransformWorker : BackgroundService
     private readonly ITransformService<string> _transformService;
     private readonly IJsonService _jsonService;
     private readonly ILogger<TransformWorker> _logger;
-    private readonly bool _enableDeadLetter;
-    private readonly string _deadLetterTopic;
+    private readonly KafkaSettings _settings;
 
     public TransformWorker(
         IMessageListener listener,
@@ -22,119 +21,72 @@ public class TransformWorker : BackgroundService
         ITransformService<string> transformService,
         IJsonService jsonService,
         ILogger<TransformWorker> logger,
-        IConfiguration config)
+        IOptions<KafkaSettings> options)
     {
         _listener = listener;
         _publisher = publisher;
         _transformService = transformService;
         _jsonService = jsonService;
         _logger = logger;
-        _enableDeadLetter = config.GetValue<bool>("Transform:EnableDeadLetter");
-        _deadLetterTopic = config.GetValue<string>("Transform:DeadLetterTopic") ?? "dead-letter";
+        _settings = options.Value;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("TransformWorker started");
-        _logger.LogInformation("EnableDeadLetter: {EnableDeadLetter}, Topic: {Topic}", _enableDeadLetter, _deadLetterTopic);
-
+        _logger.LogInformation("TransformWorker started. Dead-letter enabled: {Enabled}", _settings.Topics.EnableDeadLetter);
         await _listener.ListenAsync(HandleMessageAsync, stoppingToken);
     }
 
     private async Task HandleMessageAsync(string message)
     {
-        _logger.LogDebug("Received message: {Message}", message);
-
         var payload = TryDeserialize(message);
         if (payload == null)
         {
-            await SendToDeadLetter(message, ErrorType.DeserializationError);
+            await SendToDeadLetter(message, "DeserializationError");
             return;
         }
 
-        var transformed = await TryTransform(payload, message);
-        if (string.IsNullOrWhiteSpace(transformed) || transformed == "{}")
-        {
-            _logger.LogInformation("Filtered/empty payload. Skipping. PipelineId: {PipelineId}", payload.PipelineId);
-            return;
-        }
-
-        await TryPublish(transformed, payload.PipelineId, message);
-
-    }
-
-    private ExtractedEvent? TryDeserialize(string message)
-    {
         try
         {
-            return _jsonService.Deserialize<ExtractedEvent>(message);
+            var transformed = await _transformService.TransformDataAsync(payload);
+            if (!string.IsNullOrWhiteSpace(transformed))
+            {
+                await _publisher.PublishAsync("processedData", Guid.NewGuid().ToString(), transformed);
+                _logger.LogInformation("Transformed message published.");
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Deserialization failed");
+            _logger.LogError(ex, "Transformation failed");
+            await SendToDeadLetter(message, "TransformationError");
+        }
+    }
+
+    private ExtractedEvent? TryDeserialize(string json)
+    {
+        try
+        {
+            return _jsonService.Deserialize<ExtractedEvent>(json);
+        }
+        catch
+        {
             return null;
         }
     }
 
-    private async Task<string> TryTransform(ExtractedEvent payload, string originalMessage)
+    private async Task SendToDeadLetter(string original, string reason)
     {
-        try
-        {
-            return await _transformService.TransformDataAsync(payload);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Transformation failed. PipelineId: {PipelineId}", payload.PipelineId);
-            await SendToDeadLetter(originalMessage, ErrorType.TransformationError);
-            return string.Empty;
-        }
-    }
-
-    private async Task TryPublish(string transformed, string pipelineId, string originalMessage)
-    {
-        try
-        {
-            await _publisher.PublishAsync("processedData", Guid.NewGuid().ToString(), transformed);
-            _logger.LogInformation("Published transformed message. PipelineId: {PipelineId}", pipelineId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Publishing failed. PipelineId: {PipelineId}", pipelineId);
-            await SendToDeadLetter(originalMessage, ErrorType.PublishError);
-        }
-    }
-
-
-    private async Task SendToDeadLetter(string originalMessage, ErrorType errorType)
-    {
-        if (!_enableDeadLetter)
-            return;
+        if (!_settings.Topics.EnableDeadLetter) return;
 
         var envelope = new DeadLetterEnvelope
         {
-            OriginalPayload = originalMessage,
-            Error = errorType.ToString(),
-            Timestamp = DateTime.UtcNow
+            Timestamp = DateTime.UtcNow,
+            Error = reason,
+            OriginalPayload = original
         };
 
-        try
-        {
-            var wrapped = _jsonService.Serialize(envelope);
-            await _publisher.PublishAsync(_deadLetterTopic, Guid.NewGuid().ToString(), wrapped);
-            _logger.LogWarning("Dead-lettered message. Error: {Error}", errorType);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send to dead-letter topic");
-        }
-    }
-
-    private enum ErrorType
-    {
-        DeserializationError,
-        NullPayload,
-        TransformationError,
-        PublishError,
-        UnknownError
+        var json = _jsonService.Serialize(envelope);
+        await _publisher.PublishAsync(_settings.Topics.DeadLetterTopic, Guid.NewGuid().ToString(), json);
+        _logger.LogWarning("Message sent to dead-letter topic.");
     }
 }

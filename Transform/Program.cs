@@ -3,9 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Transform.Interfaces;
-using Transform.Messaging;
+using Transform.Messaging.Kafka.KafkaConfig;
 using Transform.Services;
-using Transform.Workers;
 
 var builder = Host.CreateDefaultBuilder(args)
     .ConfigureLogging(logging =>
@@ -15,9 +14,11 @@ var builder = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices((context, services) =>
     {
-        // Infrastructure
-        services.AddSingleton<IMessageListener, KafkaMessageListener>();
-        services.AddSingleton<IMessagePublisher, KafkaMessagePublisher>();
+        services.Configure<KafkaSettings>(context.Configuration.GetSection("Kafka"));
+
+        // Register Kafka
+        services.AddSingleton<IMessageListener, KafkaConsumer>();
+        services.AddSingleton<IMessagePublisher, KafkaProducer>();
 
         // Transformation pipeline
         services.AddSingleton<FilterService>();
