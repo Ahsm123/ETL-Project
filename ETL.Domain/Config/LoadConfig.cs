@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace ETL.Domain.Config;
-public class LoadTargetConfig
+public class LoadConfig
 {
     [Required]
     [JsonPropertyName("TargetInfo")]

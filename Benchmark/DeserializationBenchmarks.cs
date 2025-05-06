@@ -25,7 +25,7 @@ public class DeserializationBenchmarks
         {
             { "Name", "Test" }
         }),
-            LoadTargetConfig = new LoadTargetConfig
+            LoadTargetConfig = new LoadConfig
             {
                 TargetInfo = new MsSqlTargetInfo
                 {

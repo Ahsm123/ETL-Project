@@ -176,7 +176,7 @@ public class PipelineController : ControllerBase
             }
             },
 
-            LoadTargetConfig = new LoadTargetConfig
+            LoadTargetConfig = new LoadConfig
             {
                 TargetInfo = new MySqlTargetInfo
                 {

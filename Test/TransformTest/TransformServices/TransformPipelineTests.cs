@@ -40,7 +40,7 @@ public class TransformPipelineTests
                 },
                 Mappings = new()
             },
-            LoadTargetConfig = new LoadTargetConfig()
+            LoadTargetConfig = new LoadConfig()
         };
 
         // Act
@@ -73,7 +73,7 @@ public class TransformPipelineTests
                     new("account_id", "id")
                 }
             },
-            LoadTargetConfig = new LoadTargetConfig()
+            LoadTargetConfig = new LoadConfig()
         };
 
         // Act

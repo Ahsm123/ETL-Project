@@ -6,6 +6,11 @@ namespace ETL.Domain.SQLQueryBuilder;
 
 public class MsSqlExecutor : IMsSqlExecutor
 {
+    public Task<object?> ExecuteInsertWithIdentityAsync(string connectionString, string query, object parameters)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<IEnumerable<IDictionary<string, object>>> ExecuteQueryAsync(
         string connectionString,
         string query,

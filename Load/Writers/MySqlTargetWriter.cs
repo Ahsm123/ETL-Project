@@ -8,20 +8,19 @@ using ETL.Domain.Targets.DbTargets;
 using Load.Interfaces;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
-using MySqlX.XDevAPI.Relational;
 using System.Text.Json;
-
 
 namespace Load.Writers;
 
 public class MySqlTargetWriter : ITargetWriter
 {
     private readonly IMySqlQueryBuilder _queryBuilder;
-    private readonly IMySqlExecutor _executor; 
+    private readonly IMySqlExecutor _executor;
     private readonly IDataBaseMetadataService _metadataService;
     private readonly ITableDependencySorter _tableDependencySorter;
 
-    public MySqlTargetWriter(IMySqlQueryBuilder queryBuilder,
+    public MySqlTargetWriter(
+        IMySqlQueryBuilder queryBuilder,
         IMySqlExecutor executor,
         IDataBaseMetadataService metadataService,
         ITableDependencySorter tableDependencySorter)
@@ -42,27 +41,58 @@ public class MySqlTargetWriter : ITargetWriter
 
         if (context.DatabaseMetadata == null && context.TargetInfo is DbTargetInfoBase dbTarget)
         {
-            //TODO: Hvordan kommer vi uden om hardcoded databasetype?
             context.DatabaseMetadata = await _metadataService.FetchAsync(dbTarget, "mysql");
         }
 
         var sortedTables = _tableDependencySorter.SortByDependency(context.Tables, context.DatabaseMetadata);
+
+        // ✅ Her gemmes ID'er fra parent inserts
+        var identityMap = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var table in sortedTables)
         {
             try
             {
                 var mappedData = ApplyTargetMappings(context.Data, table.Fields);
+
+                var tableMeta = context.DatabaseMetadata.Tables
+                    .FirstOrDefault(t => t.TableName.Equals(table.TargetTable, StringComparison.OrdinalIgnoreCase));
+
+                // ✅ Injicer foreign keys baseret på metadata
+                if (tableMeta?.ForeignKeys != null)
+                {
+                    foreach (var fk in tableMeta.ForeignKeys)
+                    {
+                        if (identityMap.TryGetValue(fk.ReferencedTable, out var parentId))
+                        {
+                            mappedData[fk.Column] = parentId!;
+                        }
+                    }
+                }
+
                 ValidateRequiredFields(table.TargetTable, mappedData, context.DatabaseMetadata);
+
                 var (sql, parameters) = _queryBuilder.GenerateInsertQuery(table.TargetTable, mappedData);
 
-                await _executor.ExecuteQueryAsync(BuildConnectionString(info), sql, parameters);
+                // ✅ Check om der skal hentes et auto-increment ID
+                bool hasAutoIncrement = tableMeta?.Columns
+                    .Any(c => c.IsPrimaryKey && c.IsAutoIncrement) == true;
+
+                if (hasAutoIncrement)
+                {
+                    var insertedId = await _executor.ExecuteInsertWithIdentityAsync(
+                        BuildConnectionString(info), sql, parameters);
+                    identityMap[table.TargetTable] = insertedId!;
+                }
+                else
+                {
+                    await _executor.ExecuteQueryAsync(BuildConnectionString(info), sql, parameters);
+                }
             }
             catch (Exception ex)
             {
-
+                // Tilføj evt. logger her
                 throw;
-
             }
         }
     }
@@ -104,7 +134,7 @@ public class MySqlTargetWriter : ITargetWriter
         return value;
     }
 
-    private void ValidateRequiredFields(string tableName,Dictionary<string, object> mappedData,DatabaseMetaData metadata)
+    private void ValidateRequiredFields(string tableName, Dictionary<string, object> mappedData, DatabaseMetaData metadata)
     {
         var tableMeta = metadata.Tables
             .FirstOrDefault(t => t.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
@@ -118,7 +148,6 @@ public class MySqlTargetWriter : ITargetWriter
         {
             if (!column.IsNullable && !column.IsAutoIncrement)
             {
-                // Check if value is missing or null or empty string
                 if (!mappedData.TryGetValue(column.ColumnName, out var value) ||
                     value == null ||
                     (value is string str && string.IsNullOrWhiteSpace(str)))
@@ -135,12 +164,11 @@ public class MySqlTargetWriter : ITargetWriter
         }
     }
 
-
     private string BuildConnectionString(MySqlTargetInfo info)
     {
         var builder = new MySqlConnectionStringBuilder(info.ConnectionString)
         {
-            AllowPublicKeyRetrieval = true // fix for caching_sha2_password
+            AllowPublicKeyRetrieval = true
         };
 
         return builder.ConnectionString;
