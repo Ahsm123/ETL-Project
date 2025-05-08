@@ -18,5 +18,7 @@ namespace ETL.Domain.MetaDataModels
         public List<string> PrimaryKeys { get; set; } = new();
         [JsonPropertyName("foreignKeys")]
         public List<ForeignKeyMetadata> ForeignKeys { get; set; } = new();
+
+        public bool IsParentTable { get; set; } = false;
     }
 }

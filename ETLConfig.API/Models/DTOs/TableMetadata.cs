@@ -6,5 +6,6 @@ public class TableMetadata
     public List<ColumnMetadata> Columns { get; set; } = new();
     public List<string> PrimaryKeys { get; set; } = new();
     public List<ForeignKeyInfo> ForeignKeys { get; set; } = new();
+    public bool IsParentTable { get; set; }
 }
 

@@ -76,22 +76,49 @@ public class MySqlTargetWriter : ITargetWriter
                 bool hasAutoIncrement = tableMeta?.Columns
                     .Any(c => c.IsPrimaryKey && c.IsAutoIncrement) == true;
 
+                if (tableMeta?.IsParentTable == true)
+                {
+                    var pkColumn = tableMeta.Columns.FirstOrDefault(c => c.IsPrimaryKey);
+                    if (pkColumn != null && mappedData.TryGetValue(pkColumn.ColumnName, out var pkValue))
+                    {
+                        if (identityMap.ContainsKey($"{table.TargetTable}:{pkValue}"))
+                            continue;
+
+                        var selectSql = $"SELECT 1 FROM `{table.TargetTable}` WHERE `{pkColumn.ColumnName}` = @{pkColumn.ColumnName} LIMIT 1;";
+                        var exists = await _executor.ExecuteQueryAsync(BuildConnectionString(info), selectSql, new Dictionary<string, object> { [pkColumn.ColumnName] = pkValue });
+
+                        if (exists.Any())
+                        {
+                            identityMap[$"{table.TargetTable}:{pkValue}"] = pkValue;
+                            continue;
+                        }
+                    }
+                }
+
                 if (hasAutoIncrement)
                 {
                     var insertedId = await _executor.ExecuteInsertWithIdentityAsync(
                         BuildConnectionString(info), sql, parameters);
-                    identityMap[table.TargetTable] = insertedId!;
+
+                    identityMap[$"{table.TargetTable}"] = insertedId!;
                 }
                 else
                 {
                     await _executor.ExecuteQueryAsync(BuildConnectionString(info), sql, parameters);
+
+                    var pk = tableMeta?.PrimaryKeys.FirstOrDefault();
+                    if (pk != null && mappedData.TryGetValue(pk, out var pkVal))
+                    {
+                        identityMap[$"{table.TargetTable}:{pkVal}"] = pkVal;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                throw;
+                throw; // evt. log her
             }
         }
+
     }
 
     private static Dictionary<string, object> ApplyTargetMappings(

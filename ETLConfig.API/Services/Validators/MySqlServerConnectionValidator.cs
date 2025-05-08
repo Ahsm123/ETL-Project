@@ -54,7 +54,7 @@ WHERE TABLE_NAME = '{0}' AND REFERENCED_TABLE_NAME IS NOT NULL";
         {
             // Fetch column info
             var columns = (await connection.QueryAsync<ColumnMetadata>(
-         GetColumnsQuery,
+                GetColumnsQuery,
                 new { table })).ToList();
 
             // Fetch primary keys
@@ -79,8 +79,25 @@ WHERE TABLE_NAME = '{0}' AND REFERENCED_TABLE_NAME IS NOT NULL";
             metadata.Tables.Add(tableMetadata);
         }
 
+        // Find alle tabeller, der er referenced af andre (parent tables)
+        var referencedTableNames = new HashSet<string>(
+            metadata.Tables
+                .SelectMany(t => t.ForeignKeys)
+                .Select(fk => fk.ReferencedTable),
+            StringComparer.OrdinalIgnoreCase);
+
+        // Marker tabeller som IsParentTable = true hvis de bliver refereret
+        foreach (var table in metadata.Tables)
+        {
+            if (referencedTableNames.Contains(table.TableName))
+            {
+                table.IsParentTable = true;
+            }
+        }
+
         return metadata;
     }
+
 
     private int? ParseMaxLengthFromType(string type)
     {
