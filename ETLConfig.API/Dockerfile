@@ -6,14 +6,22 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ETLConfig.API.csproj ./
-RUN dotnet restore ./ETLConfig.API.csproj
-COPY . .
-RUN dotnet build ./ETLConfig.API.csproj -c $BUILD_CONFIGURATION -o /app/build
+
+COPY ETLConfig.API/ETLConfig.API.csproj ETLConfig.API/
+COPY ETL.Domain/ETL.Domain.csproj ETL.Domain/
+
+RUN dotnet restore ETLConfig.API/ETLConfig.API.csproj
+
+COPY ETLConfig.API/ ETLConfig.API/
+COPY ETL.Domain/ ETL.Domain/
+
+# Build
+WORKDIR /src/ETLConfig.API
+RUN dotnet build -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish ./ETLConfig.API.csproj -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app

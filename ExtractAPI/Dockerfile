@@ -8,14 +8,14 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 COPY ExtractAPI/ExtractAPI.csproj ExtractAPI/
-COPY ETL.Domain/ETL.Domain.csproj ETL.Domain/
+COPY /ETL.Domain/ETL.Domain.csproj ETL.Domain/
 
 WORKDIR /src/ExtractAPI
 RUN dotnet restore
 
 WORKDIR /src
 COPY ExtractAPI/ ExtractAPI/
-COPY ETL.Domain/ ETL.Domain/
+COPY /ETL.Domain/ ETL.Domain/
 
 WORKDIR /src/ExtractAPI
 RUN dotnet build -c $BUILD_CONFIGURATION -o /app/build
