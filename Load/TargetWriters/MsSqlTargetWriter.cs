@@ -90,7 +90,6 @@ public class MsSqlTargetWriter : ITargetWriter
         {
             if (!column.IsNullable && !column.IsAutoIncrement)
             {
-                // Check if value is missing or null or empty string
                 if (!mappedData.TryGetValue(column.ColumnName, out var value) ||
                     value == null ||
                     (value is string str && string.IsNullOrWhiteSpace(str)))

@@ -47,7 +47,6 @@ public class MySqlTargetWriter : ITargetWriter
 
         var sortedTables = _tableDependencySorter.SortByDependency(context.Tables, context.DatabaseMetadata);
 
-        // ✅ Her gemmes ID'er fra parent inserts
         var identityMap = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var table in sortedTables)
@@ -59,7 +58,6 @@ public class MySqlTargetWriter : ITargetWriter
                 var tableMeta = context.DatabaseMetadata.Tables
                     .FirstOrDefault(t => t.TableName.Equals(table.TargetTable, StringComparison.OrdinalIgnoreCase));
 
-                // ✅ Injicer foreign keys baseret på metadata
                 if (tableMeta?.ForeignKeys != null)
                 {
                     foreach (var fk in tableMeta.ForeignKeys)
@@ -75,7 +73,6 @@ public class MySqlTargetWriter : ITargetWriter
 
                 var (sql, parameters) = _queryBuilder.GenerateInsertQuery(table.TargetTable, mappedData);
 
-                // ✅ Check om der skal hentes et auto-increment ID
                 bool hasAutoIncrement = tableMeta?.Columns
                     .Any(c => c.IsPrimaryKey && c.IsAutoIncrement) == true;
 
@@ -92,7 +89,6 @@ public class MySqlTargetWriter : ITargetWriter
             }
             catch (Exception ex)
             {
-                // Tilføj evt. logger her
                 throw;
             }
         }

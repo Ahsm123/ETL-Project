@@ -38,7 +38,6 @@ public class LoadHandler : ILoadHandler
     {
         try
         {
-            _logger.LogWarning("📥 Incoming raw JSON:\n{Json}", json);
 
             if (string.IsNullOrWhiteSpace(json) || json == "{}")
                 throw new InvalidOperationException("Received empty or invalid payload.");
@@ -46,7 +45,7 @@ public class LoadHandler : ILoadHandler
             var payload = _jsonService.Deserialize<TransformedEvent>(json)
                 ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
-            _logger.LogInformation("✅ Deserialized table count: {Count}", payload.LoadTargetConfig?.Tables?.Count ?? -1);
+            _logger.LogInformation("Deserialized table count: {Count}", payload.LoadTargetConfig?.Tables?.Count ?? -1);
 
             if (payload.LoadTargetConfig?.TargetInfo == null)
                 throw new InvalidOperationException("TargetInfo is missing from payload.");
@@ -57,7 +56,7 @@ public class LoadHandler : ILoadHandler
             var writer = _targetWriterResolver.Resolve(payload.LoadTargetConfig.TargetInfo.GetType(), _serviceProvider)
                 ?? throw new InvalidOperationException($"No writer found for type '{payload.LoadTargetConfig.TargetInfo.GetType()}'");
 
-            _logger.LogInformation("📦 Using writer: {Writer}", writer.GetType().Name);
+            _logger.LogInformation("Using writer: {Writer}", writer.GetType().Name);
 
             var context = new LoadContext
             {
@@ -68,11 +67,11 @@ public class LoadHandler : ILoadHandler
             };
 
             await writer.WriteAsync(context);
-            _logger.LogInformation("✅ Load completed successfully.");
+            _logger.LogInformation("Load completed successfully.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ LoadHandler failed: {Message}", ex.Message);
+            _logger.LogError(ex, "LoadHandler failed: {Message}", ex.Message);
             await SendToDeadLetter(json, ex.Message);
             throw;
         }
@@ -91,11 +90,11 @@ public class LoadHandler : ILoadHandler
 
             var payload = JsonSerializer.Serialize(envelope);
             await _messagePublisher.PublishAsync(Guid.NewGuid().ToString(), payload);
-            _logger.LogWarning("📨 Message sent to dead-letter topic: {Topic}", _deadLetterTopic);
+            _logger.LogWarning("Message sent to dead-letter topic: {Topic}", _deadLetterTopic);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "⚠️ Failed to publish to dead-letter topic.");
+            _logger.LogError(ex, "Failed to publish to dead-letter topic.");
         }
     }
 
