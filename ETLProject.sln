@@ -25,17 +25,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ETLConfig.API", "ETLConfig.API\ETLConfig.API.csproj", "{31A8F188-2618-44BE-9792-DAA9B025C820}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{34A2F540-546A-4382-9388-BC493AE42A0F}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\..\etl-k8s\configapi-deployment.yml = ..\..\..\etl-k8s\configapi-deployment.yml
-		..\..\..\etl-k8s\extractapi-deployment.yml = ..\..\..\etl-k8s\extractapi-deployment.yml
-		..\..\..\etl-k8s\extractapi-service.yml = ..\..\..\etl-k8s\extractapi-service.yml
-		..\..\..\etl-k8s\kafka-bitname.yml = ..\..\..\etl-k8s\kafka-bitname.yml
-		..\..\..\etl-k8s\kafka-topic-creator.yml = ..\..\..\etl-k8s\kafka-topic-creator.yml
-		..\..\..\etl-k8s\load-deployment.yml = ..\..\..\etl-k8s\load-deployment.yml
-		..\..\..\etl-k8s\transform-deployment.yml = ..\..\..\etl-k8s\transform-deployment.yml
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
