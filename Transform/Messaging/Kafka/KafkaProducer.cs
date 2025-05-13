@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using Transform.Messaging.Interfaces;
 using Transform.Messaging.Kafka.KafkaConfig;
 
-public class KafkaProducer : IMessagePublisher
+public class KafkaProducer : IMessagePublisher, IDisposable
 {
     private readonly ILogger<KafkaProducer> _logger;
     private readonly IProducer<string, string> _producer;
@@ -35,5 +35,19 @@ public class KafkaProducer : IMessagePublisher
         {
             _logger.LogError(ex, "Failed to publish to Kafka topic {Topic}", topic);
         }
+    }
+
+    public void Dispose()
+    {
+        try
+        {
+            _producer.Flush(TimeSpan.FromSeconds(10)); // Flush before dispose
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Kafka producer flush failed");
+        }
+
+        _producer.Dispose();
     }
 }

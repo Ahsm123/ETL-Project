@@ -43,6 +43,15 @@ public class KafkaProducer : IMessagePublisher, IDisposable
 
     public void Dispose()
     {
+        try
+        {
+            _producer.Flush(TimeSpan.FromSeconds(10)); // Ensure delivery
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Kafka producer flush failed");
+        }
+
         _producer?.Dispose();
     }
 }
