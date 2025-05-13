@@ -9,4 +9,5 @@ public interface ISqlQueryBuilder
 {
     (string sql, DynamicParameters parameters) GenerateSelectQuery(DbSourceBaseInfo info, List<string>? fields, List<FilterRule>? filters);
     (string sql, DynamicParameters parameters) GenerateInsertQuery(string tableName, Dictionary<string, object>? data);
+    bool ProtectFromSQLInjection(string query); 
 }
