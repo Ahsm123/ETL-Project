@@ -120,4 +120,9 @@ public class MySQLQueryBuilder : IMySqlQueryBuilder
 
         return $"`{identifier}`"; // MySQL-safe
     }
+
+    public bool ProtectFromSQLInjection(string query)
+    {
+        throw new NotImplementedException();
+    }
 }

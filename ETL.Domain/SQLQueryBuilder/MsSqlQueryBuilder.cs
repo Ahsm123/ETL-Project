@@ -108,4 +108,9 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
         // Supports dot notation like dbo.Table
         return string.Join('.', identifier.Split('.').Select(p => $"[{p}]"));
     }
+
+    public bool ProtectFromSQLInjection(string query)
+    {
+        throw new NotImplementedException();
+    }
 }
