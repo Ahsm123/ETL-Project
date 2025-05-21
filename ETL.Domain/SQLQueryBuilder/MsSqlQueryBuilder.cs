@@ -4,6 +4,7 @@ using ETL.Domain.Sources;
 using ETL.Domain.Sources.Db;
 using ETL.Domain.SQLQueryBuilder.Interfaces;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ETL.Domain.SQLQueryBuilder;
 
@@ -105,7 +106,12 @@ public class MsSqlQueryBuilder : IMsSqlQueryBuilder
 
     private static string WrapIdentifier(string identifier)
     {
-        // Supports dot notation like dbo.Table
+        foreach (var part in identifier.Split('.'))
+        {
+            if (!Regex.IsMatch(part, @"^[a-zA-Z_][a-zA-Z0-9_]*$"))
+                throw new ArgumentException($"Invalid SQL identifier: {identifier}");
+        }
+
         return string.Join('.', identifier.Split('.').Select(p => $"[{p}]"));
     }
 
