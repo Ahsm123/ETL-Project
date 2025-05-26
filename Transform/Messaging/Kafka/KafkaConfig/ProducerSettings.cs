@@ -4,4 +4,5 @@ public class ProducerSettings
 {
     public bool EnableIdempotence { get; set; }
     public string Acks { get; set; }
+    public string Topic { get; set; }
 }

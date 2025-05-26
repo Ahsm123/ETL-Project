@@ -52,7 +52,7 @@ public class TransformWorker : BackgroundService
             var transformed = await _transformService.TransformDataAsync(payload);
             if (!string.IsNullOrWhiteSpace(transformed))
             {
-                await _publisher.PublishAsync("processedData", Guid.NewGuid().ToString(), transformed);
+                await _publisher.PublishAsync(_settings.Producer.Topic, Guid.NewGuid().ToString(), transformed);
                 _logger.LogInformation("Transformed message published.");
             }
         }
