@@ -33,7 +33,15 @@ public class ExcelTargetWriter : ITargetWriter
             }
 
             WriteRow(worksheet, data, excelInfo.IncludeHeaders);
-            workbook.Save(); // <- Save changes without overwriting the file
+            //Uses SaveAs if the file is new and doesnt exist
+            if (File.Exists(fullPath))
+            {
+                workbook.Save();
+            }
+            else
+            {
+                workbook.SaveAs(fullPath);
+            }
         }
         catch (IOException ex)
         {

@@ -55,6 +55,22 @@ public class MsSqlQueryBuilderTests
         Assert.Equal("SELECT * FROM [Users]", query);
     }
 
+    [Fact]
+    public void GenerateSelectQuery_WithInvalidFieldName_ThrowsException()
+    {
+        // Arrange
+        var source = new MsSqlSourceInfo
+        {
+            TargetTable = "Users"
+        };
+
+        var fields = new List<string> { "Id", "Invalid Field!" };
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() =>
+            _queryBuilder.GenerateSelectQuery(source, fields, null));
+    }
+
 
     [Fact]
     public void GenerateSelectQuery_WithUnsupportedFilterOperator_ThrowsException()

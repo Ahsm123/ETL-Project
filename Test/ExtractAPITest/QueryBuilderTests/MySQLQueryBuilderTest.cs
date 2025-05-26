@@ -1,7 +1,10 @@
 ﻿using Dapper;
+using DocumentFormat.OpenXml.Drawing;
 using ETL.Domain.Rules;
+using ETL.Domain.Sources;
 using ETL.Domain.Targets.DbTargets;
 using ExtractAPI.DataSources.DatabaseQueryBuilder;
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace Test.ExtractAPITest.QueryBuilderTests
@@ -32,7 +35,102 @@ namespace Test.ExtractAPITest.QueryBuilderTests
         }
 
         [Fact]
-        public void GenerateInsertQuery_ValidTargetInfo_GeneratesCorrectSQL()
+        public void GenerateSelectQuery_GeneratesValidSqlWithoutFilter()
+        {
+            var queryBuilder = new MySQLQueryBuilder();
+            var table = GetStandardTable();
+
+            var sourceInfo = new MySQLSourceInfo
+            {
+                TargetTable = table.TargetTable,
+            };
+            var rowData = new List<string> { "account_id", "cost", "status" };
+
+            var (sql, parameters) = queryBuilder.GenerateSelectQuery(sourceInfo, rowData, null);
+            var expectedSql = "SELECT `account_id`, `cost`, `status` FROM `approved_highvalue_payments`;";
+            Assert.Equal(expectedSql, sql.Trim());
+        }
+
+        [Fact]
+        public void GenerateSelectQuery_GeneratesValidSqlAndParameterWithFilters()
+        {
+            var queryBuilder = new MySQLQueryBuilder();
+            var table = GetStandardTable();
+
+            var sourceInfo = new MySQLSourceInfo
+            {
+                TargetTable = table.TargetTable,
+            };
+            var rowData = new List<string> { "account_id", "cost", "status" };
+            var filterRules = new List<FilterRule>
+            {
+                new FilterRule("cost","less_than","1000"),
+                new FilterRule("status","equals","approved")
+            };
+
+            var (sql, parameters) = queryBuilder.GenerateSelectQuery(sourceInfo, rowData,filterRules);
+            var expectedSql = "SELECT `account_id`, `cost`, `status` FROM `approved_highvalue_payments` WHERE `cost` < @p0 AND `status` = @p1;";
+            Assert.Equal(expectedSql, sql.Trim());
+
+        }
+
+        [Fact]
+        public void GenerateSelectQuery_GeneratesValidSqlWithEmptyFields()
+        {
+            var queryBuilder = new MySQLQueryBuilder();
+            var table = GetStandardTable();
+
+            var sourceInfo = new MySQLSourceInfo
+            {
+                TargetTable = table.TargetTable,
+            };
+            var rowData = new List<string>();
+
+            var (sql, parameters) = queryBuilder.GenerateSelectQuery(sourceInfo, rowData, null);
+            var expectedSql = "SELECT * FROM `approved_highvalue_payments`;";
+            Assert.Equal(expectedSql, sql.Trim());
+        }
+        [Fact]
+        public void GenerateSelectQuery_ThrowsException_WhenEmptyTargetTable()
+        {
+            var queryBuilder = new MySQLQueryBuilder();
+            var sourceInfo = new MySQLSourceInfo
+            {
+                TargetTable = null,
+            };
+            var rowData = new List<string> { "account_id", "cost", "status" };
+
+            var ex = Assert.Throws<ArgumentException>(() =>
+                queryBuilder.GenerateSelectQuery(sourceInfo, rowData, null));
+
+            Assert.Equal("Target table is required.", ex.Message);
+        }
+
+        [Fact]
+        public void GenerateSelectQuery_WhenFilterRuleIsNull_ThrowsException()
+        {
+            var queryBuilder = new MySQLQueryBuilder();
+            var table = GetStandardTable();
+            var sourceInfo = new MySQLSourceInfo
+            {
+                TargetTable = table.TargetTable
+            };
+            var rowData = new List<string> { "account_id", "cost", "status" };
+            var filterRules = new List<FilterRule>
+            {
+                new FilterRule("cost", "null", "1000"),
+                
+            };
+            var ex = Assert.Throws<ArgumentException>(() =>
+            queryBuilder.GenerateSelectQuery(sourceInfo, rowData, filterRules));
+
+            Assert.Contains("Unsupported operator", ex.Message);
+        }
+
+
+
+            [Fact]
+        public void GenerateInsertQuery_ReturnsCorrectSqlAndParametersWhenValidInput()
         {
             var queryBuilder = new MySQLQueryBuilder();
             var table = GetStandardTable();
@@ -67,7 +165,7 @@ namespace Test.ExtractAPITest.QueryBuilderTests
         }
 
         [Fact]
-        public void GenerateInsertQuery_WithInvalidTableName_ThrowsException()
+        public void GenerateInsertQuery_TableNameWithSqlInjection_ThrowsException()
         {
             var queryBuilder = new MySQLQueryBuilder();
             var rowData = new Dictionary<string, object> { { "username", "king" } };
@@ -90,7 +188,7 @@ namespace Test.ExtractAPITest.QueryBuilderTests
         }
 
         [Fact]
-        public void GenerateInsertQuery_WithNullTableName_ThrowsException()
+        public void GenerateInsertQuery_NullTableName_ThrowsException()
         {
             var queryBuilder = new MySQLQueryBuilder();
             var data = new Dictionary<string, object> { { "username", "king" } };
