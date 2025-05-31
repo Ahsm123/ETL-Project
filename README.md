@@ -1,4 +1,4 @@
-# 4. Semester Projekt - 1 GRP. @ ECG
+# 4. Semester Projekt
 
 This is the backend for FLUXETL:
 - ASP.NET Core WebAPI
